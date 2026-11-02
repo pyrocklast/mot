@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Écran d'accueil -->
+    <string name="app_placeholder">Appli</string>
+    <string name="tips">Balayez vers le haut pour vos applis\nAppui long n\'importe où pour les paramètres</string>
+    <string name="set_as_home">Définir Mot comme appli d\'accueil</string>
+    <string name="set_as_home_underlined"><u>Définir Mot comme appli d\'accueil</u></string>
+    <string name="long_press_to_choose">Appui long pour choisir une appli</string>
+    <string name="action_open">Ouvrir</string>
+    <string name="action_change_app">Changer d\'appli</string>
+    <string name="action_open_clock">Ouvrir l\'horloge</string>
+    <string name="action_choose_clock">Choisir l\'appli d\'horloge</string>
+    <string name="action_open_calendar">Ouvrir l\'agenda</string>
+    <string name="action_choose_calendar">Choisir l\'appli d\'agenda</string>
+
+    <!-- Tiroir d'applis -->
+    <string name="search_apps">Rechercher des applis</string>
+    <string name="choose_an_app">Choisir une appli</string>
+    <string name="private_space">Espace privé</string>
+    <string name="private_space_locked">Espace privé, verrouillé</string>
+    <string name="private_space_unlocked">Espace privé, déverrouillé</string>
+    <string name="work_app">%1$s, travail</string>
+    <string name="new_app">%1$s, nouvelle</string>
+    <string name="rename">Renommer</string>
+    <string name="original_name">Nom d\'origine</string>
+    <string name="hide">Masquer</string>
+    <string name="app_info">Infos sur l\'appli</string>
+    <string name="uninstall">Désinstaller</string>
+    <string name="remove">Retirer</string>
+    <string name="first_hide">Appli masquée. Retrouvez-la dans Paramètres &gt; %1$s &gt; %2$s.</string>
+    <string name="app_not_found">Appli introuvable</string>
+    <string name="cant_open">Impossible de l\'ouvrir</string>
+    <string name="shortcut_added">Ajouté au tiroir d\'applis</string>
+    <string name="shortcut_not_added">Impossible d\'ajouter le raccourci</string>
+
+    <!-- Paramètres -->
+    <string name="settings">Paramètres</string>
+    <string name="settings_title">Paramètres de %1$s</string>
+    <string name="back">Retour</string>
+    <string name="change_home">Changer d\'appli d\'accueil</string>
+    <string name="none">Aucune</string>
+    <plurals name="app_count">
+        <item quantity="one">%d appli</item>
+        <item quantity="many">%d applis</item>
+        <item quantity="other">%d applis</item>
+    </plurals>
+
+    <string name="home_screen">Écran d\'accueil</string>
+    <string name="number_of_apps">Nombre d\'applis</string>
+    <string name="alignment">Alignement</string>
+    <string name="home_alignment">Alignement de l\'écran d\'accueil</string>
+    <string name="align_bottom">Aligner les applis en bas</string>
+    <string name="left">Gauche</string>
+    <string name="centre">Centre</string>
+    <string name="right">Droite</string>
+
+    <string name="clock_and_date">Horloge et date</string>
+    <string name="show">Afficher</string>
+    <string name="time_and_date">Heure et date</string>
+    <string name="date_only">Date uniquement</string>
+    <string name="off">Désactivé</string>
+    <string name="date_style">Format de la date</string>
+    <string name="size">Taille</string>
+    <string name="clock_size">Taille de l\'heure et de la date</string>
+    <string name="tap_time">Appuyer sur l\'heure ouvre</string>
+    <string name="tap_date">Appuyer sur la date ouvre</string>
+    <string name="default_clock_app">Appli d\'horloge par défaut</string>
+    <string name="default_calendar_app">Appli d\'agenda par défaut</string>
+    <string name="default_camera_app">Appli d\'appareil photo par défaut</string>
+    <string name="default_phone_app">Appli de téléphone par défaut</string>
+    <string name="choose_app_ellipsis">Choisir une appli…</string>
+
+    <string name="app_drawer">Tiroir d\'applis</string>
+    <string name="drawer_alignment">Alignement du tiroir d\'applis</string>
+    <string name="show_keyboard">Afficher le clavier automatiquement</string>
+    <string name="hidden_apps">Applis masquées</string>
+    <string name="no_hidden_apps">Aucune appli masquée</string>
+    <string name="hide_app">Masquer %1$s</string>
+
+    <string name="appearance">Apparence</string>
+    <string name="text_colour">Couleur du texte</string>
+    <string name="dark_text">Texte sombre, pour fonds d\'écran clairs</string>
+    <string name="light_text">Texte clair, pour fonds d\'écran sombres</string>
+    <string name="text_follows_dark_mode">Selon le mode sombre du téléphone</string>
+    <string name="app_name_size">Taille des noms d\'applis</string>
+    <string name="bolder_names">Noms d\'applis plus gras</string>
+    <string name="show_status_bar">Afficher la barre d\'état</string>
+    <string name="status_bar_off_summary">Le niveau de batterie s\'affiche après la date</string>
+    <string name="size_hint">S\'ajoute à la taille de police d\'Android</string>
+
+    <string name="gestures">Gestes</string>
+    <string name="swipe_left">Balayer vers la gauche</string>
+    <string name="swipe_right">Balayer vers la droite</string>
+    <string name="swipe_left_opens">Balayer vers la gauche ouvre</string>
+    <string name="swipe_right_opens">Balayer vers la droite ouvre</string>
+
+    <string name="about">À propos</string>
+    <string name="version">Version %1$s · Minimaliste, Ouvert, Texte</string>
+</resources>

@@ -1,0 +1,35 @@
+# Checks every push: unit tests, Android lint and an (unsigned) release build.
+# Nothing is published; use the Release workflow for that.
+
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Test, lint and build
+        run: ./gradlew testDebugUnitTest lintDebug assembleRelease
+
+      - name: Keep the lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore

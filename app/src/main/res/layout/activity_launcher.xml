@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher: the home screen, with the app drawer as a panel over it. Home apps are added
+     to homeApps from code, as many as set in settings. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/home"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/clockBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="56dp"
+            android:orientation="vertical">
+
+            <TextClock
+                android:id="@+id/clock"
+                style="@style/Mot.Text.Clock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:format12Hour="h:mm"
+                tools:text="9:41" />
+
+            <TextView
+                android:id="@+id/date"
+                style="@style/Mot.Text.Date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="3dp"
+                tools:text="lun. 2 nov." />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/homeApps"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="112dp"
+            android:paddingBottom="48dp" />
+
+        <TextView
+            android:id="@+id/tips"
+            style="@style/Mot.Text.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="96dp"
+            android:text="@string/tips"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/setDefault"
+            style="@style/Mot.Text.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="48dp"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:text="@string/set_as_home_underlined"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/drawer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/launcherVeilColor"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="24dp"
+            android:layout_weight="0.1" />
+
+        <EditText
+            android:id="@+id/search"
+            style="@style/Mot.Text.Search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:importantForAutofill="no"
+            android:inputType="textCapSentences|textNoSuggestions"
+            android:imeOptions="actionGo|flagNoExtractUi"
+            android:maxLines="1" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.06" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/appList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="24dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:fadingEdgeLength="24dp"
+            android:layoutAnimation="@anim/layout_anim_from_bottom"
+            android:overScrollMode="ifContentScrolls"
+            android:requiresFadingEdge="vertical" />
+    </LinearLayout>
+
+</FrameLayout>
