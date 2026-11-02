@@ -5,6 +5,13 @@
          Material You colours (MotApp) -->
     <style name="Theme.Mot" parent="Theme.Material3.DayNight.NoActionBar" />
 
+    <!-- Settings: the same, over your wallpaper, which shows through the style screens' previews.
+         Each settings screen has its own background. -->
+    <style name="Theme.Mot.Settings" parent="Theme.Mot">
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
     <!-- The launcher: text over your wallpaper, edge to edge. Light text by default; the overlays
          below switch it to dark text, or to bolder names. -->
     <style name="Theme.Mot.Launcher" parent="Theme.Material3.DayNight.NoActionBar">
@@ -22,7 +29,6 @@
         <item name="launcherHintColor">#99FFFFFF</item>
         <item name="launcherShadowColor">#80000000</item>
         <item name="launcherVeilColor">#40000000</item>
-        <item name="launcherFont">sans-serif-light</item>
     </style>
 
     <!-- Light text, for dark wallpapers -->
@@ -41,11 +47,6 @@
         <item name="launcherVeilColor">#40FFFFFF</item>
     </style>
 
-    <!-- Bolder app names: regular weight instead of light -->
-    <style name="ThemeOverlay.Mot.Bolder" parent="">
-        <item name="launcherFont">sans-serif</item>
-    </style>
-
     <style name="Mot.WindowAnimation" parent="">
         <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
         <item name="android:windowExitAnimation">@android:anim/fade_out</item>
@@ -62,7 +63,6 @@
     </style>
 
     <style name="Mot.Text.AppName">
-        <item name="android:fontFamily">?attr/launcherFont</item>
         <item name="android:textSize">@dimen/app_name_size</item>
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
@@ -77,7 +77,6 @@
     </style>
 
     <style name="Mot.Text.Clock">
-        <item name="android:fontFamily">sans-serif-light</item>
         <item name="android:textSize">@dimen/clock_size</item>
         <item name="android:maxLines">1</item>
     </style>

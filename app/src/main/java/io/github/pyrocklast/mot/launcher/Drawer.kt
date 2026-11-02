@@ -28,6 +28,7 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.data.Profile
 import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.util.Apps
+import io.github.pyrocklast.mot.util.Look
 import io.github.pyrocklast.mot.util.Search
 
 /**
@@ -55,11 +56,18 @@ class Drawer(
     }
 
     private var choosingFor: Slot? = null
+
+    /** Showing Private Space's apps instead of yours. */
+    private var inPrivateSpace = false
+
+    /** Private Space is being unlocked from the drawer: open it once it is. */
+    private var openPrivateSpaceWhenUnlocked = false
     private val search = binding.search
     private val list = binding.appList
 
     private val adapter = DrawerAdapter(
         nameSizePx = activity.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale,
+        nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight),
         gravity = prefs.drawerAlignment,
         onClick = ::onRowClick,
         onLongClick = ::onRowLongClick,
@@ -105,6 +113,7 @@ class Drawer(
 
         val textSize = activity.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale
         search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, textSize)
+        search.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         search.gravity = prefs.drawerAlignment or Gravity.CENTER_VERTICAL
         search.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
@@ -135,8 +144,9 @@ class Drawer(
     fun open(slot: Slot? = null) {
         choosingFor = slot
         isOpen = true
+        inPrivateSpace = false
         search.text = null
-        search.hint = activity.getString(if (slot != null) R.string.choose_an_app else R.string.search_hint)
+        setSearchHint()
         update(typed = false)
         list.scrollToPosition(0)
 
@@ -156,6 +166,8 @@ class Drawer(
         if (!isOpen) return
         isOpen = false
         choosingFor = null
+        inPrivateSpace = false
+        openPrivateSpaceWhenUnlocked = false
         keepOpenWhileAway = false
         menu.dismiss()
         hideKeyboard()
@@ -181,9 +193,15 @@ class Drawer(
         binding.drawer.scaleY = 1f
     }
 
+    /** Back: from Private Space to your apps, otherwise closes the drawer. */
+    fun back() {
+        if (inPrivateSpace) showPrivateSpace(false) else close()
+    }
+
     /** Android's back gesture in progress (0 to 1): the drawer shrinks and fades a little, following it. */
     fun backProgress(progress: Float) {
-        if (!isOpen) return
+        // Back from Private Space doesn't close the drawer, so nothing shrinks
+        if (!isOpen || inPrivateSpace) return
         val scale = 1f - BACK_SHRINK * progress
         binding.drawer.scaleX = scale
         binding.drawer.scaleY = scale
@@ -201,18 +219,30 @@ class Drawer(
         if (!isOpen) return
         val apps = repo.apps.value.orEmpty()
         val space = repo.privateSpace.value
+        val unlocked = space != null && !space.locked
+        // Unlocked from here: go in. Locked (here, from quick settings or by Android): come out.
+        if (openPrivateSpaceWhenUnlocked && unlocked) {
+            openPrivateSpaceWhenUnlocked = false
+            showPrivateSpace(true)
+            return
+        }
+        if (inPrivateSpace && !unlocked) {
+            showPrivateSpace(false)
+            return
+        }
+
         val query = Search.normalize(search.text ?: "")
         val choosing = choosingFor != null
         val hidden = if (choosing) emptySet() else prefs.hiddenApps
 
+        // Your apps, then a small "Private space" row; or Private Space's apps, then "Lock".
+        // The two never mix, in the list or in search.
         val rows = ArrayList<DrawerRow>()
-        apps.filter { it.profile != Profile.PRIVATE && it.appKey !in hidden && Search.matches(it.searchText, query) }
-            .mapTo(rows) { DrawerRow.App(it) }
-        // Private Space comes last, under its own header (not while searching, when its apps simply join in)
-        if (space != null) {
-            if (query.isEmpty()) rows += DrawerRow.PrivateSpace(space.locked)
-            apps.filter { it.profile == Profile.PRIVATE && it.appKey !in hidden && Search.matches(it.searchText, query) }
-                .mapTo(rows) { DrawerRow.App(it) }
+        apps.filter {
+            (it.profile == Profile.PRIVATE) == inPrivateSpace && it.appKey !in hidden && Search.matches(it.searchText, query)
+        }.mapTo(rows) { DrawerRow.App(it) }
+        if (query.isEmpty() && space != null) {
+            rows += if (inPrivateSpace) DrawerRow.LockPrivateSpace else DrawerRow.OpenPrivateSpace(space.locked)
         }
 
         adapter.submitList(rows) {
@@ -230,10 +260,17 @@ class Drawer(
 
     private fun onRowClick(row: DrawerRow, view: View) {
         when (row) {
-            is DrawerRow.PrivateSpace -> {
-                // Unlocking shows Android's lock screen; stay open for when it comes back
-                keepOpenWhileAway = row.locked
-                repo.setPrivateSpaceLocked(!row.locked)
+            is DrawerRow.OpenPrivateSpace -> {
+                if (row.locked) {
+                    // Unlocking shows Android's lock screen; the drawer waits behind it, then goes in
+                    openPrivateSpaceWhenUnlocked = true
+                    keepOpenWhileAway = true
+                    repo.setPrivateSpaceLocked(false)
+                } else showPrivateSpace(true)
+            }
+            DrawerRow.LockPrivateSpace -> {
+                repo.setPrivateSpaceLocked(true)
+                showPrivateSpace(false)
             }
             is DrawerRow.App -> {
                 val slot = choosingFor
@@ -251,7 +288,7 @@ class Drawer(
 
     private fun onRowLongClick(row: DrawerRow, view: View) {
         when (row) {
-            is DrawerRow.PrivateSpace -> Apps.openPrivateSpaceSettings(activity)
+            is DrawerRow.OpenPrivateSpace, DrawerRow.LockPrivateSpace -> Apps.openPrivateSpaceSettings(activity)
             is DrawerRow.App -> menu.show(
                 anchor = view,
                 entry = row.entry,
@@ -260,6 +297,28 @@ class Drawer(
                 onHidden = { update() },
             )
         }
+    }
+
+    // Switches between your apps and Private Space's, starting from an empty search at the top
+    private fun showPrivateSpace(show: Boolean) {
+        inPrivateSpace = show
+        search.text = null
+        setSearchHint()
+        update()
+        list.scrollToPosition(0)
+        list.scheduleLayoutAnimation()
+        if (show) showKeyboardIfWanted()
+    }
+
+    // Underscores normally; "Choose an app" when choosing one; "Private space" inside it
+    private fun setSearchHint() {
+        search.hint = activity.getString(
+            when {
+                inPrivateSpace -> R.string.private_space
+                choosingFor != null -> R.string.choose_an_app
+                else -> R.string.search_hint
+            }
+        )
     }
 
     // Keyboard
@@ -291,7 +350,7 @@ class Drawer(
         ViewCompat.setAccessibilityDelegate(search, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
-                if (choosingFor == null) info.hintText = activity.getString(R.string.search_apps)
+                if (choosingFor == null && !inPrivateSpace) info.hintText = activity.getString(R.string.search_apps)
             }
         })
     }

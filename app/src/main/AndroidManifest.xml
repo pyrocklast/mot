@@ -57,6 +57,7 @@
         <activity
             android:name=".settings.SettingsActivity"
             android:exported="false"
+            android:theme="@style/Theme.Mot.Settings"
             android:label="@string/settings" />
 
         <!-- "Add to home screen" from other apps -->

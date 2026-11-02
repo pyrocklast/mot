@@ -86,13 +86,29 @@ class Prefs(context: Context) {
         get() = prefs.getInt("text_colour", TEXT_MATCH_WALLPAPER)
         set(value) = prefs.edit { putInt("text_colour", value) }
 
+    // App names (home screen and drawer) and the clock and date each have a font, a weight and a
+    // size. Weights are CSS-style numbers: 100 thin, 300 light, 400 regular, 500 medium, 700 bold.
+
+    var nameFont: Int
+        get() = prefs.getInt("name_font", FONT_SANS)
+        set(value) = prefs.edit { putInt("name_font", value) }
+
+    // Version 0.1's "Bolder app names" switch meant regular instead of light
+    var nameWeight: Int
+        get() = prefs.getInt("name_weight", if (prefs.getBoolean("bolder_names", false)) 400 else 300)
+        set(value) = prefs.edit { putInt("name_weight", value) }
+
     var appNameScale: Float
         get() = prefs.getFloat("app_name_scale", 1f)
         set(value) = prefs.edit { putFloat("app_name_scale", value) }
 
-    var bolderNames: Boolean
-        get() = prefs.getBoolean("bolder_names", false)
-        set(value) = prefs.edit { putBoolean("bolder_names", value) }
+    var clockFont: Int
+        get() = prefs.getInt("clock_font", FONT_SANS)
+        set(value) = prefs.edit { putInt("clock_font", value) }
+
+    var clockWeight: Int
+        get() = prefs.getInt("clock_weight", 300)
+        set(value) = prefs.edit { putInt("clock_weight", value) }
 
     var showStatusBar: Boolean
         get() = prefs.getBoolean("show_status_bar", false)
@@ -181,5 +197,10 @@ class Prefs(context: Context) {
         const val TEXT_FOLLOW_DARK_MODE = 2
         /** Dark or light text, whichever Android says suits the wallpaper. */
         const val TEXT_MATCH_WALLPAPER = 3
+
+        const val FONT_SANS = 0
+        const val FONT_SERIF = 1
+        const val FONT_MONO = 2
+        const val FONT_CONDENSED = 3
     }
 }

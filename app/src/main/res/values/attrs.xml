@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The launcher's own look, set by the text colour and bolder names settings (themes.xml) -->
+<!-- The launcher's own look, set by the text colour setting (themes.xml). Fonts and weights are
+     set from code (util/Look.kt). -->
 <resources>
     <attr name="launcherTextColor" format="color" />
     <attr name="launcherHintColor" format="color" />
     <attr name="launcherShadowColor" format="color" />
     <!-- The drawer's veil over the wallpaper -->
     <attr name="launcherVeilColor" format="color" />
-    <attr name="launcherFont" format="string" />
 </resources>

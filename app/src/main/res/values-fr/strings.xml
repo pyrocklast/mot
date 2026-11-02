@@ -19,6 +19,8 @@
     <string name="private_space">Espace privé</string>
     <string name="private_space_locked">Espace privé, verrouillé</string>
     <string name="private_space_unlocked">Espace privé, déverrouillé</string>
+    <string name="lock">Verrouiller</string>
+    <string name="lock_private_space">Verrouiller l\'espace privé</string>
     <string name="work_app">%1$s, travail</string>
     <string name="new_app">%1$s, nouvelle</string>
     <string name="change_app">Changer d\'application</string>
@@ -60,8 +62,8 @@
     <string name="time">Heure</string>
     <string name="date">Date</string>
     <string name="date_style">Format de la date</string>
+    <string name="style">Style</string>
     <string name="size">Taille</string>
-    <string name="clock_size">Taille de l\'heure et de la date</string>
     <string name="tap_time">Appuyer sur l\'heure ouvre</string>
     <string name="tap_date">Appuyer sur la date ouvre</string>
     <string name="default_clock_app">Application d\'horloge par défaut</string>
@@ -89,11 +91,20 @@
     <string name="light_text">Texte clair, pour fonds d\'écran sombres</string>
     <string name="text_follows_dark_mode">Selon le mode sombre du téléphone</string>
     <string name="text_matches_wallpaper">Selon le fond d\'écran</string>
-    <string name="app_name_size">Taille des noms d\'applications</string>
-    <string name="bolder_names">Noms d\'applications plus gras</string>
+    <string name="app_names">Noms d\'applications</string>
+    <string name="font">Police</string>
+    <string name="font_sans">Sans empattement</string>
+    <string name="font_serif">Avec empattement</string>
+    <string name="font_mono">Chasse fixe</string>
+    <string name="font_condensed">Condensée</string>
+    <string name="weight">Graisse</string>
+    <string name="weight_thin">Fine</string>
+    <string name="weight_light">Légère</string>
+    <string name="weight_regular">Normale</string>
+    <string name="weight_medium">Moyenne</string>
+    <string name="weight_bold">Grasse</string>
     <string name="show_status_bar">Afficher la barre d\'état</string>
     <string name="status_bar_off_summary">Le niveau de batterie s\'affiche après la date</string>
-    <string name="size_hint">S\'ajoute à la taille de police d\'Android</string>
 
     <string name="gestures">Gestes</string>
     <string name="swipe_left">Balayer vers la gauche</string>

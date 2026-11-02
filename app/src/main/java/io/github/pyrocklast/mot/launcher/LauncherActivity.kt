@@ -1,9 +1,7 @@
 package io.github.pyrocklast.mot.launcher
 
-import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -23,6 +21,7 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.settings.SettingsActivity
 import io.github.pyrocklast.mot.util.Apps
+import io.github.pyrocklast.mot.util.Look
 import kotlinx.coroutines.launch
 
 /**
@@ -56,7 +55,6 @@ class LauncherActivity : AppCompatActivity() {
         look = currentLook()
         // Your text colour and weight, over the launcher theme
         theme.applyStyle(if (lightText()) R.style.ThemeOverlay_Mot_LightText else R.style.ThemeOverlay_Mot_DarkText, true)
-        if (prefs.bolderNames) theme.applyStyle(R.style.ThemeOverlay_Mot_Bolder, true)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         binding = ActivityLauncherBinding.inflate(layoutInflater)
@@ -79,12 +77,12 @@ class LauncherActivity : AppCompatActivity() {
         // With "Match the wallpaper", a new wallpaper can call for the other text colour
         WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
 
-        // Back closes the drawer, which follows the back gesture as you swipe (Android 15's
-        // predictive back). On the home screen it does nothing: there's nowhere to go back to.
+        // Back leaves Private Space, or closes the drawer, which follows the back gesture as you
+        // swipe (Android 15's predictive back). On the home screen it does nothing.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackProgressed(backEvent: BackEventCompat) = drawer.backProgress(backEvent.progress)
             override fun handleOnBackCancelled() = drawer.backCancelled()
-            override fun handleOnBackPressed() = drawer.close()
+            override fun handleOnBackPressed() = drawer.back()
         })
 
         lifecycleScope.launch {
@@ -142,24 +140,11 @@ class LauncherActivity : AppCompatActivity() {
         if (request != null) homeRoleRequest.launch(request) else Apps.openHomeSettings(this)
     }
 
-    // Light text for dark wallpapers, dark text for light ones: as the wallpaper suits (Android
-    // works this out from its colours), as set, or following dark mode
-    private fun lightText(): Boolean = when (prefs.textColour) {
-        Prefs.TEXT_DARK -> false
-        Prefs.TEXT_LIGHT -> true
-        Prefs.TEXT_FOLLOW_DARK_MODE ->
-            resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
-        else -> !wallpaperSuitsDarkText()
-    }
+    private fun lightText(): Boolean = Look.lightText(this, prefs)
 
-    private fun wallpaperSuitsDarkText(): Boolean {
-        // Unknown (e.g. some live wallpapers): light text, with its shadow, reads on most wallpapers
-        val colours = WallpaperManager.getInstance(this).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) ?: return false
-        return colours.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0
-    }
-
+    // The drawer's rows are made with these, so a change redraws the screen
     private fun currentLook(): String =
-        listOf(lightText(), prefs.bolderNames, prefs.appNameScale, prefs.drawerAlignment).joinToString()
+        listOf(lightText(), prefs.nameFont, prefs.nameWeight, prefs.appNameScale, prefs.drawerAlignment).joinToString()
 
     // Status bar shown or hidden as set, and status and navigation bar icons that match the text
     private fun applySystemBars() {

@@ -27,6 +27,7 @@ import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.DefaultApp
+import io.github.pyrocklast.mot.util.Look
 import kotlin.math.abs
 
 /**
@@ -96,17 +97,22 @@ class HomeScreen(
         val count = prefs.homeAppCount
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
+        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         appViews.forEachIndexed { index, view ->
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
             view.gravity = alignment
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
+            view.typeface = nameTypeface
         }
 
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize * prefs.clockScale)
         binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize * prefs.clockScale)
+        val clockTypeface = Look.typeface(prefs.clockFont, prefs.clockWeight)
+        binding.clock.typeface = clockTypeface
+        binding.date.typeface = clockTypeface
         updateDate()
 
         // First run: how to reach the drawer and settings, and making Mot the Home app.

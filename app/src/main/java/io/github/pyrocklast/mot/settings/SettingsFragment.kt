@@ -1,37 +1,30 @@
 package io.github.pyrocklast.mot.settings
 
 import android.content.Intent
-import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.TypedValue
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.isVisible
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
 import androidx.preference.SwitchPreferenceCompat
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.pyrocklast.mot.BuildConfig
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.AppTarget
 import io.github.pyrocklast.mot.data.Prefs
-import io.github.pyrocklast.mot.databinding.DialogSizeBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
 import java.text.NumberFormat
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /**
  * The settings list, grouped by the part of the home screen each setting changes. Preferences
@@ -51,14 +44,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var showTime: SwitchPreferenceCompat
     private lateinit var showDate: SwitchPreferenceCompat
     private lateinit var dateStyle: Preference
-    private lateinit var clockSize: Preference
+    private lateinit var clockStyle: Preference
     private lateinit var clockApp: Preference
     private lateinit var calendarApp: Preference
     private lateinit var drawerAlignment: Preference
     private lateinit var hiddenApps: Preference
     private lateinit var privateSpace: Preference
     private lateinit var textColour: Preference
-    private lateinit var nameSize: Preference
+    private lateinit var nameStyle: Preference
     private lateinit var statusBar: SwitchPreferenceCompat
     private lateinit var swipeLeft: SplitSwitchPreference
     private lateinit var swipeRight: SplitSwitchPreference
@@ -106,7 +99,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 val labels = Array<CharSequence>(dateStyles.size) { DateText.date(requireContext(), dateStyles[it]) }
                 choose(R.string.date_style, labels, dateStyles.indexOf(prefs.dateStyle)) { prefs.dateStyle = dateStyles[it] }
             }
-            clockSize = item(R.string.size) { showClockSizeDialog() }
+            // Font, weight and size, with a preview
+            clockStyle = item(R.string.style) { settings().show(StyleFragment.clockAndDate()) }
             clockApp = item(R.string.tap_time) {
                 chooseApp(R.string.tap_time, R.string.default_clock_app, prefs.clockApp, Slot.Clock)
             }
@@ -130,8 +124,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
             textColour = item(R.string.text_colour) {
                 choose(R.string.text_colour, textColours, prefs.textColour, ::textColourLabel) { prefs.textColour = it }
             }
-            nameSize = item(R.string.app_name_size) { showNameSizeDialog() }
-            switch(R.string.bolder_names, prefs.bolderNames) { prefs.bolderNames = it }
+            // Font, weight and size, with a preview
+            nameStyle = item(R.string.app_names) { settings().show(StyleFragment.appNames()) }
             statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
                 prefs.showStatusBar = it
                 refresh()
@@ -161,6 +155,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // The settings window shows the wallpaper (for the style previews); this screen covers it
+        view.setBackgroundColor(MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurface))
         listView.clipToPadding = false
         listView.padForNavigationBar()
     }
@@ -193,8 +189,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         showDate.isChecked = prefs.showDate
         dateStyle.summary = DateText.date(requireContext(), prefs.dateStyle)
         dateStyle.isEnabled = prefs.showDate
-        clockSize.summary = percent(prefs.clockScale)
-        clockSize.isEnabled = prefs.showTime || prefs.showDate
+        clockStyle.summary = styleSummary(prefs.clockFont, prefs.clockWeight, prefs.clockScale)
+        clockStyle.isEnabled = prefs.showTime || prefs.showDate
         clockApp.summary = appName(prefs.clockApp, R.string.default_clock_app)
         clockApp.isEnabled = prefs.showTime
         calendarApp.summary = appName(prefs.calendarApp, R.string.default_calendar_app)
@@ -211,7 +207,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         } ?: if (isHome) getString(R.string.not_set_up) else null
 
         textColour.summary = getString(textColourLabel(prefs.textColour))
-        nameSize.summary = percent(prefs.appNameScale)
+        nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
         // With the status bar hidden, the battery level follows the date (when the date shows)
         statusBar.summaryOff = if (prefs.showDate) getString(R.string.status_bar_off_summary) else null
 
@@ -255,60 +251,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
             .show()
     }
 
-    private fun showNameSizeDialog() = showSizeDialog(R.string.app_name_size, prefs.appNameScale, { size ->
-        size.namePreview.isVisible = true
-        size.namePreview.text = previewNames()
-        size.namePreview.typeface = Typeface.create(if (prefs.bolderNames) "sans-serif" else "sans-serif-light", Typeface.NORMAL)
-        listOf(size.namePreview)
-    }) { prefs.appNameScale = it }
-
-    private fun showClockSizeDialog() = showSizeDialog(R.string.clock_size, prefs.clockScale, { size ->
-        size.clockPreview.isVisible = prefs.showTime
-        size.datePreview.isVisible = prefs.showDate
-        size.datePreview.text = DateText.date(requireContext(), prefs.dateStyle)
-        listOf(size.clockPreview, size.datePreview)
-    }) { prefs.clockScale = it }
-
-    /**
-     * A size slider, in percent of Android's own font size, with a live preview of your home
-     * apps or of the clock and date. Nothing reloads: the home screen uses the size when you go back.
-     */
-    private fun showSizeDialog(
-        @StringRes title: Int,
-        current: Float,
-        previews: (DialogSizeBinding) -> List<TextView>,
-        onApply: (Float) -> Unit,
-    ) {
-        val builder = MaterialAlertDialogBuilder(requireContext())
-        val size = DialogSizeBinding.inflate(LayoutInflater.from(builder.context))
-        val lines = previews(size)
-        val baseSizes = lines.map { it.textSize }
-        size.slider.value = ((current * 10).roundToInt() * 10).coerceIn(50, 150).toFloat()
-        size.slider.setLabelFormatter { percent(it / 100f) }
-        val showPreview = { value: Float ->
-            lines.forEachIndexed { i, line -> line.setTextSize(TypedValue.COMPLEX_UNIT_PX, baseSizes[i] * value / 100f) }
-        }
-        size.slider.addOnChangeListener { _, value, _ -> showPreview(value) }
-        showPreview(size.slider.value)
-
-        dialog?.dismiss()
-        dialog = builder
-            .setTitle(title)
-            .setView(size.root)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val scale = size.slider.value / 100f
-                if (abs(scale - current) >= 0.01f) onApply(scale)
-                refresh()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    // Up to three of your home apps, or Mot's name when none is set
-    private fun previewNames(): String {
-        val names = prefs.homeApps.take(prefs.homeAppCount).filterNotNull().mapNotNull { repo.nameFor(it) }.take(3)
-        return names.ifEmpty { listOf(getString(R.string.app_name)) }.joinToString("\n")
-    }
+    // e.g. "Sans serif · Light · 100 %"
+    private fun styleSummary(font: Int, weight: Int, scale: Float): String = listOf(
+        getString(StyleFragment.fontLabel(font)),
+        getString(StyleFragment.weightLabel(weight)),
+        percent(scale),
+    ).joinToString(" · ")
 
     // Labels
 
