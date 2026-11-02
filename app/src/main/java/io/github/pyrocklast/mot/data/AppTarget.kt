@@ -16,7 +16,15 @@ data class AppTarget(
 ) {
     val isShortcut: Boolean get() = shortcutId != null
 
-    /** Identifies this target for renames, hiding and lookups. */
+    /**
+     * Identifies the app for your name for it and for hiding it: the app itself rather than its
+     * activity, which some apps change in updates (e.g. when switching icons). For a shortcut, the
+     * shortcut.
+     */
+    val appKey: String
+        get() = if (shortcutId != null) key else "p:$packageName:$userSerial"
+
+    /** Identifies this exact target: which activity, or which shortcut. */
     val key: String
         get() = if (shortcutId != null) "s:$packageName:$userSerial:$shortcutId"
         else "a:$packageName/$className:$userSerial"

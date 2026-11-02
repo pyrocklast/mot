@@ -163,15 +163,37 @@ class Drawer(
         binding.home.isInvisible = false
         if (animate) {
             binding.drawer.animate().alpha(0f).setDuration(CLOSE_MS).withEndAction {
-                if (!isOpen) binding.drawer.isVisible = false
+                if (!isOpen) hideDrawer()
             }.start()
             binding.home.animate().alpha(1f).setDuration(CLOSE_MS).start()
         } else {
             binding.drawer.animate().cancel()
-            binding.drawer.isVisible = false
+            hideDrawer()
             binding.home.animate().cancel()
             binding.home.alpha = 1f
         }
+    }
+
+    private fun hideDrawer() {
+        binding.drawer.isVisible = false
+        // Undo any shrinking from a back gesture
+        binding.drawer.scaleX = 1f
+        binding.drawer.scaleY = 1f
+    }
+
+    /** Android's back gesture in progress (0 to 1): the drawer shrinks and fades a little, following it. */
+    fun backProgress(progress: Float) {
+        if (!isOpen) return
+        val scale = 1f - BACK_SHRINK * progress
+        binding.drawer.scaleX = scale
+        binding.drawer.scaleY = scale
+        binding.drawer.alpha = 1f - BACK_FADE * progress
+    }
+
+    /** The back gesture was let go of without going back: the drawer returns to full size. */
+    fun backCancelled() {
+        if (!isOpen) return
+        binding.drawer.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(CLOSE_MS).start()
     }
 
     /** Rebuilds the list from the current apps, hidden apps and search. */
@@ -184,12 +206,12 @@ class Drawer(
         val hidden = if (choosing) emptySet() else prefs.hiddenApps
 
         val rows = ArrayList<DrawerRow>()
-        apps.filter { it.profile != Profile.PRIVATE && it.key !in hidden && Search.matches(it.searchText, query) }
+        apps.filter { it.profile != Profile.PRIVATE && it.appKey !in hidden && Search.matches(it.searchText, query) }
             .mapTo(rows) { DrawerRow.App(it) }
         // Private Space comes last, under its own header (not while searching, when its apps simply join in)
         if (space != null) {
             if (query.isEmpty()) rows += DrawerRow.PrivateSpace(space.locked)
-            apps.filter { it.profile == Profile.PRIVATE && it.key !in hidden && Search.matches(it.searchText, query) }
+            apps.filter { it.profile == Profile.PRIVATE && it.appKey !in hidden && Search.matches(it.searchText, query) }
                 .mapTo(rows) { DrawerRow.App(it) }
         }
 
@@ -277,6 +299,8 @@ class Drawer(
     private companion object {
         const val OPEN_MS = 150L
         const val CLOSE_MS = 120L
+        const val BACK_SHRINK = 0.1f
+        const val BACK_FADE = 0.4f
         const val OVERSCROLL_TO_CLOSE = 10
 
     }

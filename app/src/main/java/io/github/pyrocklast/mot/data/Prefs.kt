@@ -5,7 +5,7 @@ import android.view.Gravity
 import androidx.core.content.edit
 
 /**
- * All of Mot's settings. Names chosen for apps live in their own file, keyed by [AppTarget.key].
+ * All of Mot's settings. Names chosen for apps live in their own file, keyed by [AppTarget.appKey].
  * Nothing here stores a copy of an app's name: names always come from [AppRepository].
  */
 class Prefs(context: Context) {
@@ -34,12 +34,14 @@ class Prefs(context: Context) {
 
     // Clock and date
 
-    var clockMode: Int
-        get() = prefs.getInt("clock_mode", CLOCK_TIME_AND_DATE)
-        set(value) = prefs.edit { putInt("clock_mode", value) }
+    // Version 0.1 had one choice (time and date, date only, off); its value sets the defaults
+    var showTime: Boolean
+        get() = prefs.getBoolean("show_time", prefs.getInt("clock_mode", 0) == 0)
+        set(value) = prefs.edit { putBoolean("show_time", value) }
 
-    val showsTime: Boolean get() = clockMode == CLOCK_TIME_AND_DATE
-    val showsDate: Boolean get() = clockMode != CLOCK_OFF
+    var showDate: Boolean
+        get() = prefs.getBoolean("show_date", prefs.getInt("clock_mode", 0) != 2)
+        set(value) = prefs.edit { putBoolean("show_date", value) }
 
     var dateStyle: Int
         get() = prefs.getInt("date_style", DATE_SHORT)
@@ -69,7 +71,7 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean("auto_keyboard", true)
         set(value) = prefs.edit { putBoolean("auto_keyboard", value) }
 
-    /** Keys ([AppTarget.key]) of the apps hidden from the drawer. */
+    /** The apps hidden from the drawer, by [AppTarget.appKey]. */
     var hiddenApps: Set<String>
         get() = prefs.getStringSet("hidden_apps", null).orEmpty().toSet()
         set(value) = prefs.edit { putStringSet("hidden_apps", value) }
@@ -135,16 +137,38 @@ class Prefs(context: Context) {
     val customNames: Map<String, String>
         get() = names.all.mapNotNull { (key, value) -> (value as? String)?.let { key to it } }.toMap()
 
+    /**
+     * Version 0.1 kept names and hidden apps by activity ("a:package/Class:user"). They're kept by
+     * app now ("p:package:user"), so an app that changes its activity in an update keeps them.
+     */
+    fun migrateAppKeys() {
+        if (prefs.getBoolean("app_keys_v2", false)) return
+        fun appKey(key: String): String {
+            if (!key.startsWith("a:")) return key
+            val packageName = key.removePrefix("a:").substringBefore('/')
+            val serial = key.substringAfterLast(':')
+            return "p:$packageName:$serial"
+        }
+        val oldNames = customNames
+        names.edit {
+            oldNames.forEach { (key, name) ->
+                remove(key)
+                putString(appKey(key), name)
+            }
+        }
+        val hidden = hiddenApps.map(::appKey).toSet()
+        prefs.edit {
+            putStringSet("hidden_apps", hidden)
+            putBoolean("app_keys_v2", true)
+        }
+    }
+
     private fun android.content.SharedPreferences.Editor.putTarget(key: String, target: AppTarget?) {
         if (target == null) remove(key) else putString(key, target.encode())
     }
 
     companion object {
         const val MAX_HOME_APPS = 8
-
-        const val CLOCK_TIME_AND_DATE = 0
-        const val CLOCK_DATE_ONLY = 1
-        const val CLOCK_OFF = 2
 
         const val DATE_SHORT = 0
         const val DATE_FULL = 1

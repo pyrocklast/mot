@@ -146,11 +146,13 @@ object Apps {
         }.onFailure { toast(context, R.string.cant_open) }
     }
 
-    /** Private Space's own settings. */
+    /** Private Space's own settings (to set it up, or manage it), or else Security settings, where it lives. */
     fun openPrivateSpaceSettings(context: Context) {
-        runCatching {
-            context.startActivity(Intent("android.settings.PRIVATE_SPACE_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }.onFailure { toast(context, R.string.cant_open) }
+        val screens = listOf("android.settings.PRIVATE_SPACE_SETTINGS", android.provider.Settings.ACTION_SECURITY_SETTINGS)
+        val opened = screens.any { action ->
+            runCatching { context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+        }
+        if (!opened) toast(context, R.string.cant_open)
     }
 
     private fun componentFor(context: Context, target: AppTarget, user: UserHandle): ComponentName? {

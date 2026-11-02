@@ -20,6 +20,9 @@ data class AppEntry(
 ) {
     val key: String get() = target.key
 
+    /** For your name for it and hiding it; see [AppTarget.appKey]. */
+    val appKey: String get() = target.appKey
+
     /** The name prepared for search: lower case, no accents, no separators. */
     val searchText: String = Search.normalize(label)
 }

@@ -103,8 +103,8 @@ class HomeScreen(
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
         }
 
-        binding.clock.isVisible = prefs.showsTime
-        binding.date.isVisible = prefs.showsDate
+        binding.clock.isVisible = prefs.showTime
+        binding.date.isVisible = prefs.showDate
         binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize * prefs.clockScale)
         binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize * prefs.clockScale)
         updateDate()
@@ -126,7 +126,7 @@ class HomeScreen(
 
     // The date, and the battery level after it while the status bar is hidden
     private fun updateDate() {
-        if (!prefs.showsDate) return
+        if (!prefs.showDate) return
         var text = DateText.date(context, prefs.dateStyle)
         if (!prefs.showStatusBar) DateText.battery(context)?.let { text = "$text, $it" }
         if (binding.date.text.toString() != text) binding.date.text = text
@@ -140,7 +140,7 @@ class HomeScreen(
     }
 
     fun startTicking() {
-        if (ticking || !prefs.showsDate) return
+        if (ticking || !prefs.showDate) return
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_TIME_TICK)
             addAction(Intent.ACTION_TIME_CHANGED)
@@ -201,6 +201,8 @@ class HomeScreen(
             anchor = view,
             entry = entry,
             alignment = prefs.homeAlignment,
+            // Hiding is about the drawer: it's done there
+            canHide = false,
             extras = listOf(
                 AppMenu.Extra(R.string.change_app) { openDrawer(Slot.Home(index)) },
                 AppMenu.Extra(R.string.remove_from_home) {

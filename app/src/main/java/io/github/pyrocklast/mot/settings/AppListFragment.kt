@@ -19,6 +19,7 @@ import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppEntry
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
+import io.github.pyrocklast.mot.data.Profile
 import io.github.pyrocklast.mot.databinding.FragmentAppListBinding
 import io.github.pyrocklast.mot.databinding.ItemSettingsAppBinding
 import io.github.pyrocklast.mot.launcher.Slot
@@ -85,7 +86,7 @@ class AppListFragment : Fragment() {
             val query = Search.normalize(binding.search.text ?: "")
             apps.filter { Search.matches(it.searchText, query) }
         } else {
-            apps.filter { it.key in listed }
+            apps.filter { it.appKey in listed }
         }
         adapter.submitList(rows)
         binding.empty.isVisible = slot == null && rows.isEmpty() && repo.apps.value != null
@@ -102,7 +103,7 @@ class AppListFragment : Fragment() {
     }
 
     private fun setHidden(entry: AppEntry, hidden: Boolean) {
-        prefs.hiddenApps = if (hidden) prefs.hiddenApps + entry.key else prefs.hiddenApps - entry.key
+        prefs.hiddenApps = if (hidden) prefs.hiddenApps + entry.appKey else prefs.hiddenApps - entry.appKey
     }
 
     private inner class Adapter : ListAdapter<AppEntry, Adapter.Holder>(Diff) {
@@ -120,10 +121,21 @@ class AppListFragment : Fragment() {
         override fun onBindViewHolder(holder: Holder, position: Int) {
             val entry = getItem(position)
             holder.binding.name.text = entry.label
+            // Tells apart the same app in two profiles, and apps from shortcuts
+            val detail = listOfNotNull(
+                getString(R.string.shortcut).takeIf { entry.target.isShortcut },
+                when (entry.profile) {
+                    Profile.WORK -> getString(R.string.work_profile)
+                    Profile.PRIVATE -> getString(R.string.private_space)
+                    Profile.PERSONAL -> null
+                },
+            ).joinToString(" · ")
+            holder.binding.detail.text = detail
+            holder.binding.detail.isVisible = detail.isNotEmpty()
             val switch = holder.binding.hidden
             switch.isVisible = slot == null
             switch.setOnCheckedChangeListener(null)
-            switch.isChecked = entry.key in prefs.hiddenApps
+            switch.isChecked = entry.appKey in prefs.hiddenApps
             switch.contentDescription = getString(R.string.hide_app, entry.label)
             switch.setOnCheckedChangeListener { _, checked -> setHidden(entry, checked) }
         }

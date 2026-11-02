@@ -14,15 +14,15 @@ mot. is a rewrite of [Olauncher Lite](https://github.com/pyrocklast/llauncher), 
 
 **Home screen**
 - Up to 8 apps or shortcuts, aligned left, centre or right, in the middle of the screen or at the bottom.
-- The time and date, the date in your language's usual short, full or numeric format. Tapping them opens your clock and calendar apps, or ones you choose.
+- The time, the date, or both, the date in your language's usual short, full or numeric format. Tapping them opens your clock and calendar apps, or ones you choose.
 - With the status bar hidden, the battery level follows the date. Both stay up to date while the home screen is showing.
 - Swipe up for the app drawer, down for notifications, left and right for two apps of your choice (the camera and phone by default). Long press for settings.
-- Long-press a home app for the drawer's menu, plus "Change app" and "Remove from home screen".
+- Long-press a home app to change it, remove it from the home screen, rename it, see its info or uninstall it.
 
 **App drawer**
 - Type to search: accents, case and spaces don't matter, and when one app is left it opens.
-- Long-press an app to rename, hide, see its info or uninstall it. A new name shows everywhere the app is.
-- Work apps are marked with a dot. Private Space has its own section: tap to lock or unlock it.
+- Long-press an app to rename, hide, see its info or uninstall it. A new name shows everywhere the app is, and stays when the app updates.
+- Work apps are marked with a dot. Private Space (set up in Android's settings) has its own section at the end: tap to lock or unlock it.
 - Pinned shortcuts ("Add to home screen" from other apps) are listed with your apps.
 
 **Settings**

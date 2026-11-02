@@ -57,10 +57,8 @@
     <string name="right">Droite</string>
 
     <string name="clock_and_date">Horloge et date</string>
-    <string name="show">Afficher</string>
-    <string name="time_and_date">Heure et date</string>
-    <string name="date_only">Date uniquement</string>
-    <string name="off">Désactivé</string>
+    <string name="time">Heure</string>
+    <string name="date">Date</string>
     <string name="date_style">Format de la date</string>
     <string name="size">Taille</string>
     <string name="clock_size">Taille de l\'heure et de la date</string>
@@ -77,9 +75,15 @@
     <string name="show_keyboard">Afficher le clavier automatiquement</string>
     <string name="hidden_apps">Applications masquées</string>
     <string name="no_hidden_apps">Aucune application masquée</string>
+    <string name="private_space_locked_summary">Verrouillé, à la fin du tiroir d\'applications</string>
+    <string name="private_space_unlocked_summary">Déverrouillé, à la fin du tiroir d\'applications</string>
+    <string name="not_set_up">Non configuré</string>
+    <string name="shortcut">Raccourci</string>
+    <string name="work_profile">Profil professionnel</string>
     <string name="hide_app">Masquer %1$s</string>
 
     <string name="appearance">Apparence</string>
+    <string name="appearance_summary">Écran d\'accueil et tiroir d\'applications</string>
     <string name="text_colour">Couleur du texte</string>
     <string name="dark_text">Texte sombre, pour fonds d\'écran clairs</string>
     <string name="light_text">Texte clair, pour fonds d\'écran sombres</string>

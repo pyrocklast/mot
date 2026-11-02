@@ -121,7 +121,7 @@ class AppRepository private constructor(private val context: Context) {
             current.map { app ->
                 AppEntry(
                     target = app.target,
-                    label = custom[app.target.key] ?: app.ownLabel,
+                    label = custom[app.target.appKey] ?: app.ownLabel,
                     ownLabel = app.ownLabel,
                     user = app.user,
                     profile = app.profile,

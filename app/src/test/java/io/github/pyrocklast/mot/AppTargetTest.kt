@@ -25,6 +25,13 @@ class AppTargetTest {
     }
 
     @Test
+    fun `names and hiding follow the app, not its activity`() {
+        assertEquals(app.appKey, app.copy(className = "org.example.app.NewIconAlias").appKey)
+        assertNotEquals(app.appKey, app.copy(userSerial = 10).appKey)
+        assertEquals(shortcut.key, shortcut.appKey)
+    }
+
+    @Test
     fun `damaged or missing values read as nothing`() {
         assertNull(AppTarget.decode(null))
         assertNull(AppTarget.decode(""))

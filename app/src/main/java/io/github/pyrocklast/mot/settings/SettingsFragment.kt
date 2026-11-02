@@ -48,13 +48,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var homeAppCount: SliderPreference
     private lateinit var homeAlignment: Preference
     private lateinit var homeAtBottom: SwitchPreferenceCompat
-    private lateinit var clockMode: Preference
+    private lateinit var showTime: SwitchPreferenceCompat
+    private lateinit var showDate: SwitchPreferenceCompat
     private lateinit var dateStyle: Preference
     private lateinit var clockSize: Preference
     private lateinit var clockApp: Preference
     private lateinit var calendarApp: Preference
     private lateinit var drawerAlignment: Preference
     private lateinit var hiddenApps: Preference
+    private lateinit var privateSpace: Preference
     private lateinit var textColour: Preference
     private lateinit var nameSize: Preference
     private lateinit var statusBar: SwitchPreferenceCompat
@@ -62,7 +64,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var swipeRight: SplitSwitchPreference
 
     private val alignments = intArrayOf(Gravity.START, Gravity.CENTER, Gravity.END)
-    private val clockModes = intArrayOf(Prefs.CLOCK_TIME_AND_DATE, Prefs.CLOCK_DATE_ONLY, Prefs.CLOCK_OFF)
     private val dateStyles = intArrayOf(Prefs.DATE_SHORT, Prefs.DATE_FULL, Prefs.DATE_NUMERIC)
     private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_DARK, Prefs.TEXT_LIGHT, Prefs.TEXT_FOLLOW_DARK_MODE)
 
@@ -93,8 +94,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         screen.category(R.string.clock_and_date) {
-            clockMode = item(R.string.show) {
-                choose(R.string.clock_and_date, clockModes, prefs.clockMode, ::clockModeLabel) { prefs.clockMode = it }
+            showTime = switch(R.string.time, prefs.showTime) {
+                prefs.showTime = it
+                refresh()
+            }
+            showDate = switch(R.string.date, prefs.showDate) {
+                prefs.showDate = it
+                refresh()
             }
             dateStyle = item(R.string.date_style) {
                 val labels = Array<CharSequence>(dateStyles.size) { DateText.date(requireContext(), dateStyles[it]) }
@@ -115,10 +121,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
             switch(R.string.show_keyboard, prefs.autoKeyboard) { prefs.autoKeyboard = it }
             hiddenApps = item(R.string.hidden_apps) { settings().show(AppListFragment.hiddenApps()) }
+            // Private Space is set up in Android's settings; its apps show at the end of the drawer
+            privateSpace = item(R.string.private_space) { Apps.openPrivateSpaceSettings(requireContext()) }
         }
 
         // These change the home screen and drawer only; this screen keeps the phone's look
-        screen.category(R.string.appearance) {
+        screen.category(R.string.appearance, summary = R.string.appearance_summary) {
             textColour = item(R.string.text_colour) {
                 choose(R.string.text_colour, textColours, prefs.textColour, ::textColourLabel) { prefs.textColour = it }
             }
@@ -181,24 +189,31 @@ class SettingsFragment : PreferenceFragmentCompat() {
         homeAlignment.summary = getString(alignmentLabel(prefs.homeAlignment))
         homeAtBottom.isChecked = prefs.homeAtBottom
 
-        clockMode.summary = getString(clockModeLabel(prefs.clockMode))
+        showTime.isChecked = prefs.showTime
+        showDate.isChecked = prefs.showDate
         dateStyle.summary = DateText.date(requireContext(), prefs.dateStyle)
-        dateStyle.isEnabled = prefs.showsDate
+        dateStyle.isEnabled = prefs.showDate
         clockSize.summary = percent(prefs.clockScale)
-        clockSize.isEnabled = prefs.showsDate
+        clockSize.isEnabled = prefs.showTime || prefs.showDate
         clockApp.summary = appName(prefs.clockApp, R.string.default_clock_app)
-        clockApp.isEnabled = prefs.showsTime
+        clockApp.isEnabled = prefs.showTime
         calendarApp.summary = appName(prefs.calendarApp, R.string.default_calendar_app)
-        calendarApp.isEnabled = prefs.showsDate
+        calendarApp.isEnabled = prefs.showDate
 
         drawerAlignment.summary = getString(alignmentLabel(prefs.drawerAlignment))
-        val hidden = prefs.hiddenApps.size
+        // Only apps still installed (the list keeps apps you uninstalled while hidden)
+        val hiddenKeys = prefs.hiddenApps
+        val hidden = repo.apps.value?.map { it.appKey }?.distinct()?.count { it in hiddenKeys } ?: hiddenKeys.size
         hiddenApps.summary = if (hidden == 0) getString(R.string.none) else resources.getQuantityString(R.plurals.app_count, hidden, hidden)
+        // Android only shows Private Space to the Home app, so it's unknown until mot. is the Home app
+        privateSpace.summary = repo.privateSpace.value?.let {
+            getString(if (it.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary)
+        } ?: if (isHome) getString(R.string.not_set_up) else null
 
         textColour.summary = getString(textColourLabel(prefs.textColour))
         nameSize.summary = percent(prefs.appNameScale)
         // With the status bar hidden, the battery level follows the date (when the date shows)
-        statusBar.summaryOff = if (prefs.showsDate) getString(R.string.status_bar_off_summary) else null
+        statusBar.summaryOff = if (prefs.showDate) getString(R.string.status_bar_off_summary) else null
 
         swipeLeft.isChecked = prefs.swipeLeftOn
         swipeLeft.summary = appName(prefs.swipeLeftApp, R.string.default_camera_app)
@@ -248,8 +263,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }) { prefs.appNameScale = it }
 
     private fun showClockSizeDialog() = showSizeDialog(R.string.clock_size, prefs.clockScale, { size ->
-        size.clockPreview.isVisible = prefs.showsTime
-        size.datePreview.isVisible = true
+        size.clockPreview.isVisible = prefs.showTime
+        size.datePreview.isVisible = prefs.showDate
         size.datePreview.text = DateText.date(requireContext(), prefs.dateStyle)
         listOf(size.clockPreview, size.datePreview)
     }) { prefs.clockScale = it }
@@ -305,13 +320,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     @StringRes
-    private fun clockModeLabel(mode: Int) = when (mode) {
-        Prefs.CLOCK_DATE_ONLY -> R.string.date_only
-        Prefs.CLOCK_OFF -> R.string.off
-        else -> R.string.time_and_date
-    }
-
-    @StringRes
     private fun textColourLabel(colour: Int) = when (colour) {
         Prefs.TEXT_DARK -> R.string.dark_text
         Prefs.TEXT_LIGHT -> R.string.light_text
@@ -324,9 +332,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     // Builders. No preference is persisted by itself: Prefs stays the one source of truth.
 
-    private fun PreferenceGroup.category(@StringRes title: Int, rows: PreferenceCategory.() -> Unit) {
+    private fun PreferenceGroup.category(
+        @StringRes title: Int,
+        @StringRes summary: Int = 0,
+        rows: PreferenceCategory.() -> Unit,
+    ) {
         val category = PreferenceCategory(context)
         category.setTitle(title)
+        if (summary != 0) category.setSummary(summary)
         category.isIconSpaceReserved = false
         addPreference(category)
         category.rows()

@@ -2,7 +2,6 @@ package io.github.pyrocklast.mot.launcher
 
 import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
@@ -11,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.MenuCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppEntry
@@ -21,7 +21,8 @@ import io.github.pyrocklast.mot.util.Apps
 
 /**
  * The long-press menu for an app or shortcut: Rename, Hide, App info, Uninstall (Remove, for a
- * shortcut). The drawer and the home screen share it; the home screen adds its own items on top.
+ * shortcut). The drawer and the home screen share it; the home screen adds its own items on top,
+ * and leaves out Hide, which is about the drawer.
  */
 class AppMenu(
     private val activity: AppCompatActivity,
@@ -49,12 +50,14 @@ class AppMenu(
         dismiss()
         val shortcut = entry.target.isShortcut
         val menu = PopupMenu(activity, anchor, if (alignment == Gravity.END) Gravity.END else Gravity.START)
-        extras.forEachIndexed { index, extra -> menu.menu.add(Menu.NONE, EXTRA + index, index, extra.title) }
+        // The extras (e.g. the home screen's) and the app's own items, with a line between them
+        extras.forEachIndexed { index, extra -> menu.menu.add(GROUP_EXTRAS, EXTRA + index, index, extra.title) }
         val order = extras.size
-        menu.menu.add(Menu.NONE, RENAME, order, R.string.rename)
-        if (!shortcut && canHide) menu.menu.add(Menu.NONE, HIDE, order + 1, R.string.hide)
-        menu.menu.add(Menu.NONE, INFO, order + 2, R.string.app_info)
-        menu.menu.add(Menu.NONE, REMOVE, order + 3, if (shortcut) R.string.remove else R.string.uninstall)
+        menu.menu.add(GROUP_APP, RENAME, order, R.string.rename)
+        if (!shortcut && canHide) menu.menu.add(GROUP_APP, HIDE, order + 1, R.string.hide)
+        menu.menu.add(GROUP_APP, INFO, order + 2, R.string.app_info)
+        menu.menu.add(GROUP_APP, REMOVE, order + 3, if (shortcut) R.string.remove else R.string.uninstall)
+        MenuCompat.setGroupDividerEnabled(menu.menu, extras.isNotEmpty())
         menu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 RENAME -> rename(entry)
@@ -85,7 +88,7 @@ class AppMenu(
         rename.name.setSelectAllOnFocus(true)
 
         fun save(name: String?) {
-            prefs.setCustomName(entry.key, name?.takeIf { it.isNotBlank() && it.trim() != entry.ownLabel })
+            prefs.setCustomName(entry.appKey, name?.takeIf { it.isNotBlank() && it.trim() != entry.ownLabel })
             repo.namesChanged()
         }
 
@@ -109,7 +112,7 @@ class AppMenu(
     }
 
     private fun hide(entry: AppEntry, onHidden: () -> Unit) {
-        prefs.hiddenApps = prefs.hiddenApps + entry.key
+        prefs.hiddenApps = prefs.hiddenApps + entry.appKey
         if (!prefs.hiddenBefore) {
             prefs.hiddenBefore = true
             Toast.makeText(
@@ -122,6 +125,9 @@ class AppMenu(
     }
 
     private companion object {
+        const val GROUP_EXTRAS = 1
+        const val GROUP_APP = 2
+
         const val RENAME = 1
         const val HIDE = 2
         const val INFO = 3

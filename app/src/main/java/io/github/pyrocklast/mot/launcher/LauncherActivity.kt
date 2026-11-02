@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -75,10 +76,14 @@ class LauncherActivity : AppCompatActivity() {
             requestHomeRole = ::requestHomeRole,
         )
 
-        // Back closes the drawer, and otherwise does nothing: there's nowhere to go back to
+        // With "Match the wallpaper", a new wallpaper can call for the other text colour
         WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
 
+        // Back closes the drawer, which follows the back gesture as you swipe (Android 15's
+        // predictive back). On the home screen it does nothing: there's nowhere to go back to.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackProgressed(backEvent: BackEventCompat) = drawer.backProgress(backEvent.progress)
+            override fun handleOnBackCancelled() = drawer.backCancelled()
             override fun handleOnBackPressed() = drawer.close()
         })
 
