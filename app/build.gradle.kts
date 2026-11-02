@@ -31,8 +31,11 @@ android {
         // The Release workflow numbers each build, so every release installs as an update
         versionCode = (project.findProperty("motVersionCode") as String?)?.toInt() ?: 1
         versionName = (project.findProperty("motVersionName") as String?) ?: "0.1-dev"
-        // English and French only, for the app and for the libraries' own strings
-        resourceConfigurations += listOf("en", "fr")
+    }
+
+    // English and French only, for the app and for the libraries' own strings
+    androidResources {
+        localeFilters += listOf("en", "fr")
     }
 
     signingConfigs {
