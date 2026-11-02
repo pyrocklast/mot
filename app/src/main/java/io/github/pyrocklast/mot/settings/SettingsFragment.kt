@@ -64,7 +64,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private val alignments = intArrayOf(Gravity.START, Gravity.CENTER, Gravity.END)
     private val clockModes = intArrayOf(Prefs.CLOCK_TIME_AND_DATE, Prefs.CLOCK_DATE_ONLY, Prefs.CLOCK_OFF)
     private val dateStyles = intArrayOf(Prefs.DATE_SHORT, Prefs.DATE_FULL, Prefs.DATE_NUMERIC)
-    private val textColours = intArrayOf(Prefs.TEXT_DARK, Prefs.TEXT_LIGHT, Prefs.TEXT_FOLLOW_DARK_MODE)
+    private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_DARK, Prefs.TEXT_LIGHT, Prefs.TEXT_FOLLOW_DARK_MODE)
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         refresh()
@@ -315,7 +315,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun textColourLabel(colour: Int) = when (colour) {
         Prefs.TEXT_DARK -> R.string.dark_text
         Prefs.TEXT_LIGHT -> R.string.light_text
-        else -> R.string.text_follows_dark_mode
+        Prefs.TEXT_FOLLOW_DARK_MODE -> R.string.text_follows_dark_mode
+        else -> R.string.text_matches_wallpaper
     }
 
     // e.g. "110 %" in French

@@ -3,11 +3,11 @@
     <!-- Écran d'accueil -->
     <string name="app_placeholder">Appli</string>
     <string name="tips">Balayez vers le haut pour vos applis\nAppui long n\'importe où pour les paramètres</string>
-    <string name="set_as_home">Définir Mot comme appli d\'accueil</string>
-    <string name="set_as_home_underlined"><u>Définir Mot comme appli d\'accueil</u></string>
+    <string name="set_as_home">Définir mot. comme appli d\'accueil</string>
+    <string name="set_as_home_underlined"><u>Définir mot. comme appli d\'accueil</u></string>
     <string name="long_press_to_choose">Appui long pour choisir une appli</string>
     <string name="action_open">Ouvrir</string>
-    <string name="action_change_app">Changer d\'appli</string>
+    <string name="action_more_options">Plus d\'options</string>
     <string name="action_open_clock">Ouvrir l\'horloge</string>
     <string name="action_choose_clock">Choisir l\'appli d\'horloge</string>
     <string name="action_open_calendar">Ouvrir l\'agenda</string>
@@ -21,6 +21,8 @@
     <string name="private_space_unlocked">Espace privé, déverrouillé</string>
     <string name="work_app">%1$s, travail</string>
     <string name="new_app">%1$s, nouvelle</string>
+    <string name="change_app">Changer d\'appli</string>
+    <string name="remove_from_home">Retirer de l\'écran d\'accueil</string>
     <string name="rename">Renommer</string>
     <string name="original_name">Nom d\'origine</string>
     <string name="hide">Masquer</string>
@@ -82,6 +84,7 @@
     <string name="dark_text">Texte sombre, pour fonds d\'écran clairs</string>
     <string name="light_text">Texte clair, pour fonds d\'écran sombres</string>
     <string name="text_follows_dark_mode">Selon le mode sombre du téléphone</string>
+    <string name="text_matches_wallpaper">Selon le fond d\'écran</string>
     <string name="app_name_size">Taille des noms d\'applis</string>
     <string name="bolder_names">Noms d\'applis plus gras</string>
     <string name="show_status_bar">Afficher la barre d\'état</string>
@@ -95,5 +98,5 @@
     <string name="swipe_right_opens">Balayer vers la droite ouvre</string>
 
     <string name="about">À propos</string>
-    <string name="version">Version %1$s · Minimaliste, Ouvert, Texte</string>
+    <string name="version">Version %1$s · un minimum de choses, un lanceur</string>
 </resources>

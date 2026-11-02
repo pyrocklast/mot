@@ -6,34 +6,27 @@ import android.text.Spannable
 import android.text.TextWatcher
 import android.view.GestureDetector
 import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.Menu
 import android.view.MotionEvent
 import android.view.View
-import android.view.WindowManager
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.data.Profile
 import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
-import io.github.pyrocklast.mot.databinding.DialogRenameBinding
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.Search
 
@@ -46,6 +39,7 @@ class Drawer(
     private val binding: ActivityLauncherBinding,
     private val prefs: Prefs,
     private val repo: AppRepository,
+    private val menu: AppMenu,
     private val onChosen: () -> Unit,
 ) {
     var isOpen = false
@@ -61,7 +55,6 @@ class Drawer(
     }
 
     private var choosingFor: Slot? = null
-    private var dialog: AlertDialog? = null
     private val search = binding.search
     private val list = binding.appList
 
@@ -150,6 +143,10 @@ class Drawer(
         binding.drawer.isVisible = true
         binding.drawer.alpha = 0f
         binding.drawer.animate().alpha(1f).setDuration(OPEN_MS).start()
+        // Only the wallpaper shows through, not the home screen
+        binding.home.animate().alpha(0f).setDuration(OPEN_MS).withEndAction {
+            if (isOpen) binding.home.isInvisible = true
+        }.start()
         // The rows rise into place while the keyboard comes up
         list.scheduleLayoutAnimation()
         showKeyboardIfWanted()
@@ -160,16 +157,20 @@ class Drawer(
         isOpen = false
         choosingFor = null
         keepOpenWhileAway = false
-        dialog?.dismiss()
+        menu.dismiss()
         hideKeyboard()
         search.text = null
+        binding.home.isInvisible = false
         if (animate) {
             binding.drawer.animate().alpha(0f).setDuration(CLOSE_MS).withEndAction {
                 if (!isOpen) binding.drawer.isVisible = false
             }.start()
+            binding.home.animate().alpha(1f).setDuration(CLOSE_MS).start()
         } else {
             binding.drawer.animate().cancel()
             binding.drawer.isVisible = false
+            binding.home.animate().cancel()
+            binding.home.alpha = 1f
         }
     }
 
@@ -229,76 +230,14 @@ class Drawer(
     private fun onRowLongClick(row: DrawerRow, view: View) {
         when (row) {
             is DrawerRow.PrivateSpace -> Apps.openPrivateSpaceSettings(activity)
-            is DrawerRow.App -> showMenu(row, view)
+            is DrawerRow.App -> menu.show(
+                anchor = view,
+                entry = row.entry,
+                alignment = prefs.drawerAlignment,
+                canHide = choosingFor == null,
+                onHidden = { update() },
+            )
         }
-    }
-
-    // Long-press menu: Rename, Hide, App info, Uninstall (or Remove, for a shortcut)
-    private fun showMenu(row: DrawerRow.App, anchor: View) {
-        val entry = row.entry
-        val shortcut = entry.target.isShortcut
-        val popup = PopupMenu(activity, anchor, if (prefs.drawerAlignment == Gravity.END) Gravity.END else Gravity.START)
-        popup.menu.add(Menu.NONE, MENU_RENAME, 0, R.string.rename)
-        if (!shortcut && choosingFor == null) popup.menu.add(Menu.NONE, MENU_HIDE, 1, R.string.hide)
-        popup.menu.add(Menu.NONE, MENU_INFO, 2, R.string.app_info)
-        popup.menu.add(Menu.NONE, MENU_REMOVE, 3, if (shortcut) R.string.remove else R.string.uninstall)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                MENU_RENAME -> showRename(row)
-                MENU_HIDE -> hide(row)
-                MENU_INFO -> Apps.openAppInfo(activity, entry.target)
-                MENU_REMOVE -> if (shortcut) Apps.unpin(activity, entry.target) else Apps.uninstall(activity, entry.target)
-            }
-            true
-        }
-        popup.show()
-    }
-
-    // A new name shows everywhere the app is: drawer, home screen and settings
-    private fun showRename(row: DrawerRow.App) {
-        val entry = row.entry
-        val builder = MaterialAlertDialogBuilder(activity)
-        val rename = DialogRenameBinding.inflate(LayoutInflater.from(builder.context))
-        rename.nameLayout.hint = entry.ownLabel
-        rename.name.setText(entry.label)
-        rename.name.setSelectAllOnFocus(true)
-
-        fun save(name: String?) {
-            prefs.setCustomName(entry.key, name?.takeIf { it.isNotBlank() && it.trim() != entry.ownLabel })
-            repo.namesChanged()
-        }
-
-        dialog?.dismiss()
-        val renameDialog = builder
-            .setTitle(R.string.rename)
-            .setView(rename.root)
-            .setPositiveButton(R.string.rename) { _, _ -> save(rename.name.text?.toString()) }
-            .setNeutralButton(R.string.original_name) { _, _ -> save(null) }
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
-        rename.name.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId != EditorInfo.IME_ACTION_DONE) return@setOnEditorActionListener false
-            save(rename.name.text?.toString())
-            renameDialog.dismiss()
-            true
-        }
-        renameDialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
-        renameDialog.show()
-        rename.name.requestFocus()
-        dialog = renameDialog
-    }
-
-    private fun hide(row: DrawerRow.App) {
-        prefs.hiddenApps = prefs.hiddenApps + row.entry.key
-        if (!prefs.hiddenBefore) {
-            prefs.hiddenBefore = true
-            Toast.makeText(
-                activity,
-                activity.getString(R.string.first_hide, activity.getString(R.string.app_drawer), activity.getString(R.string.hidden_apps)),
-                Toast.LENGTH_LONG,
-            ).show()
-        }
-        update()
     }
 
     // Keyboard
@@ -340,9 +279,5 @@ class Drawer(
         const val CLOSE_MS = 120L
         const val OVERSCROLL_TO_CLOSE = 10
 
-        const val MENU_RENAME = 1
-        const val MENU_HIDE = 2
-        const val MENU_INFO = 3
-        const val MENU_REMOVE = 4
     }
 }

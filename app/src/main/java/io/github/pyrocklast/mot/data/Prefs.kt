@@ -81,7 +81,7 @@ class Prefs(context: Context) {
     // Appearance (home screen and drawer only)
 
     var textColour: Int
-        get() = prefs.getInt("text_colour", TEXT_LIGHT)
+        get() = prefs.getInt("text_colour", TEXT_MATCH_WALLPAPER)
         set(value) = prefs.edit { putInt("text_colour", value) }
 
     var appNameScale: Float
@@ -155,5 +155,7 @@ class Prefs(context: Context) {
         /** Light text, for dark wallpapers. */
         const val TEXT_LIGHT = 1
         const val TEXT_FOLLOW_DARK_MODE = 2
+        /** Dark or light text, whichever Android says suits the wallpaper. */
+        const val TEXT_MATCH_WALLPAPER = 3
     }
 }

@@ -1,8 +1,12 @@
 package io.github.pyrocklast.mot.launcher
 
+import android.app.WallpaperColors
+import android.app.WallpaperManager
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -31,9 +35,15 @@ class LauncherActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLauncherBinding
     private lateinit var home: HomeScreen
     private lateinit var drawer: Drawer
+    private lateinit var menu: AppMenu
 
     /** The look this screen was drawn with; when settings change it, the screen is redrawn. */
     private var look = ""
+
+    // A new wallpaper can call for the other text colour (with "Match the wallpaper")
+    private val wallpaperColours = WallpaperManager.OnColorsChangedListener { _, which ->
+        if (which and WallpaperManager.FLAG_SYSTEM != 0 && currentLook() != look) recreate()
+    }
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         home.render()
@@ -52,18 +62,22 @@ class LauncherActivity : AppCompatActivity() {
         setContentView(binding.root)
         repo = AppRepository.get(this)
 
-        drawer = Drawer(this, binding, prefs, repo, onChosen = { home.render() })
+        menu = AppMenu(this, prefs, repo)
+        drawer = Drawer(this, binding, prefs, repo, menu, onChosen = { home.render() })
         home = HomeScreen(
             context = this,
             binding = binding,
             prefs = prefs,
             repo = repo,
+            menu = menu,
             openDrawer = { slot -> drawer.open(slot) },
             openSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
             requestHomeRole = ::requestHomeRole,
         )
 
         // Back closes the drawer, and otherwise does nothing: there's nowhere to go back to
+        WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = drawer.close()
         })
@@ -98,9 +112,17 @@ class LauncherActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    override fun onDestroy() {
+        WallpaperManager.getInstance(this).removeOnColorsChangedListener(wallpaperColours)
+        super.onDestroy()
+    }
+
     override fun onStop() {
         // Coming back to Mot always starts on the home screen, except after unlocking Private Space
-        if (!drawer.keepOpenWhileAway) drawer.close(animate = false)
+        if (!drawer.keepOpenWhileAway) {
+            drawer.close(animate = false)
+            menu.dismiss()
+        }
         super.onStop()
     }
 
@@ -115,11 +137,20 @@ class LauncherActivity : AppCompatActivity() {
         if (request != null) homeRoleRequest.launch(request) else Apps.openHomeSettings(this)
     }
 
-    // Light text for dark wallpapers, dark text for light ones, or following dark mode
+    // Light text for dark wallpapers, dark text for light ones: as the wallpaper suits (Android
+    // works this out from its colours), as set, or following dark mode
     private fun lightText(): Boolean = when (prefs.textColour) {
         Prefs.TEXT_DARK -> false
         Prefs.TEXT_LIGHT -> true
-        else -> resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        Prefs.TEXT_FOLLOW_DARK_MODE ->
+            resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        else -> !wallpaperSuitsDarkText()
+    }
+
+    private fun wallpaperSuitsDarkText(): Boolean {
+        // Unknown (e.g. some live wallpapers): light text, with its shadow, reads on most wallpapers
+        val colours = WallpaperManager.getInstance(this).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) ?: return false
+        return colours.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0
     }
 
     private fun currentLook(): String =

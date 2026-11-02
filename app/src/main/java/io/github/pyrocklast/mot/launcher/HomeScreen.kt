@@ -38,6 +38,7 @@ class HomeScreen(
     private val binding: ActivityLauncherBinding,
     private val prefs: Prefs,
     private val repo: AppRepository,
+    private val menu: AppMenu,
     private val openDrawer: (Slot?) -> Unit,
     private val openSettings: () -> Unit,
     private val requestHomeRole: () -> Unit,
@@ -118,7 +119,7 @@ class HomeScreen(
         val view = LayoutInflater.from(binding.homeApps.context)
             .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView
         binding.homeApps.addView(view)
-        describeForTalkBack(view, R.string.action_open, R.string.action_change_app) { tap(it) }
+        describeForTalkBack(view, R.string.action_open, R.string.action_more_options) { tap(it) }
         view.tag = index
         return view
     }
@@ -184,8 +185,30 @@ class HomeScreen(
             null -> openSettings()
             binding.clock -> openDrawer(Slot.Clock)
             binding.date -> openDrawer(Slot.Calendar)
-            else -> openDrawer(Slot.Home(view.tag as Int))
+            else -> homeAppMenu(view, view.tag as Int)
         }
+    }
+
+    // The drawer's menu for the app, with ways to change this spot on top. An empty spot (or one
+    // whose app is gone) goes straight to choosing an app.
+    private fun homeAppMenu(view: View, index: Int) {
+        val entry = prefs.homeApp(index)?.let { repo.find(it) }
+        if (entry == null) {
+            openDrawer(Slot.Home(index))
+            return
+        }
+        menu.show(
+            anchor = view,
+            entry = entry,
+            alignment = prefs.homeAlignment,
+            extras = listOf(
+                AppMenu.Extra(R.string.change_app) { openDrawer(Slot.Home(index)) },
+                AppMenu.Extra(R.string.remove_from_home) {
+                    prefs.setHomeApp(index, null)
+                    render()
+                },
+            ),
+        )
     }
 
     private fun swipe(left: Boolean) {

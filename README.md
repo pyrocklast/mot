@@ -1,12 +1,12 @@
-# Mot
+# mot.
 
-a **M**inimum **o**f **t**hings
+a **M**inimum **o**f **t**hings, a launcher.
 
 A text-only launcher for Android 15 and later: your apps as words on your wallpaper, a clock and a date, and nothing else. No icons, no widgets, no internet access, no tracking.
 
-Mot is a rewrite of [Olauncher Lite](https://github.com/pyrocklast/llauncher), a personal fork of [Olauncher](https://github.com/tanujnotes/Olauncher). It keeps their look and behaviour, rebuilt with less code and fewer permissions.
+mot. is a rewrite of [Olauncher Lite](https://github.com/pyrocklast/llauncher), a personal fork of [Olauncher](https://github.com/tanujnotes/Olauncher). It keeps their look and behaviour, rebuilt with less code and fewer permissions.
 
-> Mot was made with an AI assistant. See [Made with AI](#made-with-ai) for what that means.
+> mot. was made with an AI assistant. See [Made with AI](#made-with-ai) for what that means.
 
 ## What it does
 
@@ -15,6 +15,7 @@ Mot is a rewrite of [Olauncher Lite](https://github.com/pyrocklast/llauncher), a
 - The time and date, the date in your language's usual short, full or numeric format. Tapping them opens your clock and calendar apps, or ones you choose.
 - With the status bar hidden, the battery level follows the date. Both stay up to date while the home screen is showing.
 - Swipe up for the app drawer, down for notifications, left and right for two apps of your choice (the camera and phone by default). Long press for settings.
+- Long-press a home app for the drawer's menu, plus "Change app" and "Remove from home screen".
 
 **App drawer**
 - Type to search: accents, case and spaces don't matter, and when one app is left it opens.
@@ -24,15 +25,15 @@ Mot is a rewrite of [Olauncher Lite](https://github.com/pyrocklast/llauncher), a
 
 **Settings**
 - A standard Android settings screen that follows your phone's dark mode and Material You colours.
-- Text colour for your wallpaper (dark text, light text, or matching dark mode), app name and clock sizes on top of Android's font size, bolder names, and whether the status bar shows.
+- Text colour: matching the wallpaper by default (Android tells launchers whether a wallpaper suits dark or light text), or always dark, always light, or following dark mode. App name and clock sizes on top of Android's font size, bolder names, and whether the status bar shows.
 
-Available in English and French. Android's per-app language setting changes Mot's language and its date format.
+Available in English and French. Android's per-app language setting changes mot.'s language and its date format.
 
 ## Install
 
-Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium) and it will keep Mot up to date. Or download the APK from [Releases](https://github.com/pyrocklast/mot/releases).
+Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium) and it will keep mot. up to date. Or download the APK from [Releases](https://github.com/pyrocklast/mot/releases).
 
-Then make Mot your Home app from its first screen, or in Android's Settings > Apps > Default apps.
+Then make mot. your Home app from its first screen, or in Android's Settings > Apps > Default apps.
 
 Requires Android 15 or later.
 
@@ -45,7 +46,7 @@ Requires Android 15 or later.
 | Set alarm | Opening your alarms when you tap the time |
 | Access hidden profiles | Showing Private Space |
 
-Mot can see the apps you can open from a launcher, and no other installed packages.
+mot. can see the apps you can open from a launcher, and no other installed packages.
 
 ## Building
 
@@ -64,12 +65,12 @@ keyPassword=…
 
 ## Made with AI
 
-Mot is vibe-coded. Its code was written by Claude, Anthropic's AI assistant, in conversation with the repository's owner, who decided what it should do and tried each build on their own phone. Each release is built from this source by GitHub, but no person has reviewed the code line by line.
+mot. is vibe-coded. Its code was written by Claude, Anthropic's AI assistant, in conversation with the repository's owner, who decided what it should do and tried each build on their own phone. Each release is built from this source by GitHub, but no person has reviewed the code line by line.
 
 The commits Claude wrote carry a `Co-Authored-By: Claude` line. Expect rough edges: it's a personal project, offered as is under the GPL, without any warranty.
 
 ## Credits and licence
 
-Mot's design and behaviour come from [Olauncher](https://github.com/tanujnotes/Olauncher) by [@tanujnotes](https://github.com/tanujnotes) and its contributors, by way of Olauncher Lite. A few parts are adapted from them: the drawer's search matching and opening animation, and the Private Space handling. Mot isn't affiliated with or endorsed by Olauncher.
+mot.'s design and behaviour come from [Olauncher](https://github.com/tanujnotes/Olauncher) by [@tanujnotes](https://github.com/tanujnotes) and its contributors, by way of Olauncher Lite. A few parts are adapted from them: the drawer's search matching and opening animation, and the Private Space handling. mot. isn't affiliated with or endorsed by Olauncher.
 
-Like Olauncher, Mot is licensed under the [GNU GPLv3](LICENSE).
+Like Olauncher, mot. is licensed under the [GNU GPLv3](LICENSE).
