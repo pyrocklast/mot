@@ -64,10 +64,10 @@ jobs:
             echo "::error::No signed APK was built. Check the signing secrets."
             exit 1
           fi
-          cp "$apk" "mot-$VERSION.apk"
-          gh release create "v$VERSION" "mot-$VERSION.apk" \
+          cp "$apk" "mot-launcher-$VERSION.apk"
+          gh release create "v$VERSION" "mot-launcher-$VERSION.apk" \
             --target "$GITHUB_SHA" \
-            --title "mot. $VERSION" \
+            --title "mot launcher $VERSION" \
             --notes "Built by the Release workflow from commit $GITHUB_SHA."
 
       - name: Remove the signing key

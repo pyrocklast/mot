@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- mot. icon in one colour, for themed icons: Android tints it to match the phone.
+<!-- mot launcher icon in one colour, for themed icons: Android tints it to match the phone.
      Drawn on the design's 66×66 square, fitted to the 72dp an icon shows (the inner part of the
      108dp layer), which keeps it inside the 66dp circle Android never crops. Source: art/icon.svg;
      the lettering is Inter at weight 650, outlined. -->

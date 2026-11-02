@@ -25,7 +25,7 @@ import io.github.pyrocklast.mot.util.Look
 import kotlinx.coroutines.launch
 
 /**
- * Mot's launcher: the home screen, with the app drawer as a panel over it. Settings is a
+ * mot launcher's launcher: the home screen, with the app drawer as a panel over it. Settings is a
  * separate, ordinary activity, so it follows the phone's theme while this one uses yours.
  */
 class LauncherActivity : AppCompatActivity() {
@@ -100,12 +100,14 @@ class LauncherActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (currentLook() != look) {
+        // Checking the wallpaper's colours takes a moment: once per return to the home screen
+        val light = lightText()
+        if (currentLook(light) != look) {
             recreate()
             return
         }
         drawer.onLauncherResumed()
-        applySystemBars()
+        applySystemBars(light)
         home.render()
         home.startTicking()
     }
@@ -121,7 +123,7 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        // Coming back to Mot always starts on the home screen, except after unlocking Private Space
+        // Coming back to mot launcher always starts on the home screen, except after unlocking Private Space
         if (!drawer.keepOpenWhileAway) {
             drawer.close(animate = false)
             menu.dismiss()
@@ -129,9 +131,10 @@ class LauncherActivity : AppCompatActivity() {
         super.onStop()
     }
 
-    // The Home button, pressed while Mot is already showing
+    // The Home button, pressed while mot launcher is already showing: back to a bare home screen
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        menu.dismiss()
         drawer.close()
     }
 
@@ -143,17 +146,17 @@ class LauncherActivity : AppCompatActivity() {
     private fun lightText(): Boolean = Look.lightText(this, prefs)
 
     // The drawer's rows are made with these, so a change redraws the screen
-    private fun currentLook(): String =
-        listOf(lightText(), prefs.nameFont, prefs.nameWeight, prefs.appNameScale, prefs.drawerAlignment).joinToString()
+    private fun currentLook(light: Boolean = lightText()): String =
+        listOf(light, prefs.nameFont, prefs.nameWeight, prefs.appNameScale, prefs.drawerAlignment).joinToString()
 
     // Status bar shown or hidden as set, and status and navigation bar icons that match the text
-    private fun applySystemBars() {
+    private fun applySystemBars(light: Boolean) {
         WindowCompat.getInsetsController(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             if (prefs.showStatusBar) show(WindowInsetsCompat.Type.statusBars())
             else hide(WindowInsetsCompat.Type.statusBars())
-            isAppearanceLightStatusBars = !lightText()
-            isAppearanceLightNavigationBars = !lightText()
+            isAppearanceLightStatusBars = !light
+            isAppearanceLightNavigationBars = !light
         }
     }
 }

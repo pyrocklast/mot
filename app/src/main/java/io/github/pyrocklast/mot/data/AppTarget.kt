@@ -1,7 +1,7 @@
 package io.github.pyrocklast.mot.data
 
 /**
- * Something Mot can open: an app's activity, or a pinned shortcut. Home apps, swipe apps and the
+ * Something mot launcher can open: an app's activity, or a pinned shortcut. Home apps, swipe apps and the
  * clock and calendar apps are all stored as one of these, so one piece of code saves, finds and
  * opens all of them.
  *

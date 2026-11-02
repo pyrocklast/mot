@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- mot. icon: "mot" and an amber cursor, on the #191919 background (colors.xml).
+<!-- mot launcher icon: "mot" and an amber cursor, on the #191919 background (colors.xml).
      Drawn on the design's 66×66 square, fitted to the 72dp an icon shows (the inner part of the
      108dp layer), which keeps it inside the 66dp circle Android never crops. Source: art/icon.svg;
      the lettering is Inter at weight 650, outlined. -->

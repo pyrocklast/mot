@@ -27,13 +27,13 @@ import java.text.Collator
 
 /**
  * Every app and pinned shortcut, in every profile, sorted by name. The list is loaded once when
- * Mot starts and again only when Android reports a change (an app installed, updated or removed,
+ * mot launcher starts and again only when Android reports a change (an app installed, updated or removed,
  * shortcuts pinned or removed, a profile switched on or off), or when you rename an app.
  */
 class AppRepository private constructor(private val context: Context) {
 
     /** Private Space, when the phone has one: its profile, and whether it's locked. */
-    data class PrivateSpace(val user: UserHandle, val locked: Boolean)
+    data class PrivateSpace(val user: UserHandle, val serial: Long, val locked: Boolean)
 
     private val prefs = Prefs(context)
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
@@ -48,7 +48,7 @@ class AppRepository private constructor(private val context: Context) {
         val ownLabel: String,
         val user: UserHandle,
         val profile: Profile,
-        val isNew: Boolean,
+        val installedAt: Long,
     )
 
     private var found: List<Found> = emptyList()
@@ -125,7 +125,7 @@ class AppRepository private constructor(private val context: Context) {
                     ownLabel = app.ownLabel,
                     user = app.user,
                     profile = app.profile,
-                    isNew = app.isNew,
+                    installedAt = app.installedAt,
                 )
             }.sortedWith { a, b -> collator.compare(a.label, b.label) }
         }
@@ -137,7 +137,6 @@ class AppRepository private constructor(private val context: Context) {
     private fun queryAndroid(): Pair<List<Found>, PrivateSpace?> {
         val result = ArrayList<Found>()
         var space: PrivateSpace? = null
-        val now = System.currentTimeMillis()
         val canReadShortcuts = runCatching { launcherApps.hasShortcutHostPermission() }.getOrDefault(false)
 
         for (user in launcherApps.profiles) {
@@ -151,7 +150,7 @@ class AppRepository private constructor(private val context: Context) {
                 }
                 if (isPrivate) {
                     val locked = userManager.isQuietModeEnabled(user)
-                    space = PrivateSpace(user, locked)
+                    space = PrivateSpace(user, serial, locked)
                     // A locked Private Space shows only its header in the drawer
                     if (locked) continue
                 }
@@ -164,7 +163,7 @@ class AppRepository private constructor(private val context: Context) {
                         ownLabel = activity.label.toString(),
                         user = user,
                         profile = profile,
-                        isNew = now - activity.firstInstallTime < NEW_APP_MS,
+                        installedAt = activity.firstInstallTime,
                     )
                 }
 
@@ -178,7 +177,7 @@ class AppRepository private constructor(private val context: Context) {
                             ownLabel = label,
                             user = user,
                             profile = profile,
-                            isNew = false,
+                            installedAt = 0,
                         )
                     }
                 }
@@ -202,26 +201,45 @@ class AppRepository private constructor(private val context: Context) {
 
     /**
      * The name to show for a target on the home screen or in settings. Before the first load, or
-     * while its profile is locked or off, the last name seen is shown instead. An app that's gone
-     * has no name, so its home spot shows as empty.
+     * while a work profile is paused, the last name seen is shown instead. An app that's gone has
+     * no name, so its home spot shows as empty, and so does one from a locked Private Space:
+     * its names are never kept or shown while it's locked.
      */
     fun nameFor(target: AppTarget): String? {
         find(target)?.let { return it.label }
+        if (isLockedPrivateSpace(target.userSerial)) return null
         val profileAway = _apps.value == null || isProfileAway(target.userSerial)
         return if (profileAway) nameCache.getString(target.key, null) else null
     }
 
-    private fun isProfileAway(serial: Long): Boolean {
+    /** Whether the target's profile is paused (work) or locked (Private Space), so it can't open until it's back. */
+    fun isProfileAway(serial: Long): Boolean {
         val user = userManager.getUserForSerialNumber(serial) ?: return false
         return runCatching { userManager.isQuietModeEnabled(user) }.getOrDefault(false)
     }
 
+    /** Whether the target is in Private Space while it's locked. */
+    fun isLockedPrivateSpace(serial: Long): Boolean = _privateSpace.value?.let { it.locked && it.serial == serial } == true
+
     // Keeps the names of the apps in use, so the home screen can show them before the list loads
+    // and while a work profile is paused. Private Space's names are never kept.
     private fun rememberHomeNames() {
         val targets = prefs.homeApps.filterNotNull() + listOfNotNull(prefs.swipeLeftApp, prefs.swipeRightApp)
-        val names = targets.mapNotNull { target -> find(target)?.let { target.key to it.label } }
-        if (names.all { (key, label) -> nameCache.getString(key, null) == label }) return
-        nameCache.edit { names.forEach { (key, label) -> putString(key, label) } }
+        val names = HashMap<String, String>()
+        for (target in targets) {
+            val entry = find(target)
+            when {
+                entry != null -> if (entry.profile != Profile.PRIVATE) names[target.key] = entry.label
+                isLockedPrivateSpace(target.userSerial) -> Unit
+                // Paused: keep the name from before
+                isProfileAway(target.userSerial) -> nameCache.getString(target.key, null)?.let { names[target.key] = it }
+            }
+        }
+        if (nameCache.all == names) return
+        nameCache.edit {
+            clear()
+            names.forEach { (key, label) -> putString(key, label) }
+        }
     }
 
     /** Locks or unlocks Private Space. Unlocking asks for your PIN or fingerprint. */
@@ -232,7 +250,6 @@ class AppRepository private constructor(private val context: Context) {
 
     companion object {
         private const val CHANGE_DELAY_MS = 500L
-        private const val NEW_APP_MS = 60 * 60 * 1000L
 
         @Volatile
         private var instance: AppRepository? = null

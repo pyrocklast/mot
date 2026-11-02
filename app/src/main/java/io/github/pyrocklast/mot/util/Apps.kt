@@ -30,13 +30,22 @@ object Apps {
     fun userFor(context: Context, serial: Long): UserHandle? =
         context.getSystemService(UserManager::class.java).getUserForSerialNumber(serial)
 
-    /** Opens an app or shortcut, growing out of [from] when given. Returns false if it's gone. */
+    /**
+     * Opens an app or shortcut, growing out of [from] when given. An app in a paused work profile
+     * or a locked Private Space asks Android to turn it on or unlock it instead; tap it again
+     * once it is. Returns false if it's gone.
+     */
     fun open(context: Context, target: AppTarget, from: View? = null): Boolean {
         val launcherApps = context.getSystemService(LauncherApps::class.java)
+        val userManager = context.getSystemService(UserManager::class.java)
         val user = userFor(context, target.userSerial)
         if (user == null) {
             toast(context, R.string.app_not_found)
             return false
+        }
+        if (runCatching { userManager.isQuietModeEnabled(user) }.getOrDefault(false)) {
+            runCatching { userManager.requestQuietModeEnabled(false, user) }.onFailure { toast(context, R.string.cant_open) }
+            return true
         }
         val bounds = from?.let { screenRect(it) }
         val options = from?.let { ActivityOptions.makeScaleUpAnimation(it, 0, 0, it.width, it.height).toBundle() }
@@ -96,7 +105,7 @@ object Apps {
 
     /**
      * Asks Android to uninstall an app. Apps in another profile are uninstalled from their App
-     * info screen, since Android only lets Mot ask for its own profile.
+     * info screen, since Android only lets mot launcher ask for its own profile.
      */
     fun uninstall(context: Context, target: AppTarget) {
         val user = userFor(context, target.userSerial)
@@ -132,7 +141,7 @@ object Apps {
     fun isDefaultLauncher(context: Context): Boolean =
         context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_HOME)
 
-    /** Android's own dialog for making Mot the Home app, or null when it can't be shown. */
+    /** Android's own dialog for making mot launcher the Home app, or null when it can't be shown. */
     fun homeRoleRequest(context: Context): Intent? {
         val roles = context.getSystemService(RoleManager::class.java)
         if (!roles.isRoleAvailable(RoleManager.ROLE_HOME) || roles.isRoleHeld(RoleManager.ROLE_HOME)) return null

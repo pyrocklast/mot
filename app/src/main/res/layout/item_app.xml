@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A drawer row: the app's name, with a small dot for work apps -->
+<!-- A drawer row: the app's name, with a small dot after it for work apps. The whole row is
+     tappable; the name sits on the left, centre or right as the drawer is aligned. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/row"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true">
 
     <TextView
         android:id="@+id/name"
         style="@style/Mot.Text.AppName"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:drawablePadding="10dp"
+        android:duplicateParentState="true"
+        android:importantForAccessibility="no"
         android:paddingHorizontal="24dp"
         android:paddingVertical="12dp" />
-
-    <View
-        android:id="@+id/profileDot"
-        android:layout_width="5dp"
-        android:layout_height="5dp"
-        android:layout_gravity="center_vertical"
-        android:layout_marginStart="10dp"
-        android:background="@drawable/dot"
-        android:importantForAccessibility="no"
-        android:visibility="gone" />
 
 </FrameLayout>

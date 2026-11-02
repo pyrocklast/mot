@@ -5,7 +5,7 @@ import android.view.Gravity
 import androidx.core.content.edit
 
 /**
- * All of Mot's settings. Names chosen for apps live in their own file, keyed by [AppTarget.appKey].
+ * All of mot launcher's settings. Names chosen for apps live in their own file, keyed by [AppTarget.appKey].
  * Nothing here stores a copy of an app's name: names always come from [AppRepository].
  */
 class Prefs(context: Context) {

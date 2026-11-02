@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">mot.</string>
+    <string name="app_name" translatable="false">mot launcher</string>
 
     <!-- Home screen -->
     <string name="app_placeholder">App</string>
     <string name="tips">Swipe up for your apps\nLong press anywhere for settings</string>
-    <string name="set_as_home">Set mot. as your Home app</string>
-    <string name="set_as_home_underlined"><u>Set mot. as your Home app</u></string>
+    <string name="set_as_home">Set mot launcher as your Home app</string>
+    <string name="set_as_home_underlined"><u>Set mot launcher as your Home app</u></string>
     <string name="long_press_to_choose">Long press to choose an app</string>
     <!-- TalkBack actions on the home screen -->
     <string name="action_open">Open</string>
@@ -26,7 +26,7 @@
     <string name="private_space_unlocked">Private space, unlocked</string>
     <string name="lock">Lock</string>
     <string name="lock_private_space">Lock private space</string>
-    <!-- TalkBack: an app from the work profile; an app installed in the last hour -->
+    <!-- TalkBack: an app from the work profile; an app installed in the last 24 hours -->
     <string name="work_app">%1$s, work</string>
     <string name="new_app">%1$s, new</string>
     <!-- Home screen long-press menu, above the drawer's items -->

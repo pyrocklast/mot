@@ -115,7 +115,7 @@ class HomeScreen(
         binding.date.typeface = clockTypeface
         updateDate()
 
-        // First run: how to reach the drawer and settings, and making Mot the Home app.
+        // First run: how to reach the drawer and settings, and making mot launcher the Home app.
         // Afterwards settings has a row for that.
         binding.tips.isVisible = !prefs.settingsOpened
         binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
@@ -179,8 +179,11 @@ class HomeScreen(
             binding.clock -> prefs.clockApp?.let { Apps.open(context, it, view) } ?: Apps.openDefault(context, DefaultApp.CLOCK)
             binding.date -> prefs.calendarApp?.let { Apps.open(context, it, view) } ?: Apps.openDefault(context, DefaultApp.CALENDAR)
             else -> {
+                // A blank spot is empty, its app is gone, or it's in a locked Private Space: that
+                // one asks to unlock it, like any app whose profile is away
                 val target = prefs.homeApp(view.tag as Int)
-                if (target == null || (view as TextView).text.isEmpty()) Apps.toast(context, R.string.long_press_to_choose)
+                val blank = (view as TextView).text.isEmpty()
+                if (target == null || (blank && !repo.isProfileAway(target.userSerial))) Apps.toast(context, R.string.long_press_to_choose)
                 else Apps.open(context, target, view)
             }
         }

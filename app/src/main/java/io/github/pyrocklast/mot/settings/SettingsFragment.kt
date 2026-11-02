@@ -69,7 +69,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         repo = AppRepository.get(requireContext())
         val screen = preferenceManager.createPreferenceScreen(preferenceManager.context)
 
-        // First, until Mot is your Home app; afterwards changing it is rare, so it moves under About
+        // First, until mot launcher is your Home app; afterwards changing it is rare, so it moves under About
         setAsHome = screen.item(R.string.set_as_home) {
             Apps.homeRoleRequest(requireContext())?.let { homeRoleRequest.launch(it) }
                 ?: Apps.openHomeSettings(requireContext())
@@ -201,7 +201,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val hiddenKeys = prefs.hiddenApps
         val hidden = repo.apps.value?.map { it.appKey }?.distinct()?.count { it in hiddenKeys } ?: hiddenKeys.size
         hiddenApps.summary = if (hidden == 0) getString(R.string.none) else resources.getQuantityString(R.plurals.app_count, hidden, hidden)
-        // Android only shows Private Space to the Home app, so it's unknown until mot. is the Home app
+        // Android only shows Private Space to the Home app, so it's unknown until mot launcher is the Home app
         privateSpace.summary = repo.privateSpace.value?.let {
             getString(if (it.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary)
         } ?: if (isHome) getString(R.string.not_set_up) else null
@@ -217,8 +217,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         swipeRight.summary = appName(prefs.swipeRightApp, R.string.default_phone_app)
     }
 
-    private fun appName(target: AppTarget?, @StringRes default: Int): String =
-        target?.let { repo.nameFor(it) } ?: getString(default)
+    // An app in a locked Private Space is only named once it's unlocked
+    private fun appName(target: AppTarget?, @StringRes default: Int): String = when {
+        target == null -> getString(default)
+        repo.isLockedPrivateSpace(target.userSerial) -> getString(R.string.private_space)
+        else -> repo.nameFor(target) ?: getString(default)
+    }
 
     // Dialogs
 

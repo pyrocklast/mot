@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.view.isVisible
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -19,7 +19,8 @@ import io.github.pyrocklast.mot.databinding.ItemDrawerActionBinding
 
 /** A row in the drawer: an app or shortcut, or one of the small Private Space rows. */
 sealed interface DrawerRow {
-    data class App(val entry: AppEntry) : DrawerRow
+    /** [isNew]: installed in the last day, marked with a ✦ after its name. */
+    data class App(val entry: AppEntry, val isNew: Boolean) : DrawerRow
 
     /** At the end of your apps: opens Private Space, unlocking it first if needed. */
     data class OpenPrivateSpace(val locked: Boolean) : DrawerRow
@@ -44,24 +45,30 @@ class DrawerAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val holder: RecyclerView.ViewHolder
-        val clickable: TextView
+        val clickable: View
+        // What the app opens from, and the menu shows next to
+        val anchor: TextView
         if (viewType == TYPE_APP) {
             val binding = ItemAppBinding.inflate(inflater, parent, false)
             binding.name.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
             binding.name.typeface = nameTypeface
             binding.name.gravity = gravity
+            // The whole row is tappable; the name, and the work dot after it, sit as aligned
+            (binding.name.layoutParams as FrameLayout.LayoutParams).gravity = gravity
             holder = AppHolder(binding)
-            clickable = binding.name
+            clickable = binding.root
+            anchor = binding.name
         } else {
             val binding = ItemDrawerActionBinding.inflate(inflater, parent, false)
             // The padlock sits next to the words, wherever the drawer is aligned
             (binding.action.layoutParams as FrameLayout.LayoutParams).gravity = gravity
             holder = ActionHolder(binding)
             clickable = binding.action
+            anchor = binding.action
         }
-        clickable.setOnClickListener { view -> holder.row()?.let { onClick(it, view) } }
-        clickable.setOnLongClickListener { view ->
-            holder.row()?.let { onLongClick(it, view) }
+        clickable.setOnClickListener { holder.row()?.let { onClick(it, anchor) } }
+        clickable.setOnLongClickListener {
+            holder.row()?.let { onLongClick(it, anchor) }
             true
         }
         return holder
@@ -76,14 +83,15 @@ class DrawerAdapter(
             is DrawerRow.App -> {
                 val binding = (holder as AppHolder).binding
                 val entry = row.entry
-                binding.name.text = if (entry.isNew) "${entry.label} ✦" else entry.label
+                binding.name.text = if (row.isNew) "${entry.label} ✦" else entry.label
                 val work = entry.profile == Profile.WORK
-                binding.profileDot.isVisible = work
-                binding.name.contentDescription = when {
-                    work -> context.getString(R.string.work_app, entry.label)
-                    entry.isNew -> context.getString(R.string.new_app, entry.label)
-                    else -> null
-                }
+                val dot = if (work) ContextCompat.getDrawable(context, R.drawable.dot) else null
+                binding.name.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, dot, null)
+                // TalkBack: "Slack, work, new" rather than the dot and star
+                var description = entry.label
+                if (work) description = context.getString(R.string.work_app, description)
+                if (row.isNew) description = context.getString(R.string.new_app, description)
+                binding.root.contentDescription = description
             }
             is DrawerRow.OpenPrivateSpace -> {
                 val action = (holder as ActionHolder).binding.action

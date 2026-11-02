@@ -31,6 +31,6 @@ object DateText {
         return NumberFormat.getPercentInstance(locale(context)).format(level / 100.0)
     }
 
-    // The app's resources already use the language chosen for Mot in Android's settings, if any
+    // The app's resources already use the language chosen for mot launcher in Android's settings, if any
     private fun locale(context: Context) = context.resources.configuration.locales[0]
 }

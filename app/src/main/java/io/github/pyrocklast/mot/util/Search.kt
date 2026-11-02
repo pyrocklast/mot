@@ -5,7 +5,7 @@ import java.util.Locale
 
 /**
  * App search: case-insensitive, ignores accents and separators, so "cafe" finds "Café" and
- * "googlemaps" finds "Google Maps". Names are normalised once when the app list loads, and the
+ * "googlemaps" finds "Google Maps". Names are prepared once when the app list loads, and the
  * query once per keystroke.
  */
 object Search {
@@ -18,7 +18,22 @@ object Search {
             .replace(separators, "")
             .lowercase(Locale.ROOT)
 
+    /** Each word of a name, normalised: "Google Maps" gives "google" and "maps". */
+    fun words(text: CharSequence): List<String> =
+        text.split(separators).map(::normalize).filter { it.isNotEmpty() }
+
     /** Whether a name, already passed through [normalize], matches a query that also was. */
     fun matches(normalizedName: String, normalizedQuery: String): Boolean =
         normalizedQuery.isEmpty() || normalizedName.contains(normalizedQuery)
+
+    /**
+     * How well a name matches, best first: 0 when the name starts with the query ("ma" in Maps),
+     * 1 when one of its words does ("ma" in Google Maps), 2 for anywhere else ("ma" in Gmail).
+     * Matches are sorted by this, and alphabetically within each rank.
+     */
+    fun rank(normalizedName: String, words: List<String>, normalizedQuery: String): Int = when {
+        normalizedName.startsWith(normalizedQuery) -> 0
+        words.any { it.startsWith(normalizedQuery) } -> 1
+        else -> 2
+    }
 }

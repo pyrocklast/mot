@@ -1,6 +1,7 @@
 package io.github.pyrocklast.mot.launcher
 
 import android.annotation.SuppressLint
+import android.os.SystemClock
 import android.text.Editable
 import android.text.Spannable
 import android.text.TextWatcher
@@ -60,8 +61,12 @@ class Drawer(
     /** Showing Private Space's apps instead of yours. */
     private var inPrivateSpace = false
 
-    /** Private Space is being unlocked from the drawer: open it once it is. */
-    private var openPrivateSpaceWhenUnlocked = false
+    /**
+     * When Private Space was last unlocked from the drawer, to open it once it is. Cancelling
+     * Android's lock screen leaves this set, so it only counts for a short while, and never
+     * after the drawer is closed or opened again.
+     */
+    private var unlockRequestedAt = NO_REQUEST
     private val search = binding.search
     private val list = binding.appList
 
@@ -145,6 +150,7 @@ class Drawer(
         choosingFor = slot
         isOpen = true
         inPrivateSpace = false
+        unlockRequestedAt = NO_REQUEST
         search.text = null
         setSearchHint()
         update(typed = false)
@@ -167,7 +173,7 @@ class Drawer(
         isOpen = false
         choosingFor = null
         inPrivateSpace = false
-        openPrivateSpaceWhenUnlocked = false
+        unlockRequestedAt = NO_REQUEST
         keepOpenWhileAway = false
         menu.dismiss()
         hideKeyboard()
@@ -221,8 +227,10 @@ class Drawer(
         val space = repo.privateSpace.value
         val unlocked = space != null && !space.locked
         // Unlocked from here: go in. Locked (here, from quick settings or by Android): come out.
-        if (openPrivateSpaceWhenUnlocked && unlocked) {
-            openPrivateSpaceWhenUnlocked = false
+        val unlockRequested = unlockRequestedAt != NO_REQUEST &&
+            SystemClock.elapsedRealtime() - unlockRequestedAt < UNLOCK_WAIT_MS
+        if (unlockRequested && unlocked) {
+            unlockRequestedAt = NO_REQUEST
             showPrivateSpace(true)
             return
         }
@@ -234,13 +242,18 @@ class Drawer(
         val query = Search.normalize(search.text ?: "")
         val choosing = choosingFor != null
         val hidden = if (choosing) emptySet() else prefs.hiddenApps
+        val now = System.currentTimeMillis()
 
         // Your apps, then a small "Private space" row; or Private Space's apps, then "Lock".
         // The two never mix, in the list or in search.
         val rows = ArrayList<DrawerRow>()
-        apps.filter {
+        var matches = apps.filter {
             (it.profile == Profile.PRIVATE) == inPrivateSpace && it.appKey !in hidden && Search.matches(it.searchText, query)
-        }.mapTo(rows) { DrawerRow.App(it) }
+        }
+        // Searching, the names that start with what you typed come first, then those with a word
+        // that does, then the rest; alphabetical within each (the sort keeps the list's order)
+        if (query.isNotEmpty()) matches = matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
+        matches.mapTo(rows) { DrawerRow.App(it, isNew = it.isNew(now)) }
         if (query.isEmpty() && space != null) {
             rows += if (inPrivateSpace) DrawerRow.LockPrivateSpace else DrawerRow.OpenPrivateSpace(space.locked)
         }
@@ -263,7 +276,7 @@ class Drawer(
             is DrawerRow.OpenPrivateSpace -> {
                 if (row.locked) {
                     // Unlocking shows Android's lock screen; the drawer waits behind it, then goes in
-                    openPrivateSpaceWhenUnlocked = true
+                    unlockRequestedAt = SystemClock.elapsedRealtime()
                     keepOpenWhileAway = true
                     repo.setPrivateSpaceLocked(false)
                 } else showPrivateSpace(true)
@@ -361,6 +374,7 @@ class Drawer(
         const val BACK_SHRINK = 0.1f
         const val BACK_FADE = 0.4f
         const val OVERSCROLL_TO_CLOSE = 10
-
+        const val NO_REQUEST = -1L
+        const val UNLOCK_WAIT_MS = 60_000L
     }
 }

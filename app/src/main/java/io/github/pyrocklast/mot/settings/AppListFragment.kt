@@ -83,8 +83,10 @@ class AppListFragment : Fragment() {
         val binding = binding ?: return
         val apps = repo.apps.value.orEmpty()
         val rows = if (slot != null) {
+            // Best matches first, as in the drawer
             val query = Search.normalize(binding.search.text ?: "")
-            apps.filter { Search.matches(it.searchText, query) }
+            val matches = apps.filter { Search.matches(it.searchText, query) }
+            if (query.isEmpty()) matches else matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
         } else {
             apps.filter { it.appKey in listed }
         }

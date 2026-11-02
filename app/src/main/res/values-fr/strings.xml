@@ -3,8 +3,8 @@
     <!-- Écran d'accueil -->
     <string name="app_placeholder">Application</string>
     <string name="tips">Balayez vers le haut pour vos applications\nAppui long n\'importe où pour les paramètres</string>
-    <string name="set_as_home">Définir mot. comme application d\'accueil</string>
-    <string name="set_as_home_underlined"><u>Définir mot. comme application d\'accueil</u></string>
+    <string name="set_as_home">Définir mot launcher comme application d\'accueil</string>
+    <string name="set_as_home_underlined"><u>Définir mot launcher comme application d\'accueil</u></string>
     <string name="long_press_to_choose">Appui long pour choisir une application</string>
     <string name="action_open">Ouvrir</string>
     <string name="action_more_options">Plus d\'options</string>

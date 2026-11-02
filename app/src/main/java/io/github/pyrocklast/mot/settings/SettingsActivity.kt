@@ -13,7 +13,7 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.ActivitySettingsBinding
 
 /**
- * Mot's settings: an ordinary Android settings screen. It follows the phone's dark mode, font
+ * mot launcher's settings: an ordinary Android settings screen. It follows the phone's dark mode, font
  * and Material You colours; the launcher's own look applies to the home screen and drawer only.
  */
 class SettingsActivity : AppCompatActivity() {

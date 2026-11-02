@@ -1,6 +1,6 @@
 <img src="art/icon-outlined.svg" width="96" alt="">
 
-# mot.
+# mot launcher
 
 a **M**inimum **o**f **t**hings, a launcher.
 
@@ -12,12 +12,12 @@ For Android 15 and later, in English and French.
 
 - **Home screen:** up to 8 apps or shortcuts; the time and date in your language's format; the battery level after the date when the status bar is hidden.
 - **Gestures:** swipe up for your apps, down for notifications, left and right for two apps of your choice. Long press for settings.
-- **App drawer:** search that ignores accents and case, and opens the last app left. Rename, hide, app info and uninstall from a long press. Work apps are marked; Private Space opens as its own list.
+- **App drawer:** search that ignores accents and case, puts the best matches first, and opens the last app left. Rename, hide, app info and uninstall from a long press. Work apps are marked; Private Space opens as its own list.
 - **Look:** text colour that matches your wallpaper; font, weight and size for app names and for the clock, previewed on your wallpaper; settings that follow your phone's theme.
 
 ## Install
 
-Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium), or download the APK from [Releases](https://github.com/pyrocklast/mot/releases). Then set mot. as your Home app.
+Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium), or download the APK from [Releases](https://github.com/pyrocklast/mot/releases). Then set mot launcher as your Home app.
 
 ## Permissions
 

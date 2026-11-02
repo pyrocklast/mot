@@ -15,9 +15,12 @@ data class AppEntry(
     val ownLabel: String,
     val user: UserHandle,
     val profile: Profile,
-    /** Installed in the last hour: the drawer marks it. */
-    val isNew: Boolean,
+    /** When the app was installed (0 for shortcuts); the drawer marks it for a day. */
+    val installedAt: Long,
 ) {
+    /** Installed in the last 24 hours. */
+    fun isNew(now: Long): Boolean = installedAt > 0 && now - installedAt in 0 until NEW_FOR_MS
+
     val key: String get() = target.key
 
     /** For your name for it and hiding it; see [AppTarget.appKey]. */
@@ -25,4 +28,11 @@ data class AppEntry(
 
     /** The name prepared for search: lower case, no accents, no separators. */
     val searchText: String = Search.normalize(label)
+
+    /** Its words, prepared the same way, so search can put names whose words start with the query first. */
+    val searchWords: List<String> = Search.words(label)
+
+    private companion object {
+        const val NEW_FOR_MS = 24 * 60 * 60 * 1000L
+    }
 }

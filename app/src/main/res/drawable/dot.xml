@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Marks work apps in the drawer -->
+<!-- Marks work apps in the drawer, after their name -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
+    <size
+        android:width="5dp"
+        android:height="5dp" />
     <solid android:color="?attr/launcherTextColor" />
 </shape>
