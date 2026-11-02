@@ -1,3 +1,5 @@
+<img src="art/icon-outlined.svg" width="96" alt="">
+
 # mot.
 
 a **M**inimum **o**f **t**hings, a launcher.

@@ -2,6 +2,6 @@
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/icon_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
-    <!-- Themed icons (Android 13+) use the same lines in the system's colours -->
-    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+    <!-- Themed icons: the same drawing in one colour, tinted by Android -->
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>
