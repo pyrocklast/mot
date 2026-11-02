@@ -1,6 +1,6 @@
 # Mot
 
-**M**inimal, **O**pen, **T**ext (in French: **M**inimaliste, **O**uvert, **T**exte).
+a **M**inimum **o**f **t**hings
 
 A text-only launcher for Android 15 and later: your apps as words on your wallpaper, a clock and a date, and nothing else. No icons, no widgets, no internet access, no tracking.
 
