@@ -116,15 +116,15 @@ class HomeScreen(
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
         val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
-        // The names start under the clock, or near the top when it's hidden, and their gaps close
-        // up when that's what it takes to fit them all in
+        // The names start under the clock and date, or near the top when they're hidden, and each
+        // takes as little room as it can while staying easy to tap
         binding.homeApps.setPadding(
             binding.homeApps.paddingLeft,
             HomeFit.topPadding(context, prefs),
             binding.homeApps.paddingRight,
             HomeFit.bottomPadding(context),
         )
-        val namePadding = HomeFit.namePadding(context, prefs, count, binding.homeApps.height)
+        val namePadding = HomeFit.namePadding(context, prefs)
         appViews.forEachIndexed { index, view ->
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
