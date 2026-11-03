@@ -112,32 +112,8 @@ class HomeScreen(
         binding.homeApps.gravity = alignment or (if (prefs.homeAtBottom) Gravity.BOTTOM else Gravity.CENTER_VERTICAL)
         binding.clockBlock.gravity = alignment
 
-        val count = prefs.homeAppCount
-        while (appViews.size < count) appViews += newAppView(appViews.size)
-        while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
-        // The names start under the clock and date, or near the top when they're hidden; their
-        // gaps close up only when that's what it takes to fit them all in
-        binding.homeApps.setPadding(
-            binding.homeApps.paddingLeft,
-            HomeFit.topPadding(context, prefs),
-            binding.homeApps.paddingRight,
-            HomeFit.bottomPadding(context),
-        )
-        appViews.forEachIndexed { index, view ->
-            val target = prefs.homeApp(index)
-            view.text = target?.let { repo.nameFor(it) }.orEmpty()
-            view.gravity = alignment
-            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
-            view.typeface = nameTypeface
-        }
-        // How tall a name is comes from a name itself, now it has its size and font: an estimate
-        // a pixel or two short would cut the last one off
-        val measuredName = appViews.firstOrNull()?.lineHeight?.toFloat() ?: 0f
-        val namePadding = HomeFit.namePadding(context, prefs, count, measuredName, binding.homeApps.height)
-        appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
-
-        // With the status bar hidden, the clock and date move up into its space
+        // The clock and date first: where the names start depends on how tall they come out.
+        // With the status bar hidden, they move up into its space.
         (binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams).topMargin = HomeFit.clockTop(context, prefs)
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
@@ -148,11 +124,48 @@ class HomeScreen(
         binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
         updateDate()
 
+        val count = prefs.homeAppCount
+        while (appViews.size < count) appViews += newAppView(appViews.size)
+        while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
+        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
+        appViews.forEachIndexed { index, view ->
+            val target = prefs.homeApp(index)
+            view.text = target?.let { repo.nameFor(it) }.orEmpty()
+            view.gravity = alignment
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
+            view.typeface = nameTypeface
+            view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
+        }
+
+        // The names start below the clock and date, and their gaps close up only when that's what
+        // it takes to fit them all in. Both come from measuring: a name laid out a few pixels
+        // taller than expected would have the last one cut off.
+        binding.homeApps.setPadding(
+            binding.homeApps.paddingLeft,
+            HomeFit.topPadding(context, prefs, heightOf(binding.clockBlock)),
+            binding.homeApps.paddingRight,
+            HomeFit.bottomPadding(context),
+        )
+        val nameHeight = appViews.firstOrNull()?.let { heightOf(it) } ?: 0
+        val room = (if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()) -
+            binding.homeApps.paddingTop - binding.homeApps.paddingBottom
+        val namePadding = HomeFit.namePadding(context, count, nameHeight.toFloat(), room.toFloat())
+        appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
+
         // First run: how to reach the drawer and settings, and making mot launcher the Home app.
         // Afterwards settings has a row for that.
         binding.tips.isVisible = !prefs.settingsOpened
         binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
     }
+
+    // How tall a view comes out at its current text, size and font
+    private fun heightOf(view: View): Int {
+        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        view.measure(unspecified, unspecified)
+        return view.measuredHeight
+    }
+
+    private fun screenHeight(): Int = context.resources.displayMetrics.heightPixels
 
     private fun newAppView(index: Int): TextView {
         val view = LayoutInflater.from(binding.homeApps.context)

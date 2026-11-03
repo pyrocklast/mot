@@ -41,8 +41,8 @@ object HomeFit {
         lineHeight(context, R.dimen.app_name_size, prefs.appNameScale, prefs.nameFont, prefs.nameWeight)
 
     /**
-     * Where the names start: under the clock and date as they actually are, so they never run
-     * into them, or near the top of the screen when both are hidden.
+     * Where the names start when nothing has been measured yet: under the clock and date as this
+     * works them out, or near the top of the screen when both are hidden.
      */
     fun topPadding(context: Context, prefs: Prefs): Int {
         val time = if (prefs.showTime) lineHeight(context, R.dimen.clock_size, prefs.timeScale, prefs.timeFont, prefs.timeWeight) else 0f
@@ -55,20 +55,25 @@ object HomeFit {
 
     /**
      * The gap above and below each name: the usual one, and never more. It closes up only when
-     * [count] names wouldn't otherwise fit in [height] pixels of screen, and then only as far as
-     * it takes, down to a row that's still easy to tap.
+     * [count] names of [nameHeight] pixels wouldn't otherwise fit in [room], and then only as far
+     * as it takes, down to a row that's still easy to tap.
      *
-     * [measuredName] is how tall Android actually lays a name out, which the launcher can ask a
-     * name itself; [nameHeight] only estimates it, a little short.
+     * The launcher measures [nameHeight] and [room] rather than working them out: a name laid out
+     * a few pixels taller than expected would have the last one cut off.
      */
-    fun namePadding(context: Context, prefs: Prefs, count: Int, measuredName: Float = 0f, height: Int = 0): Int {
+    fun namePadding(context: Context, count: Int, nameHeight: Float, room: Float): Int {
         val usual = dp(context, USUAL_PADDING_DP)
-        if (count <= 0) return usual
-        val name = if (measuredName > 0f) measuredName else nameHeight(context, prefs)
-        val room = available(context, prefs, height) - dp(context, SAFETY_DP)
-        val toFit = floor((room / count - name) / 2).toInt()
-        val tightest = floor((maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), name) - name) / 2).toInt().coerceAtLeast(0)
+        if (count <= 0 || nameHeight <= 0f) return usual
+        val toFit = floor(((room - dp(context, SAFETY_DP)) / count - nameHeight) / 2).toInt()
+        val tightest = floor((maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), nameHeight) - nameHeight) / 2)
+            .toInt().coerceAtLeast(0)
         return toFit.coerceIn(tightest, usual)
+    }
+
+    /** Where the names start, under a clock and date that have been measured. */
+    fun topPadding(context: Context, prefs: Prefs, clockHeight: Int): Int {
+        if (!prefs.showTime && !prefs.showDate) return dp(context, ABOVE_NAVIGATION_DP)
+        return clockTop(context, prefs) + clockHeight + dp(context, UNDER_CLOCK_DP)
     }
 
     /** How many names fit on screen, with their gaps closed up as far as they go. */
