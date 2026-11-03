@@ -136,6 +136,7 @@ class LauncherActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         menu.dismiss()
+        home.cancelDrag()
         drawer.close()
     }
 

@@ -94,7 +94,7 @@ class HomeScreen(
         apps = { appViews },
         others = { listOf(binding.clockBlock) },
         onStart = { menu.dismiss() },
-        onRelease = { index -> if (!MENU_WHILE_HOLDING) homeAppMenu(appViews[index], index) },
+        onRelease = { index -> if (!MENU_WHILE_HOLDING) appViews.getOrNull(index)?.let { homeAppMenu(it, index) } },
         onMove = ::move,
     )
 

@@ -50,6 +50,12 @@ class HomeReorder(
     /** Handles a touch while a long press is armed. Returns true once it's moving an app. */
     fun onTouch(event: MotionEvent): Boolean {
         if (from == NONE) return false
+        // The home screen was redrawn under the finger (an app installed or removed, a setting
+        // changed): these aren't the names that were picked up, so let go of them
+        if (views != apps()) {
+            cancel()
+            return false
+        }
         when (event.actionMasked) {
             MotionEvent.ACTION_MOVE -> {
                 val dy = event.rawY - startY
@@ -135,7 +141,7 @@ class HomeReorder(
         val pressed = from
         fadeOthers(false)
         reset()
-        onRelease(pressed)
+        if (pressed in views.indices) onRelease(pressed)
     }
 
     private fun reset() {

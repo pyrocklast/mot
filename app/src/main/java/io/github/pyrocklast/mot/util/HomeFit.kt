@@ -61,12 +61,25 @@ object HomeFit {
      * The launcher measures [nameHeight] and [room] rather than working them out: a name laid out
      * a few pixels taller than expected would have the last one cut off.
      */
-    fun namePadding(context: Context, count: Int, nameHeight: Float, room: Float): Int {
-        val usual = dp(context, USUAL_PADDING_DP)
+    fun namePadding(context: Context, count: Int, nameHeight: Float, room: Float): Int = namePadding(
+        count = count,
+        nameHeight = nameHeight,
+        room = room,
+        usual = dp(context, USUAL_PADDING_DP),
+        touchTarget = dp(context, TOUCH_TARGET_DP),
+        safety = dp(context, SAFETY_DP),
+    )
+
+    /**
+     * The arithmetic behind the gap, in pixels, so it can be tested on its own. Small names stay
+     * under [usual] rather than being padded out to [touchTarget]: the row is then shorter than
+     * that, which is what asking for small names means.
+     */
+    internal fun namePadding(count: Int, nameHeight: Float, room: Float, usual: Int, touchTarget: Int, safety: Int): Int {
         if (count <= 0 || nameHeight <= 0f) return usual
-        val toFit = floor(((room - dp(context, SAFETY_DP)) / count - nameHeight) / 2).toInt()
-        val tightest = floor((maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), nameHeight) - nameHeight) / 2)
-            .toInt().coerceAtLeast(0)
+        val toFit = floor(((room - safety) / count - nameHeight) / 2).toInt()
+        val tightest = floor((maxOf(touchTarget.toFloat(), nameHeight) - nameHeight) / 2)
+            .toInt().coerceIn(0, usual)
         return toFit.coerceIn(tightest, usual)
     }
 
