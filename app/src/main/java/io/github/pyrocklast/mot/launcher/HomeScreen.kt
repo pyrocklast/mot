@@ -124,15 +124,18 @@ class HomeScreen(
             binding.homeApps.paddingRight,
             HomeFit.bottomPadding(context),
         )
-        val namePadding = HomeFit.namePadding(context, prefs, count)
         appViews.forEachIndexed { index, view ->
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
             view.gravity = alignment
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
             view.typeface = nameTypeface
-            view.setPadding(view.paddingLeft, namePadding, view.paddingRight, namePadding)
         }
+        // How tall a name is comes from a name itself, now it has its size and font: an estimate
+        // a pixel or two short would cut the last one off
+        val measuredName = appViews.firstOrNull()?.lineHeight?.toFloat() ?: 0f
+        val namePadding = HomeFit.namePadding(context, prefs, count, measuredName, binding.homeApps.height)
+        appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
 
         // With the status bar hidden, the clock and date move up into its space
         (binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams).topMargin = HomeFit.clockTop(context, prefs)

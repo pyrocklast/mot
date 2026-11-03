@@ -24,6 +24,9 @@ object HomeFit {
     /** The gap kept below the names, clear of the navigation bar. */
     private const val ABOVE_NAVIGATION_DP = 48
 
+    /** Left spare when closing the gaps up, so the last name can't end up a hair too low. */
+    private const val SAFETY_DP = 2
+
     /** How far down the clock sits, with the status bar shown and hidden, and the gap kept under it. */
     private const val CLOCK_TOP_DP = 56
     private const val CLOCK_TOP_NO_STATUS_BAR_DP = 32
@@ -52,15 +55,19 @@ object HomeFit {
 
     /**
      * The gap above and below each name: the usual one, and never more. It closes up only when
-     * [count] names wouldn't otherwise fit in the room there is, and then only as far as it takes,
-     * down to [tightestRow].
+     * [count] names wouldn't otherwise fit in [height] pixels of screen, and then only as far as
+     * it takes, down to a row that's still easy to tap.
+     *
+     * [measuredName] is how tall Android actually lays a name out, which the launcher can ask a
+     * name itself; [nameHeight] only estimates it, a little short.
      */
-    fun namePadding(context: Context, prefs: Prefs, count: Int): Int {
+    fun namePadding(context: Context, prefs: Prefs, count: Int, measuredName: Float = 0f, height: Int = 0): Int {
         val usual = dp(context, USUAL_PADDING_DP)
         if (count <= 0) return usual
-        val name = nameHeight(context, prefs)
-        val toFit = floor((available(context, prefs) / count - name) / 2).toInt()
-        val tightest = floor((tightestRow(context, prefs) - name) / 2).toInt().coerceAtLeast(0)
+        val name = if (measuredName > 0f) measuredName else nameHeight(context, prefs)
+        val room = available(context, prefs, height) - dp(context, SAFETY_DP)
+        val toFit = floor((room / count - name) / 2).toInt()
+        val tightest = floor((maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), name) - name) / 2).toInt().coerceAtLeast(0)
         return toFit.coerceIn(tightest, usual)
     }
 
@@ -75,9 +82,12 @@ object HomeFit {
     private fun tightestRow(context: Context, prefs: Prefs): Float =
         maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), nameHeight(context, prefs))
 
-    // The screen between the clock and the navigation bar
-    private fun available(context: Context, prefs: Prefs): Float =
-        (screenHeight(context) - topPadding(context, prefs) - bottomPadding(context)).toFloat().coerceAtLeast(0f)
+    // The room between the clock and the navigation bar: the launcher knows how tall its own
+    // window is, and settings works from the screen's, which is close enough
+    private fun available(context: Context, prefs: Prefs, height: Int = 0): Float {
+        val screen = if (height > 0) height else screenHeight(context)
+        return (screen - topPadding(context, prefs) - bottomPadding(context)).toFloat().coerceAtLeast(0f)
+    }
 
     private fun screenHeight(context: Context): Int = context.resources.displayMetrics.heightPixels
 
