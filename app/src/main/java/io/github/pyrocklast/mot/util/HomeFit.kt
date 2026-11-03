@@ -10,12 +10,15 @@ import kotlin.math.floor
 /**
  * How much room the home screen's names take, and how much it has for them. Text sizes follow
  * Android's font size as well as your own, so this measures them rather than assuming: the names
- * sit right under the clock whatever size it is, each takes as little room as it can, and settings
- * can say when a number of apps won't fit.
+ * sit right under the clock whatever size it is, the gaps between them close up when they would
+ * otherwise not fit, and settings can say when a number of apps won't fit even then.
  */
 object HomeFit {
 
-    /** A name is this easy to tap, and no taller, unless the text itself is taller. */
+    /** The gap above and below a name when there's room for it. */
+    private const val USUAL_PADDING_DP = 8
+
+    /** Closed up, a name is still this easy to tap, unless the text itself is taller. */
     private const val TOUCH_TARGET_DP = 50
 
     /** The gap kept below the names, clear of the navigation bar. */
@@ -47,19 +50,29 @@ object HomeFit {
 
     fun bottomPadding(context: Context): Int = dp(context, ABOVE_NAVIGATION_DP)
 
-    /** The gap above and below each name: just enough to keep its row [TOUCH_TARGET_DP] tall. */
-    fun namePadding(context: Context, prefs: Prefs): Int =
-        floor((row(context, prefs) - nameHeight(context, prefs)) / 2).toInt().coerceAtLeast(0)
+    /**
+     * The gap above and below each name: the usual one, and never more. It closes up only when
+     * [count] names wouldn't otherwise fit in the room there is, and then only as far as it takes,
+     * down to [tightestRow].
+     */
+    fun namePadding(context: Context, prefs: Prefs, count: Int): Int {
+        val usual = dp(context, USUAL_PADDING_DP)
+        if (count <= 0) return usual
+        val name = nameHeight(context, prefs)
+        val toFit = floor((available(context, prefs) / count - name) / 2).toInt()
+        val tightest = floor((tightestRow(context, prefs) - name) / 2).toInt().coerceAtLeast(0)
+        return toFit.coerceIn(tightest, usual)
+    }
 
-    /** How many names fit on screen. */
+    /** How many names fit on screen, with their gaps closed up as far as they go. */
     fun namesThatFit(context: Context, prefs: Prefs): Int {
-        val row = row(context, prefs)
+        val row = tightestRow(context, prefs)
         if (row <= 0f) return Prefs.MAX_HOME_APPS
         return floor(available(context, prefs) / row).toInt().coerceAtLeast(0)
     }
 
-    // A name's row: easy to tap, or the text itself where that's taller
-    private fun row(context: Context, prefs: Prefs): Float =
+    // The shortest a name's row goes: still easy to tap, or the text itself where that's taller
+    private fun tightestRow(context: Context, prefs: Prefs): Float =
         maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), nameHeight(context, prefs))
 
     // The screen between the clock and the navigation bar
