@@ -6,4 +6,7 @@
     <dimen name="clock_size">66sp</dimen>
     <dimen name="date_size">18sp</dimen>
     <dimen name="small_size">18sp</dimen>
+
+    <!-- The style screens' preview: room for the largest the time, date or three app names get -->
+    <dimen name="preview_height">216dp</dimen>
 </resources>
