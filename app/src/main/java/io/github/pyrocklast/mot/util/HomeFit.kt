@@ -15,9 +15,11 @@ import kotlin.math.floor
  */
 object HomeFit {
 
-    /** The gap above and below a name when there's room to spare, and the least it closes up to. */
+    /** The gap above and below a name when there's room to spare; it closes up to nothing when tight. */
     private const val ROOM_TO_SPARE_PADDING_DP = 10
-    private const val TIGHTEST_PADDING_DP = 2
+
+    /** However tight it gets, a name stays this easy to tap — unless the text alone is taller. */
+    private const val TOUCH_TARGET_DP = 50
 
     /** Where the names start when the clock is shown, and the gap kept below them. */
     private const val BELOW_CLOCK_DP = 112
@@ -51,23 +53,28 @@ object HomeFit {
     fun bottomPadding(context: Context): Int = dp(context, ABOVE_NAVIGATION_DP)
 
     /**
-     * The gap above and below each name: the usual one, closed up as far as [TIGHTEST_PADDING_DP]
+     * The gap above and below each name: the usual one, closed up as far as [tightestRow] allows
      * when [count] names wouldn't otherwise fit in [height] pixels of screen.
      */
     fun namePadding(context: Context, prefs: Prefs, count: Int, height: Int): Int {
         val roomToSpare = dp(context, ROOM_TO_SPARE_PADDING_DP)
         if (count <= 0) return roomToSpare
-        val room = available(context, prefs, height)
-        val fits = floor((room / count - nameHeight(context, prefs)) / 2).toInt()
-        return fits.coerceIn(dp(context, TIGHTEST_PADDING_DP), roomToSpare)
+        val name = nameHeight(context, prefs)
+        val fits = floor((available(context, prefs, height) / count - name) / 2).toInt()
+        val tightest = floor((tightestRow(context, prefs) - name) / 2).toInt()
+        return fits.coerceIn(tightest, roomToSpare)
     }
 
-    /** How many names fit on screen, with the gaps between them closed up as far as they go. */
+    /** How many names fit on screen, closed up as far as they go. */
     fun namesThatFit(context: Context, prefs: Prefs): Int {
-        val row = nameHeight(context, prefs) + 2 * dp(context, TIGHTEST_PADDING_DP)
+        val row = tightestRow(context, prefs)
         if (row <= 0f) return Prefs.MAX_HOME_APPS
         return floor(available(context, prefs, screenHeight(context)) / row).toInt().coerceAtLeast(0)
     }
+
+    // The shortest a name's row goes: still easy to tap, or the text itself where that's taller
+    private fun tightestRow(context: Context, prefs: Prefs): Float =
+        maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), nameHeight(context, prefs))
 
     // The screen between the clock and the navigation bar. Settings works from the screen's own
     // height, which is close enough to the launcher's window.
