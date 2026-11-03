@@ -48,13 +48,17 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
-    <!-- The discrete style marks each step. The bar's own padding is taken off at the sides so its
-         ends line up with the text above it. -->
+    <!-- The discrete style marks each step. The bar's ends sit at its padding, so the negative
+         margins pull them out to line up with the text above. (They're start and end margins
+         because Android ignores a negative layout_marginHorizontal.) -->
     <SeekBar
         android:id="@+id/slider"
         style="@android:style/Widget.Material.SeekBar.Discrete"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginHorizontal="-16dp" />
+        android:layout_marginStart="-16dp"
+        android:layout_marginEnd="-16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp" />
 
 </LinearLayout>

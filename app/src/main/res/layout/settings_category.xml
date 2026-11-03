@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A group's heading in a settings list, in the accent colour, with an optional line under it -->
+<!-- A group's heading in a settings list, with an optional note under it. Both are in the accent
+     colour, so the note reads as part of the heading rather than as a row's summary, and
+     TalkBack reads the two together as one heading. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:accessibilityHeading="true"
     android:orientation="vertical"
+    android:screenReaderFocusable="true"
     android:paddingStart="?android:attr/listPreferredItemPaddingStart"
     android:paddingTop="24dp"
     android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
@@ -15,7 +19,6 @@
         android:id="@android:id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:accessibilityHeading="true"
         android:fontFamily="sans-serif-medium"
         android:textColor="?android:attr/colorAccent"
         android:textSize="14sp" />
@@ -24,9 +27,8 @@
         android:id="@android:id/summary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textAppearance="?android:attr/textAppearanceListItemSecondary"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textColor="?android:attr/colorAccent"
+        android:textSize="12sp"
         android:visibility="gone" />
 
 </LinearLayout>
