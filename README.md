@@ -4,38 +4,38 @@
 
 a **M**inimum **o**f **t**hings, a launcher.
 
-Your apps as words on your wallpaper, with a clock and a date. No icons, no widgets, no internet access, no data collected.
+Your apps as words on your wallpaper, with the time and the date. No icons, no widgets, no internet, nothing collected.
 
-For Android 15 and later, in English and French.
+It's for Android 15 and up, in English and French.
 
-## Features
+## What it does
 
-- **Home screen:** up to 8 apps or shortcuts, moved by long pressing and dragging; the time and date in your language's format; the battery level after the date when the status bar is hidden.
-- **Gestures:** swipe up for your apps, down for notifications, left and right for two apps of your choice. Long press for settings.
-- **App drawer:** search that ignores accents and case, puts the best matches first, and opens the last app left. Rename, hide, app info and uninstall from a long press. Work apps are marked; Private Space opens as its own list.
-- **Look:** text colour that matches your wallpaper; font, weight and size for app names, the time and the date, each previewed on your wallpaper; settings that follow your phone's theme.
+- Up to 8 apps on the home screen. Long press and drag one to move it.
+- Swipe up for all your apps, down for notifications, left and right for two apps you pick. Long press anywhere for settings.
+- Tap the time or the date to open your clock or calendar, or any app you choose.
+- Search ignores accents and case, puts the best matches first, and opens the app once it's the only one left.
+- Long press an app to rename it, hide it or uninstall it. Work apps get a small dot, and Private Space has its own list.
+- Choose the font, weight and size of app names, the time and the date. You see the result on your wallpaper as you go.
+- The text colour matches your wallpaper. Settings follow your phone's theme.
+- With the status bar hidden, the battery level shows after the date.
 
 ## Install
 
-Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium), or download the APK from [Releases](https://github.com/pyrocklast/mot/releases). Then set mot launcher as your Home app.
+Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium), or get the APK from [Releases](https://github.com/pyrocklast/mot/releases). Then set mot launcher as your Home app.
 
 ## Permissions
 
-| Permission | Used for |
+| Permission | What for |
 |---|---|
 | Expand status bar | Opening notifications |
-| Request delete packages | Uninstalling apps from the drawer |
+| Request delete packages | Uninstalling apps |
 | Set alarm | Opening your alarms |
 | Access hidden profiles | Showing Private Space |
 
-## Building
-
-`./gradlew assembleRelease`, with JDK 17 or later and the Android SDK. To sign, add a `keystore.properties` file (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`). On GitHub, the Release workflow does this with the `KEYSTORE_BASE64` and `KEYSTORE_PASSWORD` secrets.
-
 ## Made with AI
 
-Written by Claude, Anthropic's AI assistant, with the repository's owner, who decided what it does and tests it on their phone. No person has reviewed the code line by line.
+Claude, Anthropic's AI, wrote the code. I decide what it does and test it on my phone. Nobody has gone through the code line by line.
 
 ## Licence
 
-[GNU GPLv3](LICENSE). Based on [Olauncher](https://github.com/tanujnotes/Olauncher) by [@tanujnotes](https://github.com/tanujnotes) and its contributors, and not affiliated with them.
+[GNU GPLv3](LICENSE). Based on [Olauncher](https://github.com/tanujnotes/Olauncher) by [@tanujnotes](https://github.com/tanujnotes) and its contributors. Not affiliated with them.
