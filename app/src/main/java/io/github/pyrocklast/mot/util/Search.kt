@@ -36,4 +36,21 @@ object Search {
         words.any { it.startsWith(normalizedQuery) } -> 1
         else -> 2
     }
+
+    /**
+     * Automatic launch is opt-in and requires at least two committed characters and one result.
+     */
+    fun shouldAutoOpenUniqueResult(
+        query: CharSequence,
+        resultCount: Int,
+        enabled: Boolean,
+        composing: Boolean,
+    ): Boolean {
+        val normalized = normalize(query)
+        return enabled &&
+            normalized.length >= 2 &&
+            resultCount == 1 &&
+            query.firstOrNull()?.isWhitespace() != true &&
+            !composing
+    }
 }

@@ -37,6 +37,24 @@ class SearchTest {
     }
 
     @Test
+    fun `automatic opening is opt in`() {
+        assertFalse(Search.shouldAutoOpenUniqueResult("maps", 1, enabled = false, composing = false))
+    }
+
+    @Test
+    fun `automatic opening needs two characters and exactly one result`() {
+        assertFalse(Search.shouldAutoOpenUniqueResult("m", 1, enabled = true, composing = false))
+        assertFalse(Search.shouldAutoOpenUniqueResult("ma", 2, enabled = true, composing = false))
+        assertTrue(Search.shouldAutoOpenUniqueResult("ma", 1, enabled = true, composing = false))
+    }
+
+    @Test
+    fun `automatic opening waits for committed input and rejects leading whitespace`() {
+        assertFalse(Search.shouldAutoOpenUniqueResult("maps", 1, enabled = true, composing = true))
+        assertFalse(Search.shouldAutoOpenUniqueResult(" maps", 1, enabled = true, composing = false))
+    }
+
+    @Test
     fun `normalises to plain lower case`() {
         assertEquals("cafecreme", Search.normalize("Café Crème"))
     }
