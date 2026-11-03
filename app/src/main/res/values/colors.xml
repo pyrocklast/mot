@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_background">#191919</color>
+
+    <!-- Settings groups: a step lighter than the page, from the phone's own (Material You)
+         palette. White on the light page; the dark version is in values-night. -->
+    <color name="settings_group">@android:color/system_surface_container_lowest_light</color>
 </resources>

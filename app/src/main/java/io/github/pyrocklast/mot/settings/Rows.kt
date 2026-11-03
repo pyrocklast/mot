@@ -23,12 +23,16 @@ class Rows(private val column: ViewGroup) {
     private fun inflate(@LayoutRes layout: Int): View =
         LayoutInflater.from(context).inflate(layout, column, false).also { column.addView(it) }
 
-    /** A heading, with the rows added in [rows] under it. */
-    fun category(@StringRes title: Int, @StringRes summary: Int = 0, rows: Rows.() -> Unit) {
-        val heading = Row(inflate(R.layout.settings_category))
-        heading.setTitle(title)
+    /**
+     * A group: rows on their own rounded surface, added in [rows], under an optional heading
+     * with an optional note.
+     */
+    fun group(@StringRes title: Int = 0, @StringRes summary: Int = 0, rows: Rows.() -> Unit) {
+        val group = inflate(R.layout.settings_group)
+        val heading = Row(group.findViewById(R.id.groupHeading))
+        if (title != 0) heading.setTitle(title) else heading.isVisible = false
         if (summary != 0) heading.summary = context.getString(summary)
-        rows()
+        Rows(group.findViewById(R.id.groupRows)).rows()
     }
 
     fun item(@StringRes title: Int, onClick: () -> Unit): Row {
@@ -82,10 +86,15 @@ open class Row(val view: View) {
             summaryView.isVisible = !value.isNullOrEmpty()
         }
 
+    /** A group whose rows are all hidden is hidden too, surface and heading with it. */
     var isVisible: Boolean
         get() = view.isVisible
         set(value) {
             view.isVisible = value
+            val groupRows = view.parent as? ViewGroup ?: return
+            if (groupRows.id != R.id.groupRows) return
+            val anyShown = (0 until groupRows.childCount).any { groupRows.getChildAt(it).isVisible }
+            (groupRows.parent as? View)?.isVisible = anyShown
         }
 
     /** A disabled row is greyed out (by its text colours' disabled state) and takes no taps. */

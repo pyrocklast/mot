@@ -105,7 +105,7 @@ class StyleActivity : SettingsScreen() {
             Element.DATE -> R.string.date
         }
         setUpFrame(binding.root, binding.appBar, binding.scroll, getString(title))
-        addRows(Rows(binding.rows))
+        Rows(binding.rows).group { addRows(this) }
         setUpPreview()
     }
 

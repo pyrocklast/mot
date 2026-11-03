@@ -71,12 +71,14 @@ class SettingsActivity : SettingsScreen() {
 
     private fun addRows(rows: Rows) = with(rows) {
         // First, until mot launcher is your Home app; afterwards changing it is rare, so it moves under About
-        setAsHome = item(R.string.set_as_home) {
-            Apps.homeRoleRequest(this@SettingsActivity)?.let { homeRoleRequest.launch(it) }
-                ?: Apps.openHomeSettings(this@SettingsActivity)
+        group {
+            setAsHome = item(R.string.set_as_home) {
+                Apps.homeRoleRequest(this@SettingsActivity)?.let { homeRoleRequest.launch(it) }
+                    ?: Apps.openHomeSettings(this@SettingsActivity)
+            }
         }
 
-        category(R.string.home_screen) {
+        group(R.string.home_screen) {
             homeAppCount = slider(R.string.number_of_apps, 0, Prefs.MAX_HOME_APPS, prefs.homeAppCount) {
                 prefs.homeAppCount = it
                 showHomeAppCountWarning()
@@ -89,12 +91,12 @@ class SettingsActivity : SettingsScreen() {
         }
 
         // Everything about each one on its own screen, with a preview of both
-        category(R.string.clock_and_date) {
+        group(R.string.clock_and_date) {
             time = item(R.string.time) { startActivity(StyleActivity.time(this@SettingsActivity)) }
             date = item(R.string.date) { startActivity(StyleActivity.date(this@SettingsActivity)) }
         }
 
-        category(R.string.app_drawer) {
+        group(R.string.app_drawer) {
             drawerAlignment = item(R.string.alignment) {
                 choose(R.string.drawer_alignment, alignments, prefs.drawerAlignment, ::alignmentLabel) { prefs.drawerAlignment = it }
             }
@@ -105,7 +107,7 @@ class SettingsActivity : SettingsScreen() {
         }
 
         // These change the home screen and drawer only; this screen keeps the phone's look
-        category(R.string.appearance, summary = R.string.appearance_summary) {
+        group(R.string.appearance, summary = R.string.appearance_summary) {
             textColour = item(R.string.text_colour) {
                 choose(R.string.text_colour, textColours, prefs.textColour, ::textColourLabel) { prefs.textColour = it }
             }
@@ -118,7 +120,7 @@ class SettingsActivity : SettingsScreen() {
         }
 
         // One row per swipe: the text chooses the app, the switch turns the swipe on or off
-        category(R.string.gestures) {
+        group(R.string.gestures) {
             swipeLeft = splitSwitch(R.string.swipe_left, prefs.swipeLeftOn, onChange = { prefs.swipeLeftOn = it }) {
                 chooseApp(R.string.swipe_left_opens, R.string.default_camera_app, prefs.swipeLeftApp, Slot.SwipeLeft)
             }
@@ -127,7 +129,7 @@ class SettingsActivity : SettingsScreen() {
             }
         }
 
-        category(R.string.about) {
+        group(R.string.about) {
             changeHome = item(R.string.change_home) { Apps.openHomeSettings(this@SettingsActivity) }
             item(R.string.app_info) {
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", BuildConfig.APPLICATION_ID, null))

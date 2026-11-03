@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings groups on the dark page: a step lighter than it -->
+    <color name="settings_group">@android:color/system_surface_container_high_dark</color>
+</resources>

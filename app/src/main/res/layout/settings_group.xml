@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A group of settings rows: an optional heading (with an optional note under it), then the
+     rows on a rounded surface (Rows.kt adds them to groupRows). Space between groups and the
+     surface behind each one, rather than lines, show which rows belong together. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="16dp"
+    tools:viewBindingIgnore="true">
+
+    <!-- Lines up with the rows' text: the surface's margin plus the rows' own padding.
+         TalkBack reads the heading and its note together, as one heading. -->
+    <LinearLayout
+        android:id="@+id/groupHeading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityHeading="true"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/settings_heading_inset"
+        android:paddingTop="8dp"
+        android:paddingEnd="@dimen/settings_heading_inset"
+        android:paddingBottom="8dp"
+        android:screenReaderFocusable="true">
+
+        <TextView
+            android:id="@android:id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="?android:attr/colorAccent"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@android:id/summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?android:attr/colorAccent"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- clipToOutline keeps the rows' touch ripples inside the rounded corners -->
+    <LinearLayout
+        android:id="@+id/groupRows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/settings_group_margin"
+        android:background="@drawable/settings_group"
+        android:clipToOutline="true"
+        android:orientation="vertical"
+        android:paddingVertical="4dp" />
+
+</LinearLayout>
