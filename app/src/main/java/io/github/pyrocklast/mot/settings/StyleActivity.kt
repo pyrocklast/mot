@@ -1,21 +1,15 @@
 package io.github.pyrocklast.mot.settings
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import androidx.appcompat.app.AlertDialog
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
-import io.github.pyrocklast.mot.databinding.FragmentStyleBinding
+import io.github.pyrocklast.mot.databinding.ActivityStyleBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.Look
@@ -31,22 +25,21 @@ import kotlin.math.roundToInt
  * The time and date screens preview both, so you can see how they go together. Everything applies
  * as you change it; the home screen and drawer use it when you go back.
  */
-class StyleFragment : PreferenceFragmentCompat() {
+class StyleActivity : SettingsScreen() {
 
     enum class Element { NAMES, TIME, DATE }
 
     private lateinit var prefs: Prefs
     private lateinit var repo: AppRepository
-    private var preview: FragmentStyleBinding? = null
-    private var dialog: AlertDialog? = null
-    private val element: Element by lazy { Element.entries[arguments?.getInt(ARG_ELEMENT) ?: 0] }
+    private lateinit var binding: ActivityStyleBinding
+    private val element: Element by lazy { Element.entries[intent.getIntExtra(EXTRA_ELEMENT, 0)] }
 
-    private var format: Preference? = null
-    private lateinit var font: Preference
-    private var opens: Preference? = null
+    private var format: Row? = null
+    private lateinit var font: Row
+    private var opens: Row? = null
 
     /** Every row but the switch: greyed out while the time or date is hidden. */
-    private val styleRows = ArrayList<Preference>()
+    private val styleRows = ArrayList<Row>()
 
     // The three styles are the same three settings, saved in different places
 
@@ -100,11 +93,23 @@ class StyleFragment : PreferenceFragmentCompat() {
             Element.DATE -> prefs.showDate
         }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        prefs = Prefs(requireContext())
-        repo = AppRepository.get(requireContext())
-        val screen = preferenceManager.createPreferenceScreen(preferenceManager.context)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        prefs = Prefs(this)
+        repo = AppRepository.get(this)
+        binding = ActivityStyleBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        val title = when (element) {
+            Element.NAMES -> R.string.app_names
+            Element.TIME -> R.string.time
+            Element.DATE -> R.string.date
+        }
+        setUpFrame(binding.root, binding.appBar, binding.scroll, getString(title))
+        addRows(Rows(binding.rows))
+        setUpPreview()
+    }
 
+    private fun addRows(screen: Rows) {
         when (element) {
             Element.NAMES -> Unit
             Element.TIME -> screen.switch(R.string.show_time, prefs.showTime) {
@@ -147,27 +152,9 @@ class StyleFragment : PreferenceFragmentCompat() {
             }
         }
         opens?.let { styleRows += it }
-
-        preferenceScreen = screen
     }
 
-    // The settings list goes under the preview
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val list = super.onCreateView(inflater, container, savedInstanceState)
-        val binding = FragmentStyleBinding.inflate(inflater, container, false)
-        binding.listContainer.addView(
-            list,
-            FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
-        )
-        preview = binding
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        listView.clipToPadding = false
-        listView.padForNavigationBar()
-        val binding = preview ?: return
+    private fun setUpPreview() {
         val names = element == Element.NAMES
         binding.namePreview.isVisible = names
         binding.clockPreview.isVisible = !names
@@ -176,40 +163,24 @@ class StyleFragment : PreferenceFragmentCompat() {
             binding.namePreview.gravity = prefs.homeAlignment
         }
         binding.clockPreview.gravity = prefs.homeAlignment or Gravity.CENTER_VERTICAL
-        val light = Look.lightText(requireContext(), prefs)
+        val light = Look.lightText(this, prefs)
         listOf(binding.namePreview, binding.previewClock, binding.previewDate).forEach { Look.applyTextColour(it, light) }
     }
 
     override fun onResume() {
         super.onResume()
-        (requireActivity() as SettingsActivity).setScreenTitle(
-            getString(
-                when (element) {
-                    Element.NAMES -> R.string.app_names
-                    Element.TIME -> R.string.time
-                    Element.DATE -> R.string.date
-                }
-            )
-        )
         update()
-    }
-
-    override fun onDestroyView() {
-        dialog?.dismiss()
-        dialog = null
-        preview = null
-        super.onDestroyView()
     }
 
     /** Shows the current value of every row, and the preview. */
     private fun update() {
         val on = isShown
         styleRows.forEach { it.isEnabled = on }
-        format?.summary = DateText.date(requireContext(), prefs.dateStyle)
+        format?.summary = DateText.date(this, prefs.dateStyle)
         font.summary = getString(fontLabel(fontValue))
         opens?.summary = when (element) {
-            Element.TIME -> requireContext().appName(repo, prefs.clockApp, R.string.default_clock_app)
-            else -> requireContext().appName(repo, prefs.calendarApp, R.string.default_calendar_app)
+            Element.TIME -> appName(repo, prefs.clockApp, R.string.default_clock_app)
+            else -> appName(repo, prefs.calendarApp, R.string.default_calendar_app)
         }
         showPreview()
     }
@@ -217,7 +188,6 @@ class StyleFragment : PreferenceFragmentCompat() {
     // The time and date each in their own style, showing exactly what the home screen shows:
     // either of them switched off is gone from the preview too.
     private fun showPreview() {
-        val binding = preview ?: return
         val res = resources
         if (element == Element.NAMES) {
             binding.namePreview.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
@@ -228,7 +198,7 @@ class StyleFragment : PreferenceFragmentCompat() {
         binding.previewClock.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.clock_size) * prefs.timeScale)
         binding.previewDate.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
         binding.previewDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.date_size) * prefs.dateScale)
-        binding.previewDate.text = DateText.date(requireContext(), prefs.dateStyle)
+        binding.previewDate.text = DateText.date(this, prefs.dateStyle)
 
         binding.previewClock.isVisible = prefs.showTime
         binding.previewDate.isVisible = prefs.showDate
@@ -238,8 +208,7 @@ class StyleFragment : PreferenceFragmentCompat() {
 
     private fun chooseFont() {
         val labels = Array<CharSequence>(Look.FONTS.size) { getString(fontLabel(Look.FONTS[it])) }
-        dialog?.dismiss()
-        dialog = choiceDialog(R.string.font, labels, Look.FONTS.indexOf(fontValue)) { which ->
+        choiceDialog(R.string.font, labels, Look.FONTS.indexOf(fontValue)) { which ->
             fontValue = Look.FONTS[which]
             update()
         }
@@ -247,9 +216,8 @@ class StyleFragment : PreferenceFragmentCompat() {
 
     // Each format shown as today's date
     private fun chooseFormat() {
-        val labels = Array<CharSequence>(DATE_FORMATS.size) { DateText.date(requireContext(), DATE_FORMATS[it]) }
-        dialog?.dismiss()
-        dialog = choiceDialog(R.string.date_format, labels, DATE_FORMATS.indexOf(prefs.dateStyle)) { which ->
+        val labels = Array<CharSequence>(DATE_FORMATS.size) { DateText.date(this, DATE_FORMATS[it]) }
+        choiceDialog(R.string.date_format, labels, DATE_FORMATS.indexOf(prefs.dateStyle)) { which ->
             prefs.dateStyle = DATE_FORMATS[which]
             update()
         }
@@ -257,8 +225,7 @@ class StyleFragment : PreferenceFragmentCompat() {
 
     private fun chooseApp(title: Int, defaultLabel: Int, slot: Slot) {
         val current = if (slot == Slot.Clock) prefs.clockApp else prefs.calendarApp
-        dialog?.dismiss()
-        dialog = appChoiceDialog(prefs, title, defaultLabel, current, slot) { update() }
+        appChoiceDialog(prefs, title, defaultLabel, current, slot) { update() }
     }
 
     // Up to three of your home apps, or mot launcher's name when none is set
@@ -270,15 +237,16 @@ class StyleFragment : PreferenceFragmentCompat() {
     private fun IntArray.indexOfNearest(value: Int): Int = indices.minBy { kotlin.math.abs(this[it] - value) }
 
     companion object {
-        private const val ARG_ELEMENT = "element"
+        private const val EXTRA_ELEMENT = "element"
         private val DATE_FORMATS = intArrayOf(Prefs.DATE_SHORT, Prefs.DATE_FULL, Prefs.DATE_NUMERIC)
 
-        fun appNames() = of(Element.NAMES)
+        fun appNames(context: Context) = of(context, Element.NAMES)
 
-        fun time() = of(Element.TIME)
+        fun time(context: Context) = of(context, Element.TIME)
 
-        fun date() = of(Element.DATE)
+        fun date(context: Context) = of(context, Element.DATE)
 
-        private fun of(element: Element) = StyleFragment().apply { arguments = bundleOf(ARG_ELEMENT to element.ordinal) }
+        private fun of(context: Context, element: Element) =
+            Intent(context, StyleActivity::class.java).putExtra(EXTRA_ELEMENT, element.ordinal)
     }
 }

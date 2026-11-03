@@ -1,17 +1,15 @@
 package io.github.pyrocklast.mot.launcher
 
+import android.app.Activity
+import android.app.AlertDialog
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.PopupMenu
-import androidx.core.view.MenuCompat
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppEntry
 import io.github.pyrocklast.mot.data.AppRepository
@@ -25,7 +23,7 @@ import io.github.pyrocklast.mot.util.Apps
  * and leaves out Hide, which is about the drawer.
  */
 class AppMenu(
-    private val activity: AppCompatActivity,
+    private val activity: Activity,
     private val prefs: Prefs,
     private val repo: AppRepository,
 ) {
@@ -57,7 +55,7 @@ class AppMenu(
         if (!shortcut && canHide) menu.menu.add(GROUP_APP, HIDE, order + 1, R.string.hide)
         menu.menu.add(GROUP_APP, INFO, order + 2, R.string.app_info)
         menu.menu.add(GROUP_APP, REMOVE, order + 3, if (shortcut) R.string.remove else R.string.uninstall)
-        MenuCompat.setGroupDividerEnabled(menu.menu, extras.isNotEmpty())
+        menu.menu.setGroupDividerEnabled(extras.isNotEmpty())
         menu.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 RENAME -> rename(entry)
@@ -81,9 +79,9 @@ class AppMenu(
 
     // A new name shows everywhere the app is: drawer, home screen and settings
     private fun rename(entry: AppEntry) {
-        val builder = MaterialAlertDialogBuilder(activity)
+        val builder = AlertDialog.Builder(activity)
         val rename = DialogRenameBinding.inflate(LayoutInflater.from(builder.context))
-        rename.nameLayout.hint = entry.ownLabel
+        rename.name.hint = entry.ownLabel
         rename.name.setText(entry.label)
         rename.name.setSelectAllOnFocus(true)
 

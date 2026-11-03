@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Settings, menus and dialogs: plain Material 3, following the phone's dark mode, with
-         Material You colours (MotApp) -->
-    <style name="Theme.Mot" parent="Theme.Material3.DayNight.NoActionBar" />
+    <!-- Settings, menus and dialogs: Android's own look, following the phone's dark mode and,
+         on phones that have them, its Material You colours. No title bar from the theme: each
+         settings screen has its own. -->
+    <style name="Theme.Mot" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
 
     <!-- Settings: the same, over your wallpaper, which shows through the style screens' previews.
          Each settings screen has its own background. -->
@@ -14,7 +18,7 @@
 
     <!-- The launcher: text over your wallpaper, edge to edge. Light text by default; the overlays
          below switch it to dark text, or to bolder names. -->
-    <style name="Theme.Mot.Launcher" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.Mot.Launcher" parent="Theme.Mot">
         <item name="android:windowShowWallpaper">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:colorBackgroundCacheHint">@null</item>

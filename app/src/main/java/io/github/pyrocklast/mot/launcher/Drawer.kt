@@ -1,6 +1,7 @@
 package io.github.pyrocklast.mot.launcher
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.os.SystemClock
 import android.text.Editable
 import android.text.Spannable
@@ -12,7 +13,6 @@ import android.view.View
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -37,7 +37,7 @@ import io.github.pyrocklast.mot.util.Search
  * [open] is given a [Slot], for choosing the app that spot opens.
  */
 class Drawer(
-    private val activity: AppCompatActivity,
+    private val activity: Activity,
     private val binding: ActivityLauncherBinding,
     private val prefs: Prefs,
     private val repo: AppRepository,

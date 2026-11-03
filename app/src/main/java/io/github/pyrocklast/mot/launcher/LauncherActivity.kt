@@ -6,9 +6,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.BackEventCompat
+import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
  * mot launcher's launcher: the home screen, with the app drawer as a panel over it. Settings is a
  * separate, ordinary activity, so it follows the phone's theme while this one uses yours.
  */
-class LauncherActivity : AppCompatActivity() {
+class LauncherActivity : ComponentActivity() {
 
     private lateinit var prefs: Prefs
     private lateinit var repo: AppRepository
