@@ -78,7 +78,8 @@ jobs:
           ./gradlew assembleRelease "-PmotVersionName=$VERSION" "-PmotVersionCode=$CODE"
           apk=app/build/outputs/apk/release/app-release.apk
           test -s "$apk"
-          jarsigner -verify -strict -certs "$apk"
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          "$build_tools/apksigner" verify --verbose "$apk"
 
       - name: Publish the release
         env:
