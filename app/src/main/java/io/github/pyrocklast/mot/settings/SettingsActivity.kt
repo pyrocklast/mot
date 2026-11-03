@@ -90,12 +90,6 @@ class SettingsActivity : SettingsScreen() {
             homeAtBottom = switch(R.string.align_bottom, prefs.homeAtBottom) { prefs.homeAtBottom = it }
         }
 
-        // Everything about each one on its own screen, with a preview of both
-        group(R.string.clock_and_date) {
-            time = item(R.string.time) { startActivity(StyleActivity.time(this@SettingsActivity)) }
-            date = item(R.string.date) { startActivity(StyleActivity.date(this@SettingsActivity)) }
-        }
-
         group(R.string.app_drawer) {
             drawerAlignment = item(R.string.alignment) {
                 choose(R.string.drawer_alignment, alignments, prefs.drawerAlignment, ::alignmentLabel) { prefs.drawerAlignment = it }
@@ -106,13 +100,16 @@ class SettingsActivity : SettingsScreen() {
             privateSpace = item(R.string.private_space) { Apps.openPrivateSpaceSettings(this@SettingsActivity) }
         }
 
-        // These change the home screen and drawer only; this screen keeps the phone's look
+        // How the home screen and drawer look (this screen keeps the phone's look). App names, the
+        // time and the date each have their own screen, with a preview, for font, weight and size;
+        // the time's and date's screens also set what tapping them opens.
         group(R.string.appearance, summary = R.string.appearance_summary) {
             textColour = item(R.string.text_colour) {
                 choose(R.string.text_colour, textColours, prefs.textColour, ::textColourLabel) { prefs.textColour = it }
             }
-            // Font, weight and size, with a preview
             nameStyle = item(R.string.app_names) { startActivity(StyleActivity.appNames(this@SettingsActivity)) }
+            time = item(R.string.time) { startActivity(StyleActivity.time(this@SettingsActivity)) }
+            date = item(R.string.date) { startActivity(StyleActivity.date(this@SettingsActivity)) }
             statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
                 prefs.showStatusBar = it
                 refresh()
