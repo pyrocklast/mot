@@ -7,10 +7,10 @@ import org.junit.Test
 /** The gap above and below a home app name, in pixels. Sizes here are a phone's: 2.75 pixels to the dp. */
 class HomeFitTest {
 
-    private val usual = 22      // 8dp
-    private val touchTarget = 137 // 50dp
-    private val safety = 5      // 2dp
-    private val room = 1700f    // the screen under the clock
+    private val usual = 22        // 8dp
+    private val touchTarget = 132 // 48dp
+    private val safety = 5        // 2dp
+    private val room = 1700f      // the screen under the clock
 
     private fun gap(count: Int, nameHeight: Float, room: Float = this.room) =
         HomeFit.namePadding(count, nameHeight, room, usual, touchTarget, safety)
@@ -23,23 +23,21 @@ class HomeFitTest {
 
     @Test
     fun `tight, the gap closes up by just enough`() {
-        // 12 names of 109px need 1308px; the 392px left over is 16px above and below each
+        // 12 names of 109px need 1308px; the rest is 16px above and below each
         assertEquals(16, gap(count = 12, nameHeight = 109f))
     }
 
     @Test
     fun `tighter than the names fit, the gap stops at a row you can still tap`() {
-        assertEquals(14, gap(count = 20, nameHeight = 109f))
-        assertEquals(0, gap(count = 20, nameHeight = 164f))
+        assertEquals(11, gap(count = 20, nameHeight = 109f))  // an 11px gap makes the row 48dp
+        assertEquals(0, gap(count = 20, nameHeight = 164f))   // taller than 48dp on its own
     }
 
     @Test
-    fun `small names are never padded out past the usual gap`() {
-        // A short name would need 41px of padding to make a 50dp row: that's not a reason to
-        // spread names out, and asking for one bigger than the gap used to crash
-        assertEquals(usual, gap(count = 4, nameHeight = 54f))
-        assertEquals(usual, gap(count = 40, nameHeight = 54f))
-        assertEquals(usual, gap(count = 4, nameHeight = 87f))
+    fun `small names are padded out to a row you can tap, even past the usual gap`() {
+        assertEquals(39, gap(count = 4, nameHeight = 54f))    // 54 + 2 x 39 = 48dp
+        assertEquals(39, gap(count = 40, nameHeight = 54f))   // and no tighter, however many there are
+        assertEquals(22, gap(count = 4, nameHeight = 87f))
     }
 
     @Test
@@ -50,6 +48,6 @@ class HomeFitTest {
 
     @Test
     fun `before the screen is measured, the gap is as tight as it goes`() {
-        assertEquals(14, gap(count = 4, nameHeight = 109f, room = 0f))
+        assertEquals(11, gap(count = 4, nameHeight = 109f, room = 0f))
     }
 }

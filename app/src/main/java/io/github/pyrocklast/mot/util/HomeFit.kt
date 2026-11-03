@@ -18,8 +18,8 @@ object HomeFit {
     /** The gap above and below a name when there's room for it. */
     private const val USUAL_PADDING_DP = 8
 
-    /** Closed up, a name is still this easy to tap, unless the text itself is taller. */
-    private const val TOUCH_TARGET_DP = 50
+    /** A name's row is never shorter than this, so it's always easy to tap, however small the text. */
+    private const val TOUCH_TARGET_DP = 48
 
     /** The gap kept below the names, clear of the navigation bar. */
     private const val ABOVE_NAVIGATION_DP = 48
@@ -71,16 +71,15 @@ object HomeFit {
     )
 
     /**
-     * The arithmetic behind the gap, in pixels, so it can be tested on its own. Small names stay
-     * under [usual] rather than being padded out to [touchTarget]: the row is then shorter than
-     * that, which is what asking for small names means.
+     * The arithmetic behind the gap, in pixels, so it can be tested on its own. A row is always
+     * at least [touchTarget] tall, so a small name is padded out to it even where that's more
+     * than [usual]; a name taller than that needs no gap at all.
      */
     internal fun namePadding(count: Int, nameHeight: Float, room: Float, usual: Int, touchTarget: Int, safety: Int): Int {
         if (count <= 0 || nameHeight <= 0f) return usual
+        val leastForTouch = floor((maxOf(touchTarget.toFloat(), nameHeight) - nameHeight) / 2).toInt().coerceAtLeast(0)
         val toFit = floor(((room - safety) / count - nameHeight) / 2).toInt()
-        val tightest = floor((maxOf(touchTarget.toFloat(), nameHeight) - nameHeight) / 2)
-            .toInt().coerceIn(0, usual)
-        return toFit.coerceIn(tightest, usual)
+        return toFit.coerceIn(leastForTouch, maxOf(usual, leastForTouch))
     }
 
     /** Where the names start, under a clock and date that have been measured. */
@@ -96,7 +95,7 @@ object HomeFit {
         return floor(available(context, prefs) / row).toInt().coerceAtLeast(0)
     }
 
-    // The shortest a name's row goes: still easy to tap, or the text itself where that's taller
+    // The shortest a name's row goes: easy to tap, or the text itself where that's taller
     private fun tightestRow(context: Context, prefs: Prefs): Float =
         maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), nameHeight(context, prefs))
 
