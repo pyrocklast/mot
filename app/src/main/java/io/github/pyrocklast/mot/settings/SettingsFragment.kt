@@ -89,6 +89,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 choose(R.string.drawer_alignment, alignments, prefs.drawerAlignment, ::alignmentLabel) { prefs.drawerAlignment = it }
             }
             switch(R.string.show_keyboard, prefs.autoKeyboard) { prefs.autoKeyboard = it }
+            switch(R.string.auto_open_single_result, prefs.autoOpenSingleResult) {
+                prefs.autoOpenSingleResult = it
+            }.summary = getString(R.string.auto_open_single_result_summary)
             hiddenApps = item(R.string.hidden_apps) { settings().show(AppListFragment.hiddenApps()) }
             // Private Space is set up in Android's settings; its apps show at the end of the drawer
             privateSpace = item(R.string.private_space) { Apps.openPrivateSpaceSettings(requireContext()) }
