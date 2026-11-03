@@ -53,6 +53,7 @@
 
     <string name="home_screen">Écran d\'accueil</string>
     <string name="number_of_apps">Nombre d\'applications</string>
+    <string name="too_many_apps">À cette taille de nom, elles ne tiennent pas toutes à l\'écran</string>
     <string name="alignment">Alignement</string>
     <string name="home_alignment">Alignement de l\'écran d\'accueil</string>
     <string name="align_bottom">Aligner les applications en bas</string>

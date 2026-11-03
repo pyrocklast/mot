@@ -60,6 +60,8 @@
 
     <string name="home_screen">Home screen</string>
     <string name="number_of_apps">Number of apps</string>
+    <!-- Under Number of apps, when they don't all fit at the current app name size -->
+    <string name="too_many_apps">At this name size, not all of them fit on your screen</string>
     <string name="alignment">Alignment</string>
     <string name="home_alignment">Home screen alignment</string>
     <string name="align_bottom">Align apps to the bottom</string>

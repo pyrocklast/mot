@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.AccessibilityDelegateCompat
@@ -27,6 +28,7 @@ import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.DefaultApp
+import io.github.pyrocklast.mot.util.HomeFit
 import io.github.pyrocklast.mot.util.Look
 import kotlin.math.abs
 
@@ -114,14 +116,26 @@ class HomeScreen(
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
         val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
+        // The names start under the clock, or near the top when it's hidden, and their gaps close
+        // up when that's what it takes to fit them all in
+        binding.homeApps.setPadding(
+            binding.homeApps.paddingLeft,
+            HomeFit.topPadding(context, prefs),
+            binding.homeApps.paddingRight,
+            HomeFit.bottomPadding(context),
+        )
+        val namePadding = HomeFit.namePadding(context, prefs, count, binding.homeApps.height)
         appViews.forEachIndexed { index, view ->
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
             view.gravity = alignment
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
             view.typeface = nameTypeface
+            view.setPadding(view.paddingLeft, namePadding, view.paddingRight, namePadding)
         }
 
+        // With the status bar hidden, the clock and date move up into its space
+        (binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams).topMargin = HomeFit.clockTop(context, prefs)
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         // The time and the date each have their own style

@@ -36,6 +36,7 @@
                 tools:text="lun. 2 nov." />
         </LinearLayout>
 
+        <!-- The top and bottom padding are set in code, from how tall the clock and names are -->
         <LinearLayout
             android:id="@+id/homeApps"
             android:layout_width="match_parent"
@@ -44,7 +45,8 @@
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
             android:paddingTop="112dp"
-            android:paddingBottom="48dp" />
+            android:paddingBottom="48dp"
+            tools:ignore="RtlSymmetry" />
 
         <TextView
             android:id="@+id/tips"

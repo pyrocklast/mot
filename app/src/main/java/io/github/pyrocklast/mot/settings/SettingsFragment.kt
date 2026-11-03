@@ -21,6 +21,7 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
+import io.github.pyrocklast.mot.util.HomeFit
 
 /**
  * The settings list, grouped by the part of the home screen each setting changes. Preferences
@@ -156,6 +157,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
         changeHome.isVisible = isHome
 
         homeAppCount.value = prefs.homeAppCount
+        // Big names on a small screen: say so rather than quietly cutting the list off
+        val fit = HomeFit.namesThatFit(requireContext(), prefs)
+        homeAppCount.summary = if (prefs.homeAppCount > fit) getString(R.string.too_many_apps) else null
         homeAlignment.summary = getString(alignmentLabel(prefs.homeAlignment))
         homeAtBottom.isChecked = prefs.homeAtBottom
 

@@ -37,6 +37,17 @@
             android:textColor="?android:attr/textColorSecondary" />
     </LinearLayout>
 
+    <!-- Shown only when the row has a summary, e.g. a warning about the value chosen -->
+    <TextView
+        android:id="@android:id/summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textAppearance="?android:attr/textAppearanceListItemSecondary"
+        android:textColor="?android:attr/textColorSecondary"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
     <com.google.android.material.slider.Slider
         android:id="@+id/slider"
         android:layout_width="match_parent"
