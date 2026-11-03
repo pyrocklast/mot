@@ -173,7 +173,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         drawerAlignment.summary = getString(alignmentLabel(prefs.drawerAlignment))
         // Only apps still installed (the list keeps apps you uninstalled while hidden)
         val hiddenKeys = prefs.hiddenApps
-        val hidden = repo.apps.value?.map { it.appKey }?.distinct()?.count { it in hiddenKeys } ?: hiddenKeys.size
+        val hidden = repo.apps.value?.mapNotNullTo(HashSet()) { it.appKey.takeIf { key -> key in hiddenKeys } }?.size
+            ?: hiddenKeys.size
         hiddenApps.summary = if (hidden == 0) getString(R.string.none) else resources.getQuantityString(R.plurals.app_count, hidden, hidden)
         // Android only shows Private Space to the Home app, so it's unknown until mot launcher is the Home app
         privateSpace.summary = repo.privateSpace.value?.let {

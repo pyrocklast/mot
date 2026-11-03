@@ -228,8 +228,10 @@ class HomeScreen(
     }
 
     private fun viewAt(event: MotionEvent): View? {
-        val candidates = appViews + listOf(binding.clock, binding.date)
-        return candidates.firstOrNull { it.isVisible && it.contains(event.rawX, event.rawY) }
+        appViews.forEach { if (it.isVisible && it.contains(event.rawX, event.rawY)) return it }
+        if (binding.clock.isVisible && binding.clock.contains(event.rawX, event.rawY)) return binding.clock
+        if (binding.date.isVisible && binding.date.contains(event.rawX, event.rawY)) return binding.date
+        return null
     }
 
     private fun tap(view: View?) {

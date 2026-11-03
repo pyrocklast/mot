@@ -43,12 +43,16 @@ class AppListFragment : Fragment() {
     // be turned back on
     private var listed: Set<String> = emptySet()
 
+    /** Which apps are hidden now, read once rather than for every row drawn. */
+    private var hidden: Set<String> = emptySet()
+
     private val adapter = Adapter()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         prefs = Prefs(requireContext())
         repo = AppRepository.get(requireContext())
         listed = prefs.hiddenApps
+        hidden = listed
         return FragmentAppListBinding.inflate(inflater, container, false).also { binding = it }.root
     }
 
@@ -81,6 +85,7 @@ class AppListFragment : Fragment() {
 
     private fun update() {
         val binding = binding ?: return
+        hidden = prefs.hiddenApps
         val apps = repo.apps.value.orEmpty()
         val rows = if (slot != null) {
             // Best matches first, as in the drawer
@@ -104,8 +109,9 @@ class AppListFragment : Fragment() {
         }
     }
 
-    private fun setHidden(entry: AppEntry, hidden: Boolean) {
-        prefs.hiddenApps = if (hidden) prefs.hiddenApps + entry.appKey else prefs.hiddenApps - entry.appKey
+    private fun setHidden(entry: AppEntry, hide: Boolean) {
+        hidden = if (hide) hidden + entry.appKey else hidden - entry.appKey
+        prefs.hiddenApps = hidden
     }
 
     private inner class Adapter : ListAdapter<AppEntry, Adapter.Holder>(Diff) {
@@ -137,7 +143,7 @@ class AppListFragment : Fragment() {
             val switch = holder.binding.hidden
             switch.isVisible = slot == null
             switch.setOnCheckedChangeListener(null)
-            switch.isChecked = entry.appKey in prefs.hiddenApps
+            switch.isChecked = entry.appKey in hidden
             switch.contentDescription = getString(R.string.hide_app, entry.label)
             switch.setOnCheckedChangeListener { _, checked -> setHidden(entry, checked) }
         }

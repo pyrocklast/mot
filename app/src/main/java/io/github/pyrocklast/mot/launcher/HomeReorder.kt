@@ -38,7 +38,9 @@ class HomeReorder(
      * [lift], the app picks up straight away (when the menu waits for the finger to lift).
      */
     fun arm(index: Int, rawY: Float, lift: Boolean) {
-        views = apps()
+        // A copy: the home screen's own list changes under us when it's redrawn, and comparing
+        // against it is how a drag knows to let go
+        views = ArrayList(apps())
         if (index !in views.indices) return
         from = index
         to = index
