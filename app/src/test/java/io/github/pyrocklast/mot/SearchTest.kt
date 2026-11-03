@@ -37,6 +37,19 @@ class SearchTest {
     }
 
     @Test
+    fun `typing until one app is left opens it, from two letters on`() {
+        assertFalse(Search.opensOnlyMatch("m", matches = 1, composing = false))
+        assertTrue(Search.opensOnlyMatch("ma", matches = 1, composing = false))
+        assertFalse(Search.opensOnlyMatch("ma", matches = 2, composing = false))
+    }
+
+    @Test
+    fun `a half-typed word, or a search that starts with a space, opens nothing`() {
+        assertFalse(Search.opensOnlyMatch("maps", matches = 1, composing = true))
+        assertFalse(Search.opensOnlyMatch(" maps", matches = 1, composing = false))
+    }
+
+    @Test
     fun `normalises to plain lower case`() {
         assertEquals("cafecreme", Search.normalize("Café Crème"))
     }

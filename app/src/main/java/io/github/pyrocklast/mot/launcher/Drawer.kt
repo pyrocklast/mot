@@ -272,10 +272,10 @@ class Drawer(
         }
     }
 
-    // Typing until one app is left opens it, unless the search starts with a space
+    // Typing until one app is left opens it, from two letters on
     private fun maybeOpenOnlyMatch() {
-        val text = search.text?.toString().orEmpty()
-        if (text.isEmpty() || text.startsWith(" ") || isComposingCjk()) return
+        val query = search.text?.toString().orEmpty()
+        if (!Search.opensOnlyMatch(query, adapter.currentList.size, isComposingCjk())) return
         val only = adapter.currentList.singleOrNull() as? DrawerRow.App ?: return
         onRowClick(only, search)
     }
