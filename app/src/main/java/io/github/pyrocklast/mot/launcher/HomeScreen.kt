@@ -23,6 +23,7 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.Accessibilit
 import androidx.core.view.isVisible
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
+import io.github.pyrocklast.mot.data.AppTarget
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.util.Apps
@@ -47,6 +48,10 @@ class HomeScreen(
     private val requestHomeRole: () -> Unit,
 ) {
     private val appViews = ArrayList<TextView>()
+
+    // Where the system bars are, until Android says otherwise: the home screen draws under them
+    private var topInset = (24 * context.resources.displayMetrics.density).toInt()
+    private var bottomInset = (40 * context.resources.displayMetrics.density).toInt()
     private val config = ViewConfiguration.get(context)
     private val minSwipeDistance = SWIPE_DISTANCE_DP * context.resources.displayMetrics.density
     private val appNameSize = context.resources.getDimension(R.dimen.app_name_size)
@@ -114,7 +119,7 @@ class HomeScreen(
 
         // The clock and date first: where the names start depends on how tall they come out.
         // With the status bar hidden, they move up into its space.
-        (binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams).topMargin = HomeFit.clockTop(context, prefs)
+        (binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams).topMargin = HomeFit.clockTop(context, topInset)
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         // The time and the date each have their own style
@@ -142,9 +147,9 @@ class HomeScreen(
         // taller than expected would have the last one cut off.
         binding.homeApps.setPadding(
             binding.homeApps.paddingLeft,
-            HomeFit.topPadding(context, prefs, heightOf(binding.clockBlock)),
+            HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock)),
             binding.homeApps.paddingRight,
-            HomeFit.bottomPadding(context),
+            HomeFit.bottomPadding(context, bottomInset),
         )
         val nameHeight = appViews.firstOrNull()?.let { heightOf(it) } ?: 0
         val room = (if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()) -
@@ -216,6 +221,14 @@ class HomeScreen(
     private fun onTouch(view: View, event: MotionEvent): Boolean =
         reorder.onTouch(event) || gestures.onTouchEvent(event)
 
+    /** Where the status bar (with any cutout) and the navigation bar end, so nothing hides behind them. */
+    fun applyInsets(top: Int, bottom: Int) {
+        if (top == topInset && bottom == bottomInset) return
+        topInset = top
+        bottomInset = bottom
+        render()
+    }
+
     /** Leaving the home screen mid-drag puts the apps back where they were. */
     fun cancelDrag() = reorder.cancel()
 
@@ -237,8 +250,8 @@ class HomeScreen(
     private fun tap(view: View?) {
         when (view) {
             null -> Unit
-            binding.clock -> prefs.clockApp?.let { Apps.open(context, it, view) } ?: Apps.openDefault(context, DefaultApp.CLOCK)
-            binding.date -> prefs.calendarApp?.let { Apps.open(context, it, view) } ?: Apps.openDefault(context, DefaultApp.CALENDAR)
+            binding.clock -> openOrDefault(prefs.clockApp, DefaultApp.CLOCK, view)
+            binding.date -> openOrDefault(prefs.calendarApp, DefaultApp.CALENDAR, view)
             else -> {
                 // A blank spot is empty, its app is gone, or it's in a locked Private Space: that
                 // one asks to unlock it, like any app whose profile is away
@@ -287,11 +300,18 @@ class HomeScreen(
     private fun swipe(left: Boolean) {
         if (left) {
             if (!prefs.swipeLeftOn) return
-            prefs.swipeLeftApp?.let { Apps.open(context, it) } ?: Apps.openDefault(context, DefaultApp.CAMERA)
+            openOrDefault(prefs.swipeLeftApp, DefaultApp.CAMERA)
         } else {
             if (!prefs.swipeRightOn) return
-            prefs.swipeRightApp?.let { Apps.open(context, it) } ?: Apps.openDefault(context, DefaultApp.PHONE)
+            openOrDefault(prefs.swipeRightApp, DefaultApp.PHONE)
         }
+    }
+
+    // The app you chose, or Android's own: an app that's been uninstalled falls back to the
+    // default rather than saying it's missing. One whose profile is away still asks to turn it on.
+    private fun openOrDefault(target: AppTarget?, default: DefaultApp, from: View? = null) {
+        val here = target != null && (repo.find(target) != null || repo.isProfileAway(target.userSerial))
+        if (here) Apps.open(context, target!!, from) else Apps.openDefault(context, default)
     }
 
     private fun View.contains(x: Float, y: Float): Boolean {

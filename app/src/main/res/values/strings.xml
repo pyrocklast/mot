@@ -42,6 +42,8 @@
     <string name="remove">Remove</string>
     <!-- %1$s and %2$s are the "App drawer" and "Hidden apps" settings -->
     <string name="first_hide">App hidden. Find it in Settings &gt; %1$s &gt; %2$s.</string>
+    <!-- Shown once, after mot launcher crashed repeatedly and put its look back to the defaults -->
+    <string name="look_reset">mot launcher kept stopping, so its look is back to the defaults. Your apps are as they were.</string>
     <string name="app_not_found">App not found</string>
     <string name="cant_open">Couldn\'t open it</string>
     <string name="shortcut_added">Added to the app drawer</string>

@@ -158,7 +158,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         homeAppCount.value = prefs.homeAppCount
         // Big names on a small screen: say so rather than quietly cutting the list off
-        val fit = HomeFit.namesThatFit(requireContext(), prefs)
+        val fit = HomeFit.namesThatFit(requireContext(), prefs)  // from the screen's height, with typical system bars
         homeAppCount.summary = if (prefs.homeAppCount > fit) getString(R.string.too_many_apps) else null
         homeAlignment.summary = getString(alignmentLabel(prefs.homeAlignment))
         homeAtBottom.isChecked = prefs.homeAtBottom

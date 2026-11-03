@@ -155,6 +155,42 @@ class Prefs(context: Context) {
         get() = AppTarget.decode(prefs.getString("swipe_right_app", null))
         set(value) = prefs.edit { putTarget("swipe_right_app", value) }
 
+    // Crashes
+
+    /**
+     * A Home app that crashes as it draws takes the phone with it: it comes back, crashes again,
+     * and there's no way out but installing another launcher. So each crash is counted, and
+     * [resetLookAfterCrashes] gives the look back its defaults once they repeat.
+     */
+    fun recordCrash() {
+        val now = System.currentTimeMillis()
+        val recent = now - prefs.getLong("last_crash", 0) < CRASHES_WITHIN_MS
+        prefs.edit {
+            putInt("crashes", if (recent) prefs.getInt("crashes", 0) + 1 else 1)
+            putLong("last_crash", now)
+        }
+    }
+
+    /** The launcher got going again: the crashes before it don't count towards a reset. */
+    fun crashesSurvived() {
+        if (prefs.getInt("crashes", 0) == 0) return
+        prefs.edit { remove("crashes") }
+    }
+
+    /**
+     * After [CRASHES_BEFORE_RESET] crashes in a row, puts the look back to its defaults, which is
+     * where a crash while drawing comes from. Your apps, names and gestures are left alone.
+     * Returns whether it did, so the launcher can say so.
+     */
+    fun resetLookAfterCrashes(): Boolean {
+        if (prefs.getInt("crashes", 0) < CRASHES_BEFORE_RESET) return false
+        prefs.edit {
+            remove("crashes")
+            LOOK_KEYS.forEach { remove(it) }
+        }
+        return true
+    }
+
     // First run
 
     /** Until settings are opened once, the home screen shows how to reach the drawer and settings. */
@@ -222,6 +258,20 @@ class Prefs(context: Context) {
 
     companion object {
         const val MAX_HOME_APPS = 10
+
+        private const val CRASHES_BEFORE_RESET = 3
+        private const val CRASHES_WITHIN_MS = 60 * 1000L
+
+        // Everything that decides how the home screen is drawn, and so what a crash while drawing
+        // is likely to have come from
+        private val LOOK_KEYS = listOf(
+            "home_app_count", "home_alignment", "home_at_bottom",
+            "show_time", "show_date", "date_style", "clock_mode",
+            "clock_font", "clock_weight", "clock_scale",
+            "date_font", "date_weight", "date_scale",
+            "name_font", "name_weight", "app_name_scale", "bolder_names",
+            "text_colour", "show_status_bar", "drawer_alignment",
+        )
 
         const val DATE_SHORT = 0
         const val DATE_FULL = 1

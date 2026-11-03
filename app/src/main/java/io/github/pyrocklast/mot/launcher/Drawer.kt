@@ -24,6 +24,7 @@ import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.github.pyrocklast.mot.R
+import io.github.pyrocklast.mot.data.AppEntry
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.data.Profile
@@ -31,6 +32,7 @@ import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.Look
 import io.github.pyrocklast.mot.util.Search
+import java.text.Collator
 
 /**
  * The app drawer, a panel over the home screen. It lists your apps for opening, or, when
@@ -43,6 +45,7 @@ class Drawer(
     private val repo: AppRepository,
     private val menu: AppMenu,
     private val onChosen: () -> Unit,
+    private val openSettings: () -> Unit,
 ) {
     var isOpen = false
         private set
@@ -241,6 +244,9 @@ class Drawer(
 
         val query = Search.normalize(search.text ?: "")
         val choosing = choosingFor != null
+        // mot launcher's settings sit among your apps, so there's a way in besides a long press
+        val settings = activity.getString(R.string.settings_title, activity.getString(R.string.app_name))
+        val showSettings = !choosing && !inPrivateSpace && Search.matches(Search.normalize(settings), query)
         val hidden = if (choosing) emptySet() else prefs.hiddenApps
         val now = System.currentTimeMillis()
 
@@ -254,6 +260,7 @@ class Drawer(
         // that does, then the rest; alphabetical within each (the sort keeps the list's order)
         if (query.isNotEmpty()) matches = matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
         matches.mapTo(rows) { DrawerRow.App(it, isNew = it.isNew(now)) }
+        if (showSettings) rows.add(settingsAt(matches, settings), DrawerRow.Settings(settings))
         if (query.isEmpty() && space != null) {
             rows += if (inPrivateSpace) DrawerRow.LockPrivateSpace else DrawerRow.OpenPrivateSpace(space.locked)
         }
@@ -261,6 +268,15 @@ class Drawer(
         adapter.submitList(rows) {
             if (typed && !choosing) maybeOpenOnlyMatch()
         }
+    }
+
+    // Where "mot launcher settings" belongs: in its place among the names, or first when a search
+    // ranks the apps, where the best match leads
+    private fun settingsAt(matches: List<AppEntry>, label: String): Int {
+        if (search.text?.isNotEmpty() == true) return 0
+        val collator = Collator.getInstance()
+        val at = matches.indexOfFirst { collator.compare(it.label, label) > 0 }
+        return if (at < 0) matches.size else at
     }
 
     // Typing until one app is left opens it, unless the search starts with a space
@@ -285,6 +301,10 @@ class Drawer(
                 repo.setPrivateSpaceLocked(true)
                 showPrivateSpace(false)
             }
+            is DrawerRow.Settings -> {
+                close()
+                openSettings()
+            }
             is DrawerRow.App -> {
                 val slot = choosingFor
                 if (slot != null) {
@@ -302,6 +322,7 @@ class Drawer(
     private fun onRowLongClick(row: DrawerRow, view: View) {
         when (row) {
             is DrawerRow.OpenPrivateSpace, DrawerRow.LockPrivateSpace -> Apps.openPrivateSpaceSettings(activity)
+            is DrawerRow.Settings -> onRowClick(row, view)
             is DrawerRow.App -> menu.show(
                 anchor = view,
                 entry = row.entry,

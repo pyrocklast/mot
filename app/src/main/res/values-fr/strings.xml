@@ -34,6 +34,7 @@
     <string name="uninstall">Désinstaller</string>
     <string name="remove">Retirer</string>
     <string name="first_hide">Application masquée. Retrouvez-la dans Paramètres &gt; %1$s &gt; %2$s.</string>
+    <string name="look_reset">mot launcher s\'arrêtait sans cesse : son apparence est revenue aux réglages par défaut. Vos applications n\'ont pas changé.</string>
     <string name="app_not_found">Application introuvable</string>
     <string name="cant_open">Impossible de l\'ouvrir</string>
     <string name="shortcut_added">Ajouté au tiroir d\'applications</string>

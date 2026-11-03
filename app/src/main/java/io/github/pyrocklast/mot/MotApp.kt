@@ -6,11 +6,26 @@ import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
 
 class MotApp : Application() {
+
+    /**
+     * Counts crashes before letting Android deal with them as usual, so a launcher that can't
+     * draw itself can put its look back to the defaults rather than crashing for ever.
+     */
+    private fun countCrashes(prefs: Prefs) {
+        val android = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            runCatching { prefs.recordCrash() }
+            android?.uncaughtException(thread, error)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         // Material You colours for settings, menus and dialogs
         DynamicColors.applyToActivitiesIfAvailable(this)
-        Prefs(this).migrate()
+        val prefs = Prefs(this)
+        prefs.migrate()
+        countCrashes(prefs)
         // Start loading apps right away, so the drawer is ready by the time it's opened
         AppRepository.get(this)
     }

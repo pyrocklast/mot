@@ -19,14 +19,20 @@ import io.github.pyrocklast.mot.databinding.ItemDrawerActionBinding
 
 /** A row in the drawer: an app or shortcut, or one of the small Private Space rows. */
 sealed interface DrawerRow {
+    /** The small, dimmed rows with a padlock, rather than a name among your apps. */
+    sealed interface Action : DrawerRow
+
     /** [isNew]: installed in the last day, marked with a ✦ after its name. */
     data class App(val entry: AppEntry, val isNew: Boolean) : DrawerRow
 
     /** At the end of your apps: opens Private Space, unlocking it first if needed. */
-    data class OpenPrivateSpace(val locked: Boolean) : DrawerRow
+    data class OpenPrivateSpace(val locked: Boolean) : Action
 
     /** At the end of Private Space's apps. */
-    data object LockPrivateSpace : DrawerRow
+    data object LockPrivateSpace : Action
+
+    /** mot launcher's own settings, listed and searched among your apps. */
+    data class Settings(val label: String) : DrawerRow
 }
 
 class DrawerAdapter(
@@ -40,7 +46,8 @@ class DrawerAdapter(
     private class AppHolder(val binding: ItemAppBinding) : RecyclerView.ViewHolder(binding.root)
     private class ActionHolder(val binding: ItemDrawerActionBinding) : RecyclerView.ViewHolder(binding.root)
 
-    override fun getItemViewType(position: Int) = if (getItem(position) is DrawerRow.App) TYPE_APP else TYPE_ACTION
+    override fun getItemViewType(position: Int) =
+        if (getItem(position) is DrawerRow.Action) TYPE_ACTION else TYPE_APP
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -92,6 +99,12 @@ class DrawerAdapter(
                 if (work) description = context.getString(R.string.work_app, description)
                 if (row.isNew) description = context.getString(R.string.new_app, description)
                 binding.root.contentDescription = description
+            }
+            is DrawerRow.Settings -> {
+                val binding = (holder as AppHolder).binding
+                binding.name.text = row.label
+                binding.name.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null)
+                binding.root.contentDescription = null
             }
             is DrawerRow.OpenPrivateSpace -> {
                 val action = (holder as ActionHolder).binding.action

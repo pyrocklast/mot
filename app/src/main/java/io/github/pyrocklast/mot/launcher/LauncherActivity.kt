@@ -9,6 +9,7 @@ import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -52,6 +53,9 @@ class LauncherActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
+        // Crashing over and over while drawing leaves a phone with no home screen, so after a few
+        // the look goes back to its defaults, which is where such a crash comes from
+        val lookWasReset = prefs.resetLookAfterCrashes()
         look = currentLook()
         // Your text colour and weight, over the launcher theme
         theme.applyStyle(if (lightText()) R.style.ThemeOverlay_Mot_LightText else R.style.ThemeOverlay_Mot_DarkText, true)
@@ -62,7 +66,7 @@ class LauncherActivity : AppCompatActivity() {
         repo = AppRepository.get(this)
 
         menu = AppMenu(this, prefs, repo)
-        drawer = Drawer(this, binding, prefs, repo, menu, onChosen = { home.render() })
+        drawer = Drawer(this, binding, prefs, repo, menu, onChosen = { home.render() }, openSettings = ::openSettings)
         home = HomeScreen(
             context = this,
             binding = binding,
@@ -70,9 +74,17 @@ class LauncherActivity : AppCompatActivity() {
             repo = repo,
             menu = menu,
             openDrawer = { slot -> drawer.open(slot) },
-            openSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
+            openSettings = ::openSettings,
             requestHomeRole = ::requestHomeRole,
         )
+
+        // The home screen draws edge to edge, and keeps the clock and the names clear of the bars
+        ViewCompat.setOnApplyWindowInsetsListener(binding.home) { _, insets ->
+            val top = insets.getInsets(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.displayCutout()).top
+            val bottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+            home.applyInsets(top, bottom)
+            insets
+        }
 
         // With "Match the wallpaper", a new wallpaper can call for the other text colour
         WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
@@ -84,6 +96,8 @@ class LauncherActivity : AppCompatActivity() {
             override fun handleOnBackCancelled() = drawer.backCancelled()
             override fun handleOnBackPressed() = drawer.back()
         })
+
+        if (lookWasReset) Apps.toast(this, R.string.look_reset)
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -110,6 +124,8 @@ class LauncherActivity : AppCompatActivity() {
         applySystemBars(light)
         home.render()
         home.startTicking()
+        // Drawn without crashing: whatever went before doesn't count towards a reset
+        prefs.crashesSurvived()
     }
 
     override fun onPause() {
@@ -139,6 +155,8 @@ class LauncherActivity : AppCompatActivity() {
         home.cancelDrag()
         drawer.close()
     }
+
+    private fun openSettings() = startActivity(Intent(this, SettingsActivity::class.java))
 
     private fun requestHomeRole() {
         val request = Apps.homeRoleRequest(this)

@@ -21,20 +21,24 @@ object HomeFit {
     /** A name's row is never shorter than this, so it's always easy to tap, however small the text. */
     private const val TOUCH_TARGET_DP = 48
 
-    /** The gap kept below the names, clear of the navigation bar. */
-    private const val ABOVE_NAVIGATION_DP = 48
+    /** The gap kept below the names, under the navigation bar wherever it ends. */
+    private const val ABOVE_NAVIGATION_DP = 8
 
     /** Left spare when closing the gaps up, so the last name can't end up a hair too low. */
     private const val SAFETY_DP = 2
 
-    /** How far down the clock sits, with the status bar shown and hidden, and the gap kept under it. */
-    private const val CLOCK_TOP_DP = 56
-    private const val CLOCK_TOP_NO_STATUS_BAR_DP = 32
+    /** Stands in for the system bars where they can't be asked for: in settings, away from the home screen. */
+    private const val TYPICAL_STATUS_BAR_DP = 32
+
+    /** How far the clock sits below the status bar, and the gap kept under the date. */
+    private const val CLOCK_TOP_DP = 32
     private const val UNDER_CLOCK_DP = 16
 
-    /** How far down the clock and date sit: higher up when the status bar is hidden. */
-    fun clockTop(context: Context, prefs: Prefs): Int =
-        dp(context, if (prefs.showStatusBar) CLOCK_TOP_DP else CLOCK_TOP_NO_STATUS_BAR_DP)
+    /**
+     * How far down the clock and date sit: below the status bar and any cutout, by [topInset].
+     * Hiding the status bar takes its inset away, so they move up into its space on their own.
+     */
+    fun clockTop(context: Context, topInset: Int): Int = topInset + dp(context, CLOCK_TOP_DP)
 
     /** One name's height at the current font, weight and size. */
     fun nameHeight(context: Context, prefs: Prefs): Float =
@@ -42,16 +46,17 @@ object HomeFit {
 
     /**
      * Where the names start when nothing has been measured yet: under the clock and date as this
-     * works them out, or near the top of the screen when both are hidden.
+     * works them out, or below the status bar when both are hidden.
      */
-    fun topPadding(context: Context, prefs: Prefs): Int {
+    fun topPadding(context: Context, prefs: Prefs, topInset: Int): Int {
         val time = if (prefs.showTime) lineHeight(context, R.dimen.clock_size, prefs.timeScale, prefs.timeFont, prefs.timeWeight) else 0f
         val date = if (prefs.showDate) lineHeight(context, R.dimen.date_size, prefs.dateScale, prefs.dateFont, prefs.dateWeight) else 0f
-        if (time == 0f && date == 0f) return dp(context, ABOVE_NAVIGATION_DP)
-        return clockTop(context, prefs) + ceil(time + date).toInt() + dp(context, UNDER_CLOCK_DP)
+        if (time == 0f && date == 0f) return clockTop(context, topInset)
+        return clockTop(context, topInset) + ceil(time + date).toInt() + dp(context, UNDER_CLOCK_DP)
     }
 
-    fun bottomPadding(context: Context): Int = dp(context, ABOVE_NAVIGATION_DP)
+    /** Where the names stop: clear of the navigation bar, wherever Android puts it. */
+    fun bottomPadding(context: Context, bottomInset: Int): Int = bottomInset + dp(context, ABOVE_NAVIGATION_DP)
 
     /**
      * The gap above and below each name: the usual one, and never more. It closes up only when
@@ -83,9 +88,9 @@ object HomeFit {
     }
 
     /** Where the names start, under a clock and date that have been measured. */
-    fun topPadding(context: Context, prefs: Prefs, clockHeight: Int): Int {
-        if (!prefs.showTime && !prefs.showDate) return dp(context, ABOVE_NAVIGATION_DP)
-        return clockTop(context, prefs) + clockHeight + dp(context, UNDER_CLOCK_DP)
+    fun topPadding(context: Context, prefs: Prefs, topInset: Int, clockHeight: Int): Int {
+        if (!prefs.showTime && !prefs.showDate) return clockTop(context, topInset)
+        return clockTop(context, topInset) + clockHeight + dp(context, UNDER_CLOCK_DP)
     }
 
     /** How many names fit on screen, with their gaps closed up as far as they go. */
@@ -99,11 +104,12 @@ object HomeFit {
     private fun tightestRow(context: Context, prefs: Prefs): Float =
         maxOf(dp(context, TOUCH_TARGET_DP).toFloat(), nameHeight(context, prefs))
 
-    // The room between the clock and the navigation bar: the launcher knows how tall its own
-    // window is, and settings works from the screen's, which is close enough
-    private fun available(context: Context, prefs: Prefs, height: Int = 0): Float {
-        val screen = if (height > 0) height else screenHeight(context)
-        return (screen - topPadding(context, prefs) - bottomPadding(context)).toFloat().coerceAtLeast(0f)
+    // The room between the clock and the navigation bar. Only settings asks: it works from the
+    // screen's height and a typical set of system bars, which is close enough for its note.
+    private fun available(context: Context, prefs: Prefs): Float {
+        val bars = dp(context, TYPICAL_STATUS_BAR_DP)
+        val room = screenHeight(context) - topPadding(context, prefs, bars) - bottomPadding(context, bars)
+        return room.toFloat().coerceAtLeast(0f)
     }
 
     private fun screenHeight(context: Context): Int = context.resources.displayMetrics.heightPixels
