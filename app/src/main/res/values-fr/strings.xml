@@ -2,7 +2,7 @@
 <resources>
     <!-- Écran d'accueil -->
     <string name="app_placeholder">Application</string>
-    <string name="tips">Balayez vers le haut pour vos applications\nAppui long n\'importe où pour les paramètres</string>
+    <string name="tips">Balayez vers le haut pour vos applications\nAppui long n\'importe où pour les paramètres\nAppui long puis glisser pour déplacer une application</string>
     <string name="set_as_home">Définir mot launcher comme application d\'accueil</string>
     <string name="set_as_home_underlined"><u>Définir mot launcher comme application d\'accueil</u></string>
     <string name="long_press_to_choose">Appui long pour choisir une application</string>
@@ -12,6 +12,8 @@
     <string name="action_choose_clock">Choisir l\'application d\'horloge</string>
     <string name="action_open_calendar">Ouvrir l\'agenda</string>
     <string name="action_choose_calendar">Choisir l\'application d\'agenda</string>
+    <string name="move_up">Déplacer vers le haut</string>
+    <string name="move_down">Déplacer vers le bas</string>
 
     <!-- Tiroir d'applications -->
     <string name="search_apps">Rechercher des applications</string>

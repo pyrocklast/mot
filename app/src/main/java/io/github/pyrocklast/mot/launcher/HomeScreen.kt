@@ -61,7 +61,15 @@ class HomeScreen(
 
         override fun onLongPress(e: MotionEvent) {
             binding.home.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            longPress(viewAt(e))
+            val view = viewAt(e)
+            val index = appViews.indexOf(view)
+            if (view == null || index < 0) return longPress(view)
+            // A home app: its menu, and dragging from here moves it to another spot
+            if (MENU_WHILE_HOLDING) {
+                if (homeAppMenu(view, index)) reorder.arm(index, e.rawY, lift = false)
+            } else {
+                if (canMove(index)) reorder.arm(index, e.rawY, lift = true) else homeAppMenu(view, index)
+            }
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
@@ -79,6 +87,14 @@ class HomeScreen(
             return true
         }
     })
+
+    private val reorder = HomeReorder(
+        apps = { appViews },
+        others = { listOf(binding.clockBlock) },
+        onStart = { menu.dismiss() },
+        onRelease = { index -> if (!MENU_WHILE_HOLDING) homeAppMenu(appViews[index], index) },
+        onMove = ::move,
+    )
 
     init {
         // Taps reach TalkBack users through the actions set up in describeForTalkBack
@@ -125,7 +141,7 @@ class HomeScreen(
         val view = LayoutInflater.from(binding.homeApps.context)
             .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView
         binding.homeApps.addView(view)
-        describeForTalkBack(view, R.string.action_open, R.string.action_more_options) { tap(it) }
+        describeForTalkBack(view, R.string.action_open, R.string.action_more_options, canBeMoved = true) { tap(it) }
         view.tag = index
         return view
     }
@@ -164,9 +180,22 @@ class HomeScreen(
 
     // Gestures
 
+    // A long press on a home app can turn into moving it; until the finger lifts, that comes first
     @SuppressLint("ClickableViewAccessibility")
     @Suppress("UNUSED_PARAMETER")
-    private fun onTouch(view: View, event: MotionEvent): Boolean = gestures.onTouchEvent(event)
+    private fun onTouch(view: View, event: MotionEvent): Boolean =
+        reorder.onTouch(event) || gestures.onTouchEvent(event)
+
+    /** Leaving the home screen mid-drag puts the apps back where they were. */
+    fun cancelDrag() = reorder.cancel()
+
+    // Only a spot with an app in it moves (not an empty one, or one whose app is gone or locked away)
+    private fun canMove(index: Int): Boolean = prefs.homeApp(index)?.let { repo.find(it) } != null
+
+    private fun move(from: Int, to: Int) {
+        prefs.moveHomeApp(from, to, prefs.homeAppCount)
+        render()
+    }
 
     private fun viewAt(event: MotionEvent): View? {
         val candidates = appViews + listOf(binding.clock, binding.date)
@@ -199,12 +228,12 @@ class HomeScreen(
     }
 
     // The drawer's menu for the app, with ways to change this spot on top. An empty spot (or one
-    // whose app is gone) goes straight to choosing an app.
-    private fun homeAppMenu(view: View, index: Int) {
+    // whose app is gone) goes straight to choosing an app. Returns whether the menu opened.
+    private fun homeAppMenu(view: View, index: Int): Boolean {
         val entry = prefs.homeApp(index)?.let { repo.find(it) }
         if (entry == null) {
             openDrawer(Slot.Home(index))
-            return
+            return false
         }
         menu.show(
             anchor = view,
@@ -220,6 +249,7 @@ class HomeScreen(
                 },
             ),
         )
+        return true
     }
 
     private fun swipe(left: Boolean) {
@@ -241,8 +271,15 @@ class HomeScreen(
     /**
      * The home screen's text isn't clickable itself (the gesture detector handles touch), so
      * TalkBack is told what each item does: double tap to open, double tap and hold to change.
+     * Home apps can also be moved up and down from TalkBack's actions, as dragging can't be done.
      */
-    private fun describeForTalkBack(view: View, openLabel: Int, changeLabel: Int, onOpen: (View) -> Unit) {
+    private fun describeForTalkBack(
+        view: View,
+        openLabel: Int,
+        changeLabel: Int,
+        canBeMoved: Boolean = false,
+        onOpen: (View) -> Unit,
+    ) {
         ViewCompat.setAccessibilityDelegate(view, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
@@ -250,6 +287,12 @@ class HomeScreen(
                 info.isLongClickable = true
                 info.addAction(AccessibilityActionCompat(AccessibilityNodeInfoCompat.ACTION_CLICK, context.getString(openLabel)))
                 info.addAction(AccessibilityActionCompat(AccessibilityNodeInfoCompat.ACTION_LONG_CLICK, context.getString(changeLabel)))
+                val index = host.tag as? Int ?: return
+                if (!canBeMoved || !canMove(index)) return
+                if (index > 0) info.addAction(AccessibilityActionCompat(R.id.action_move_up, context.getString(R.string.move_up)))
+                if (index < appViews.lastIndex) {
+                    info.addAction(AccessibilityActionCompat(R.id.action_move_down, context.getString(R.string.move_down)))
+                }
             }
 
             override fun performAccessibilityAction(host: View, action: Int, args: android.os.Bundle?): Boolean = when (action) {
@@ -261,12 +304,29 @@ class HomeScreen(
                     longPress(host)
                     true
                 }
+                R.id.action_move_up -> moveForTalkBack(host.tag as Int, -1)
+                R.id.action_move_down -> moveForTalkBack(host.tag as Int, 1)
                 else -> super.performAccessibilityAction(host, action, args)
             }
         })
     }
 
+    // Moves the app one spot, and TalkBack follows it there
+    private fun moveForTalkBack(index: Int, step: Int): Boolean {
+        val to = index + step
+        if (to !in appViews.indices || !canMove(index)) return false
+        move(index, to)
+        appViews[to].performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null)
+        return true
+    }
+
     private companion object {
         const val SWIPE_DISTANCE_DP = 40
+
+        /**
+         * When a long press on a home app shows its menu: straight away (true), or once the finger
+         * lifts without dragging (false), so the menu never covers the spots an app is dragged to.
+         */
+        const val MENU_WHILE_HOLDING = true
     }
 }

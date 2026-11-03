@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TalkBack actions on home apps, which can't be dragged with TalkBack on -->
+    <item name="action_move_up" type="id" />
+    <item name="action_move_down" type="id" />
+</resources>

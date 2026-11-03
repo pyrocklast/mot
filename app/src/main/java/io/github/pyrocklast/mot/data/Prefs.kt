@@ -24,6 +24,14 @@ class Prefs(context: Context) {
 
     val homeApps: List<AppTarget?> get() = (0 until MAX_HOME_APPS).map { homeApp(it) }
 
+    /** Moves the home app at [from] to [to]; the ones in between shift by one spot. Empty spots move too. */
+    fun moveHomeApp(from: Int, to: Int, count: Int) {
+        if (from == to || from !in 0 until count || to !in 0 until count) return
+        val apps = (0 until count).map { homeApp(it) }.toMutableList()
+        apps.add(to, apps.removeAt(from))
+        prefs.edit { apps.forEachIndexed { slot, target -> putTarget("home_app_$slot", target) } }
+    }
+
     var homeAlignment: Int
         get() = prefs.getInt("home_alignment", Gravity.START)
         set(value) = prefs.edit { putInt("home_alignment", value) }

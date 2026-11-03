@@ -128,6 +128,7 @@ class LauncherActivity : AppCompatActivity() {
             drawer.close(animate = false)
             menu.dismiss()
         }
+        home.cancelDrag()
         super.onStop()
     }
 
