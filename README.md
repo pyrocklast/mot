@@ -13,7 +13,7 @@ For Android 15 and later, in English and French.
 - **Home screen:** up to 8 apps or shortcuts, moved by long pressing and dragging; the time and date in your language's format; the battery level after the date when the status bar is hidden.
 - **Gestures:** swipe up for your apps, down for notifications, left and right for two apps of your choice. Long press for settings.
 - **App drawer:** search that ignores accents and case, puts the best matches first, and opens the last app left. Rename, hide, app info and uninstall from a long press. Work apps are marked; Private Space opens as its own list.
-- **Look:** text colour that matches your wallpaper; font, weight and size for app names and for the clock, previewed on your wallpaper; settings that follow your phone's theme.
+- **Look:** text colour that matches your wallpaper; font, weight and size for app names, the time and the date, each previewed on your wallpaper; settings that follow your phone's theme.
 
 ## Install
 

@@ -10,7 +10,7 @@ class MotApp : Application() {
         super.onCreate()
         // Material You colours for settings, menus and dialogs
         DynamicColors.applyToActivitiesIfAvailable(this)
-        Prefs(this).migrateAppKeys()
+        Prefs(this).migrate()
         // Start loading apps right away, so the drawer is ready by the time it's opened
         AppRepository.get(this)
     }

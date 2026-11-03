@@ -7,98 +7,146 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.FragmentStyleBinding
+import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.Look
-import java.text.NumberFormat
 import kotlin.math.roundToInt
 
 /**
- * Font, weight and size, for app names or for the clock and date, with a live preview on your
- * wallpaper at the top. Everything applies as you change it; the home screen and drawer use it
- * when you go back.
+ * Everything about one thing on the home screen, with a live preview on your wallpaper at the top:
+ *
+ * - App names: font, weight and size (in the drawer too).
+ * - Time: shown or not, font, weight, size, and the app tapping it opens.
+ * - Date: shown or not, format, font, weight, size, and the app tapping it opens.
+ *
+ * The time and date screens preview both, so you can see how they go together. Everything applies
+ * as you change it; the home screen and drawer use it when you go back.
  */
 class StyleFragment : PreferenceFragmentCompat() {
 
+    enum class Element { NAMES, TIME, DATE }
+
     private lateinit var prefs: Prefs
+    private lateinit var repo: AppRepository
     private var preview: FragmentStyleBinding? = null
     private var dialog: AlertDialog? = null
-    private val forClock: Boolean by lazy { arguments?.getBoolean(ARG_CLOCK) == true }
+    private val element: Element by lazy { Element.entries[arguments?.getInt(ARG_ELEMENT) ?: 0] }
 
+    private var format: Preference? = null
     private lateinit var font: Preference
+    private var opens: Preference? = null
 
-    // The two styles are the same three settings, saved in different places
+    /** Every row but the switch: greyed out while the time or date is hidden. */
+    private val styleRows = ArrayList<Preference>()
+
+    // The three styles are the same three settings, saved in different places
+
     private var fontValue: Int
-        get() = if (forClock) prefs.clockFont else prefs.nameFont
+        get() = when (element) {
+            Element.NAMES -> prefs.nameFont
+            Element.TIME -> prefs.timeFont
+            Element.DATE -> prefs.dateFont
+        }
         set(value) {
-            if (forClock) prefs.clockFont = value else prefs.nameFont = value
+            when (element) {
+                Element.NAMES -> prefs.nameFont = value
+                Element.TIME -> prefs.timeFont = value
+                Element.DATE -> prefs.dateFont = value
+            }
         }
 
     private var weightValue: Int
-        get() = if (forClock) prefs.clockWeight else prefs.nameWeight
+        get() = when (element) {
+            Element.NAMES -> prefs.nameWeight
+            Element.TIME -> prefs.timeWeight
+            Element.DATE -> prefs.dateWeight
+        }
         set(value) {
-            if (forClock) prefs.clockWeight = value else prefs.nameWeight = value
+            when (element) {
+                Element.NAMES -> prefs.nameWeight = value
+                Element.TIME -> prefs.timeWeight = value
+                Element.DATE -> prefs.dateWeight = value
+            }
         }
 
     private var scaleValue: Float
-        get() = if (forClock) prefs.clockScale else prefs.appNameScale
+        get() = when (element) {
+            Element.NAMES -> prefs.appNameScale
+            Element.TIME -> prefs.timeScale
+            Element.DATE -> prefs.dateScale
+        }
         set(value) {
-            if (forClock) prefs.clockScale = value else prefs.appNameScale = value
+            when (element) {
+                Element.NAMES -> prefs.appNameScale = value
+                Element.TIME -> prefs.timeScale = value
+                Element.DATE -> prefs.dateScale = value
+            }
+        }
+
+    // App names always show; the time and date can be switched off
+    private val isShown: Boolean
+        get() = when (element) {
+            Element.NAMES -> true
+            Element.TIME -> prefs.showTime
+            Element.DATE -> prefs.showDate
         }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         prefs = Prefs(requireContext())
-        val context = preferenceManager.context
-        val screen = preferenceManager.createPreferenceScreen(context)
+        repo = AppRepository.get(requireContext())
+        val screen = preferenceManager.createPreferenceScreen(preferenceManager.context)
 
-        font = Preference(context).apply {
-            setTitle(R.string.font)
-            isIconSpaceReserved = false
-            isPersistent = false
-            setOnPreferenceClickListener {
-                chooseFont()
-                true
+        when (element) {
+            Element.NAMES -> Unit
+            Element.TIME -> screen.switch(R.string.show_time, prefs.showTime) {
+                prefs.showTime = it
+                update()
+            }
+            Element.DATE -> screen.switch(R.string.show_date, prefs.showDate) {
+                prefs.showDate = it
+                update()
             }
         }
-        screen.addPreference(font)
+
+        if (element == Element.DATE) {
+            format = screen.item(R.string.format) { chooseFormat() }.also { styleRows += it }
+        }
+
+        font = screen.item(R.string.font) { chooseFont() }
+        styleRows += font
 
         // Thin to bold, in five steps
-        screen.addPreference(SliderPreference(context).apply {
-            setTitle(R.string.weight)
-            isIconSpaceReserved = false
-            valueFrom = 0
-            valueTo = Look.WEIGHTS.lastIndex
-            value = Look.WEIGHTS.indexOfNearest(weightValue)
-            formatValue = { getString(weightLabel(Look.WEIGHTS[it])) }
-            onValueChange = {
-                weightValue = Look.WEIGHTS[it]
-                showPreview()
-            }
-        })
+        styleRows += screen.slider(R.string.weight, 0, Look.WEIGHTS.lastIndex, Look.WEIGHTS.indexOfNearest(weightValue)) {
+            weightValue = Look.WEIGHTS[it]
+            showPreview()
+        }.apply { formatValue = { getString(weightLabel(Look.WEIGHTS[it])) } }
 
         // 50 to 150 % of the usual size, which itself follows Android's font size
-        screen.addPreference(SliderPreference(context).apply {
-            setTitle(R.string.size)
-            isIconSpaceReserved = false
-            valueFrom = 0
-            valueTo = 10
-            value = ((scaleValue - 0.5f) * 10).roundToInt().coerceIn(0, 10)
-            formatValue = { percent(0.5f + it / 10f) }
-            onValueChange = {
-                scaleValue = 0.5f + it / 10f
-                showPreview()
+        val sizeStep = ((scaleValue - 0.5f) * 10).roundToInt().coerceIn(0, 10)
+        styleRows += screen.slider(R.string.size, 0, 10, sizeStep) {
+            scaleValue = 0.5f + it / 10f
+            showPreview()
+        }.apply { formatValue = { percent(0.5f + it / 10f) } }
+
+        opens = when (element) {
+            Element.NAMES -> null
+            Element.TIME -> screen.item(R.string.tap_time) {
+                chooseApp(R.string.tap_time, R.string.default_clock_app, Slot.Clock)
             }
-        })
+            Element.DATE -> screen.item(R.string.tap_date) {
+                chooseApp(R.string.tap_date, R.string.default_calendar_app, Slot.Calendar)
+            }
+        }
+        opens?.let { styleRows += it }
 
         preferenceScreen = screen
     }
@@ -120,28 +168,30 @@ class StyleFragment : PreferenceFragmentCompat() {
         listView.clipToPadding = false
         listView.padForNavigationBar()
         val binding = preview ?: return
-        binding.namePreview.isVisible = !forClock
-        binding.clockPreview.isVisible = forClock
-        if (forClock) {
-            binding.previewClock.isVisible = prefs.showTime
-            binding.previewDate.isVisible = prefs.showDate
-            binding.previewDate.text = DateText.date(requireContext(), prefs.dateStyle)
-        } else {
+        val names = element == Element.NAMES
+        binding.namePreview.isVisible = names
+        binding.clockPreview.isVisible = !names
+        if (names) {
             binding.namePreview.text = previewNames()
             binding.namePreview.gravity = prefs.homeAlignment
         }
         binding.clockPreview.gravity = prefs.homeAlignment or Gravity.CENTER_VERTICAL
         val light = Look.lightText(requireContext(), prefs)
         listOf(binding.namePreview, binding.previewClock, binding.previewDate).forEach { Look.applyTextColour(it, light) }
-        showPreview()
     }
 
     override fun onResume() {
         super.onResume()
         (requireActivity() as SettingsActivity).setScreenTitle(
-            getString(if (forClock) R.string.clock_and_date else R.string.app_names)
+            getString(
+                when (element) {
+                    Element.NAMES -> R.string.app_names
+                    Element.TIME -> R.string.time
+                    Element.DATE -> R.string.date
+                }
+            )
         )
-        font.summary = getString(fontLabel(fontValue))
+        update()
     }
 
     override fun onDestroyView() {
@@ -151,67 +201,88 @@ class StyleFragment : PreferenceFragmentCompat() {
         super.onDestroyView()
     }
 
+    /** Shows the current value of every row, and the preview. */
+    private fun update() {
+        val on = isShown
+        styleRows.forEach { it.isEnabled = on }
+        format?.summary = DateText.date(requireContext(), prefs.dateStyle)
+        font.summary = getString(fontLabel(fontValue))
+        opens?.summary = when (element) {
+            Element.TIME -> requireContext().appName(repo, prefs.clockApp, R.string.default_clock_app)
+            else -> requireContext().appName(repo, prefs.calendarApp, R.string.default_calendar_app)
+        }
+        showPreview()
+    }
+
+    // The time and date each in their own style. The one being styled shows even when it's
+    // switched off, faded; the other shows only if it's on, as on the home screen.
     private fun showPreview() {
         val binding = preview ?: return
-        val typeface = Look.typeface(fontValue, weightValue)
-        val scale = scaleValue
         val res = resources
-        binding.namePreview.typeface = typeface
-        binding.namePreview.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.app_name_size) * scale)
-        binding.previewClock.typeface = typeface
-        binding.previewClock.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.clock_size) * scale)
-        binding.previewDate.typeface = typeface
-        binding.previewDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.date_size) * scale)
+        if (element == Element.NAMES) {
+            binding.namePreview.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
+            binding.namePreview.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.app_name_size) * prefs.appNameScale)
+            return
+        }
+        binding.previewClock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
+        binding.previewClock.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.clock_size) * prefs.timeScale)
+        binding.previewDate.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
+        binding.previewDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.date_size) * prefs.dateScale)
+        binding.previewDate.text = DateText.date(requireContext(), prefs.dateStyle)
+
+        val editingTime = element == Element.TIME
+        binding.previewClock.isVisible = editingTime || prefs.showTime
+        binding.previewDate.isVisible = !editingTime || prefs.showDate
+        binding.previewClock.alpha = if (editingTime && !prefs.showTime) HIDDEN_ALPHA else 1f
+        binding.previewDate.alpha = if (!editingTime && !prefs.showDate) HIDDEN_ALPHA else 1f
     }
+
+    // Dialogs
 
     private fun chooseFont() {
         val labels = Array<CharSequence>(Look.FONTS.size) { getString(fontLabel(Look.FONTS[it])) }
         dialog?.dismiss()
-        dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.font)
-            .setSingleChoiceItems(labels, Look.FONTS.indexOf(fontValue)) { choice, which ->
-                choice.dismiss()
-                fontValue = Look.FONTS[which]
-                font.summary = labels[which]
-                showPreview()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        dialog = choiceDialog(R.string.font, labels, Look.FONTS.indexOf(fontValue)) { which ->
+            fontValue = Look.FONTS[which]
+            update()
+        }
     }
 
-    // Up to three of your home apps, or mot.'s name when none is set
+    // Each format shown as today's date
+    private fun chooseFormat() {
+        val labels = Array<CharSequence>(DATE_FORMATS.size) { DateText.date(requireContext(), DATE_FORMATS[it]) }
+        dialog?.dismiss()
+        dialog = choiceDialog(R.string.date_format, labels, DATE_FORMATS.indexOf(prefs.dateStyle)) { which ->
+            prefs.dateStyle = DATE_FORMATS[which]
+            update()
+        }
+    }
+
+    private fun chooseApp(title: Int, defaultLabel: Int, slot: Slot) {
+        val current = if (slot == Slot.Clock) prefs.clockApp else prefs.calendarApp
+        dialog?.dismiss()
+        dialog = appChoiceDialog(prefs, title, defaultLabel, current, slot) { update() }
+    }
+
+    // Up to three of your home apps, or mot launcher's name when none is set
     private fun previewNames(): String {
-        val repo = AppRepository.get(requireContext())
         val names = prefs.homeApps.take(prefs.homeAppCount).filterNotNull().mapNotNull { repo.nameFor(it) }.take(3)
         return names.ifEmpty { listOf(getString(R.string.app_name)) }.joinToString("\n")
     }
 
     private fun IntArray.indexOfNearest(value: Int): Int = indices.minBy { kotlin.math.abs(this[it] - value) }
 
-    private fun percent(scale: Float): String = NumberFormat.getPercentInstance().format(scale.toDouble())
-
     companion object {
-        private const val ARG_CLOCK = "clock"
+        private const val ARG_ELEMENT = "element"
+        private const val HIDDEN_ALPHA = 0.4f
+        private val DATE_FORMATS = intArrayOf(Prefs.DATE_SHORT, Prefs.DATE_FULL, Prefs.DATE_NUMERIC)
 
-        fun appNames() = StyleFragment()
+        fun appNames() = of(Element.NAMES)
 
-        fun clockAndDate() = StyleFragment().apply { arguments = bundleOf(ARG_CLOCK to true) }
+        fun time() = of(Element.TIME)
 
-        @StringRes
-        fun fontLabel(font: Int) = when (font) {
-            Prefs.FONT_SERIF -> R.string.font_serif
-            Prefs.FONT_MONO -> R.string.font_mono
-            Prefs.FONT_CONDENSED -> R.string.font_condensed
-            else -> R.string.font_sans
-        }
+        fun date() = of(Element.DATE)
 
-        @StringRes
-        fun weightLabel(weight: Int) = when {
-            weight < 200 -> R.string.weight_thin
-            weight < 350 -> R.string.weight_light
-            weight < 450 -> R.string.weight_regular
-            weight < 600 -> R.string.weight_medium
-            else -> R.string.weight_bold
-        }
+        private fun of(element: Element) = StyleFragment().apply { arguments = bundleOf(ARG_ELEMENT to element.ordinal) }
     }
 }

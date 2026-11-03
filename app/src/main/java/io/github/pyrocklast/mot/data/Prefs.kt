@@ -55,10 +55,6 @@ class Prefs(context: Context) {
         get() = prefs.getInt("date_style", DATE_SHORT)
         set(value) = prefs.edit { putInt("date_style", value) }
 
-    var clockScale: Float
-        get() = prefs.getFloat("clock_scale", 1f)
-        set(value) = prefs.edit { putFloat("clock_scale", value) }
-
     /** The app tapping the time opens; null for Android's default clock app. */
     var clockApp: AppTarget?
         get() = AppTarget.decode(prefs.getString("clock_app", null))
@@ -94,7 +90,7 @@ class Prefs(context: Context) {
         get() = prefs.getInt("text_colour", TEXT_MATCH_WALLPAPER)
         set(value) = prefs.edit { putInt("text_colour", value) }
 
-    // App names (home screen and drawer) and the clock and date each have a font, a weight and a
+    // App names (home screen and drawer), the time and the date each have a font, a weight and a
     // size. Weights are CSS-style numbers: 100 thin, 300 light, 400 regular, 500 medium, 700 bold.
 
     var nameFont: Int
@@ -110,13 +106,30 @@ class Prefs(context: Context) {
         get() = prefs.getFloat("app_name_scale", 1f)
         set(value) = prefs.edit { putFloat("app_name_scale", value) }
 
-    var clockFont: Int
+    // The time's style is saved as the "clock" style, which the date shared until it got its own
+    var timeFont: Int
         get() = prefs.getInt("clock_font", FONT_SANS)
         set(value) = prefs.edit { putInt("clock_font", value) }
 
-    var clockWeight: Int
+    var timeWeight: Int
         get() = prefs.getInt("clock_weight", 300)
         set(value) = prefs.edit { putInt("clock_weight", value) }
+
+    var timeScale: Float
+        get() = prefs.getFloat("clock_scale", 1f)
+        set(value) = prefs.edit { putFloat("clock_scale", value) }
+
+    var dateFont: Int
+        get() = prefs.getInt("date_font", FONT_SANS)
+        set(value) = prefs.edit { putInt("date_font", value) }
+
+    var dateWeight: Int
+        get() = prefs.getInt("date_weight", 300)
+        set(value) = prefs.edit { putInt("date_weight", value) }
+
+    var dateScale: Float
+        get() = prefs.getFloat("date_scale", 1f)
+        set(value) = prefs.edit { putFloat("date_scale", value) }
 
     var showStatusBar: Boolean
         get() = prefs.getBoolean("show_status_bar", false)
@@ -161,11 +174,27 @@ class Prefs(context: Context) {
     val customNames: Map<String, String>
         get() = names.all.mapNotNull { (key, value) -> (value as? String)?.let { key to it } }.toMap()
 
+    /** Brings settings saved by an older version up to date. Runs when the app starts. */
+    fun migrate() {
+        migrateAppKeys()
+        splitDateStyle()
+    }
+
+    /** The date had the time's style until it got its own: it starts from the time's, so nothing changes. */
+    private fun splitDateStyle() {
+        if (prefs.contains("date_font")) return
+        prefs.edit {
+            putInt("date_font", timeFont)
+            putInt("date_weight", timeWeight)
+            putFloat("date_scale", timeScale)
+        }
+    }
+
     /**
      * Version 0.1 kept names and hidden apps by activity ("a:package/Class:user"). They're kept by
      * app now ("p:package:user"), so an app that changes its activity in an update keeps them.
      */
-    fun migrateAppKeys() {
+    private fun migrateAppKeys() {
         if (prefs.getBoolean("app_keys_v2", false)) return
         fun appKey(key: String): String {
             if (!key.startsWith("a:")) return key

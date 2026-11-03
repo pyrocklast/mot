@@ -124,11 +124,11 @@ class HomeScreen(
 
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
-        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize * prefs.clockScale)
-        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize * prefs.clockScale)
-        val clockTypeface = Look.typeface(prefs.clockFont, prefs.clockWeight)
-        binding.clock.typeface = clockTypeface
-        binding.date.typeface = clockTypeface
+        // The time and the date each have their own style
+        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize * prefs.timeScale)
+        binding.clock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
+        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize * prefs.dateScale)
+        binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
         updateDate()
 
         // First run: how to reach the drawer and settings, and making mot launcher the Home app.

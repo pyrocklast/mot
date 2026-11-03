@@ -10,12 +10,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.Preference
-import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceGroup
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.color.MaterialColors
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.github.pyrocklast.mot.BuildConfig
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
@@ -24,7 +21,6 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
-import java.text.NumberFormat
 
 /**
  * The settings list, grouped by the part of the home screen each setting changes. Preferences
@@ -41,12 +37,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var homeAppCount: SliderPreference
     private lateinit var homeAlignment: Preference
     private lateinit var homeAtBottom: SwitchPreferenceCompat
-    private lateinit var showTime: SwitchPreferenceCompat
-    private lateinit var showDate: SwitchPreferenceCompat
-    private lateinit var dateStyle: Preference
-    private lateinit var clockStyle: Preference
-    private lateinit var clockApp: Preference
-    private lateinit var calendarApp: Preference
+    private lateinit var time: Preference
+    private lateinit var date: Preference
     private lateinit var drawerAlignment: Preference
     private lateinit var hiddenApps: Preference
     private lateinit var privateSpace: Preference
@@ -57,7 +49,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var swipeRight: SplitSwitchPreference
 
     private val alignments = intArrayOf(Gravity.START, Gravity.CENTER, Gravity.END)
-    private val dateStyles = intArrayOf(Prefs.DATE_SHORT, Prefs.DATE_FULL, Prefs.DATE_NUMERIC)
     private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_DARK, Prefs.TEXT_LIGHT, Prefs.TEXT_FOLLOW_DARK_MODE)
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -86,27 +77,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
             homeAtBottom = switch(R.string.align_bottom, prefs.homeAtBottom) { prefs.homeAtBottom = it }
         }
 
+        // Everything about each one on its own screen, with a preview of both
         screen.category(R.string.clock_and_date) {
-            showTime = switch(R.string.time, prefs.showTime) {
-                prefs.showTime = it
-                refresh()
-            }
-            showDate = switch(R.string.date, prefs.showDate) {
-                prefs.showDate = it
-                refresh()
-            }
-            dateStyle = item(R.string.date_style) {
-                val labels = Array<CharSequence>(dateStyles.size) { DateText.date(requireContext(), dateStyles[it]) }
-                choose(R.string.date_style, labels, dateStyles.indexOf(prefs.dateStyle)) { prefs.dateStyle = dateStyles[it] }
-            }
-            // Font, weight and size, with a preview
-            clockStyle = item(R.string.style) { settings().show(StyleFragment.clockAndDate()) }
-            clockApp = item(R.string.tap_time) {
-                chooseApp(R.string.tap_time, R.string.default_clock_app, prefs.clockApp, Slot.Clock)
-            }
-            calendarApp = item(R.string.tap_date) {
-                chooseApp(R.string.tap_date, R.string.default_calendar_app, prefs.calendarApp, Slot.Calendar)
-            }
+            time = item(R.string.time) { settings().show(StyleFragment.time()) }
+            date = item(R.string.date) { settings().show(StyleFragment.date()) }
         }
 
         screen.category(R.string.app_drawer) {
@@ -185,16 +159,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         homeAlignment.summary = getString(alignmentLabel(prefs.homeAlignment))
         homeAtBottom.isChecked = prefs.homeAtBottom
 
-        showTime.isChecked = prefs.showTime
-        showDate.isChecked = prefs.showDate
-        dateStyle.summary = DateText.date(requireContext(), prefs.dateStyle)
-        dateStyle.isEnabled = prefs.showDate
-        clockStyle.summary = styleSummary(prefs.clockFont, prefs.clockWeight, prefs.clockScale)
-        clockStyle.isEnabled = prefs.showTime || prefs.showDate
-        clockApp.summary = appName(prefs.clockApp, R.string.default_clock_app)
-        clockApp.isEnabled = prefs.showTime
-        calendarApp.summary = appName(prefs.calendarApp, R.string.default_calendar_app)
-        calendarApp.isEnabled = prefs.showDate
+        val context = requireContext()
+        // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
+        time.summary = if (!prefs.showTime) getString(R.string.hidden)
+        else context.styleSummary(prefs.timeFont, prefs.timeWeight, prefs.timeScale)
+        date.summary = if (!prefs.showDate) getString(R.string.hidden)
+        else DateText.date(context, prefs.dateStyle) + SEPARATOR + context.styleSummary(prefs.dateFont, prefs.dateWeight, prefs.dateScale)
 
         drawerAlignment.summary = getString(alignmentLabel(prefs.drawerAlignment))
         // Only apps still installed (the list keeps apps you uninstalled while hidden)
@@ -207,60 +177,32 @@ class SettingsFragment : PreferenceFragmentCompat() {
         } ?: if (isHome) getString(R.string.not_set_up) else null
 
         textColour.summary = getString(textColourLabel(prefs.textColour))
-        nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
+        nameStyle.summary = context.styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
         // With the status bar hidden, the battery level follows the date (when the date shows)
         statusBar.summaryOff = if (prefs.showDate) getString(R.string.status_bar_off_summary) else null
 
         swipeLeft.isChecked = prefs.swipeLeftOn
-        swipeLeft.summary = appName(prefs.swipeLeftApp, R.string.default_camera_app)
+        swipeLeft.summary = context.appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
         swipeRight.isChecked = prefs.swipeRightOn
-        swipeRight.summary = appName(prefs.swipeRightApp, R.string.default_phone_app)
-    }
-
-    // An app in a locked Private Space is only named once it's unlocked
-    private fun appName(target: AppTarget?, @StringRes default: Int): String = when {
-        target == null -> getString(default)
-        repo.isLockedPrivateSpace(target.userSerial) -> getString(R.string.private_space)
-        else -> repo.nameFor(target) ?: getString(default)
+        swipeRight.summary = context.appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
     }
 
     // Dialogs
 
     /** Android's default app for something, or one you choose from the list of apps. */
     private fun chooseApp(@StringRes title: Int, @StringRes defaultLabel: Int, current: AppTarget?, slot: Slot) {
-        val labels = arrayOf<CharSequence>(getString(defaultLabel), getString(R.string.choose_app_ellipsis))
-        choose(title, labels, if (current == null) 0 else 1) { which ->
-            if (which == 0) {
-                slot.save(prefs, null)
-                refresh()
-            } else settings().show(AppListFragment.chooseApp(slot))
-        }
+        dialog?.dismiss()
+        dialog = appChoiceDialog(prefs, title, defaultLabel, current, slot) { refresh() }
     }
 
     private fun choose(@StringRes title: Int, values: IntArray, current: Int, label: (Int) -> Int, onChoice: (Int) -> Unit) {
         val labels = Array<CharSequence>(values.size) { getString(label(values[it])) }
-        choose(title, labels, values.indexOf(current)) { onChoice(values[it]) }
-    }
-
-    private fun choose(@StringRes title: Int, labels: Array<CharSequence>, checked: Int, onChoice: (Int) -> Unit) {
         dialog?.dismiss()
-        dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(title)
-            .setSingleChoiceItems(labels, checked) { choiceDialog, which ->
-                choiceDialog.dismiss()
-                onChoice(which)
-                refresh()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        dialog = choiceDialog(title, labels, values.indexOf(current)) {
+            onChoice(values[it])
+            refresh()
+        }
     }
-
-    // e.g. "Sans serif · Light · 100 %"
-    private fun styleSummary(font: Int, weight: Int, scale: Float): String = listOf(
-        getString(StyleFragment.fontLabel(font)),
-        getString(StyleFragment.weightLabel(weight)),
-        percent(scale),
-    ).joinToString(" · ")
 
     // Labels
 
@@ -277,88 +219,5 @@ class SettingsFragment : PreferenceFragmentCompat() {
         Prefs.TEXT_LIGHT -> R.string.light_text
         Prefs.TEXT_FOLLOW_DARK_MODE -> R.string.text_follows_dark_mode
         else -> R.string.text_matches_wallpaper
-    }
-
-    // e.g. "110 %" in French
-    private fun percent(scale: Float): String = NumberFormat.getPercentInstance().format(scale.toDouble())
-
-    // Builders. No preference is persisted by itself: Prefs stays the one source of truth.
-
-    private fun PreferenceGroup.category(
-        @StringRes title: Int,
-        @StringRes summary: Int = 0,
-        rows: PreferenceCategory.() -> Unit,
-    ) {
-        val category = PreferenceCategory(context)
-        category.setTitle(title)
-        if (summary != 0) category.setSummary(summary)
-        category.isIconSpaceReserved = false
-        addPreference(category)
-        category.rows()
-    }
-
-    private fun PreferenceGroup.item(@StringRes title: Int, onClick: () -> Unit): Preference {
-        val preference = Preference(context)
-        preference.setTitle(title)
-        preference.isIconSpaceReserved = false
-        preference.isPersistent = false
-        preference.setOnPreferenceClickListener {
-            onClick()
-            true
-        }
-        addPreference(preference)
-        return preference
-    }
-
-    private fun PreferenceGroup.slider(
-        @StringRes title: Int,
-        from: Int,
-        to: Int,
-        value: Int,
-        onChange: (Int) -> Unit,
-    ): SliderPreference {
-        val preference = SliderPreference(context)
-        preference.setTitle(title)
-        preference.isIconSpaceReserved = false
-        preference.valueFrom = from
-        preference.valueTo = to
-        preference.value = value
-        preference.onValueChange = onChange
-        addPreference(preference)
-        return preference
-    }
-
-    private fun PreferenceGroup.switch(@StringRes title: Int, checked: Boolean, onChange: (Boolean) -> Unit): SwitchPreferenceCompat {
-        val preference = SwitchPreferenceCompat(context)
-        preference.setTitle(title)
-        preference.isIconSpaceReserved = false
-        preference.isPersistent = false
-        preference.widgetLayoutResource = R.layout.preference_material_switch
-        preference.isChecked = checked
-        preference.setOnPreferenceChangeListener { _, newValue ->
-            onChange(newValue as Boolean)
-            true
-        }
-        addPreference(preference)
-        return preference
-    }
-
-    private fun PreferenceGroup.splitSwitch(
-        @StringRes title: Int,
-        checked: Boolean,
-        onChange: (Boolean) -> Unit,
-        onClick: () -> Unit,
-    ): SplitSwitchPreference {
-        val preference = SplitSwitchPreference(context)
-        preference.setTitle(title)
-        preference.isIconSpaceReserved = false
-        preference.isChecked = checked
-        preference.onCheckedChange = onChange
-        preference.setOnPreferenceClickListener {
-            onClick()
-            true
-        }
-        addPreference(preference)
-        return preference
     }
 }

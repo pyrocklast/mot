@@ -70,9 +70,13 @@
     <string name="clock_and_date">Clock and date</string>
     <string name="time">Time</string>
     <string name="date">Date</string>
-    <string name="date_style">Date style</string>
-    <!-- Opens the clock and date's font, weight and size -->
-    <string name="style">Style</string>
+    <!-- The Time and Date settings: shown on the home screen or not, and the date's format -->
+    <string name="show_time">Show the time</string>
+    <string name="show_date">Show the date</string>
+    <string name="format">Format</string>
+    <string name="date_format">Date format</string>
+    <!-- Summary of the Time or Date setting while it's switched off -->
+    <string name="hidden">Hidden</string>
     <string name="size">Size</string>
     <string name="tap_time">Tapping the time opens</string>
     <string name="tap_date">Tapping the date opens</string>

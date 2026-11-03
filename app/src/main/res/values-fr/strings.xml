@@ -63,8 +63,11 @@
     <string name="clock_and_date">Horloge et date</string>
     <string name="time">Heure</string>
     <string name="date">Date</string>
-    <string name="date_style">Format de la date</string>
-    <string name="style">Style</string>
+    <string name="show_time">Afficher l\'heure</string>
+    <string name="show_date">Afficher la date</string>
+    <string name="format">Format</string>
+    <string name="date_format">Format de la date</string>
+    <string name="hidden">Masquée</string>
     <string name="size">Taille</string>
     <string name="tap_time">Appuyer sur l\'heure ouvre</string>
     <string name="tap_date">Appuyer sur la date ouvre</string>
