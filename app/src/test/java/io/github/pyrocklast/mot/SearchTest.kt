@@ -37,21 +37,16 @@ class SearchTest {
     }
 
     @Test
-    fun `automatic opening is opt in`() {
-        assertFalse(Search.shouldAutoOpenUniqueResult("maps", 1, enabled = false, composing = false))
+    fun `typing until one app is left opens it, from two letters on`() {
+        assertFalse(Search.opensOnlyMatch("m", matches = 1, composing = false))
+        assertTrue(Search.opensOnlyMatch("ma", matches = 1, composing = false))
+        assertFalse(Search.opensOnlyMatch("ma", matches = 2, composing = false))
     }
 
     @Test
-    fun `automatic opening needs two characters and exactly one result`() {
-        assertFalse(Search.shouldAutoOpenUniqueResult("m", 1, enabled = true, composing = false))
-        assertFalse(Search.shouldAutoOpenUniqueResult("ma", 2, enabled = true, composing = false))
-        assertTrue(Search.shouldAutoOpenUniqueResult("ma", 1, enabled = true, composing = false))
-    }
-
-    @Test
-    fun `automatic opening waits for committed input and rejects leading whitespace`() {
-        assertFalse(Search.shouldAutoOpenUniqueResult("maps", 1, enabled = true, composing = true))
-        assertFalse(Search.shouldAutoOpenUniqueResult(" maps", 1, enabled = true, composing = false))
+    fun `a half-typed word, or a search that starts with a space, opens nothing`() {
+        assertFalse(Search.opensOnlyMatch("maps", matches = 1, composing = true))
+        assertFalse(Search.opensOnlyMatch(" maps", matches = 1, composing = false))
     }
 
     @Test

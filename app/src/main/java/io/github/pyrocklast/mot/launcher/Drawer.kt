@@ -272,16 +272,10 @@ class Drawer(
         }
     }
 
-    // Auto-opening is opt-in; require two committed characters to avoid launching on a prefix.
+    // Typing until one app is left opens it, from two letters on
     private fun maybeOpenOnlyMatch() {
-        if (!Search.shouldAutoOpenUniqueResult(
-                query = search.text?.toString().orEmpty(),
-                resultCount = adapter.currentList.size,
-                enabled = prefs.autoOpenSingleResult,
-                composing = isComposingCjk(),
-            )
-        ) return
-
+        val query = search.text?.toString().orEmpty()
+        if (!Search.opensOnlyMatch(query, adapter.currentList.size, isComposingCjk())) return
         val only = adapter.currentList.singleOrNull() as? DrawerRow.App ?: return
         onRowClick(only, search)
     }

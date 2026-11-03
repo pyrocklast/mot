@@ -22,12 +22,13 @@
         </intent>
     </queries>
 
-    <!-- Keep app choices and custom names on this device, including device-to-device transfers. -->
+    <!-- No backup: the settings are a list of the apps you use, Private Space's among them, and
+         they stay on the phone. With some manufacturers, allowBackup leaves device-to-device
+         transfers on, so the rules turn those off too. -->
     <application
         android:name=".MotApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"

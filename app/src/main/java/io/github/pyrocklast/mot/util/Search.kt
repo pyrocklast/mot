@@ -38,19 +38,13 @@ object Search {
     }
 
     /**
-     * Automatic launch is opt-in and requires at least two committed characters and one result.
+     * Whether typing has left one app to open. It takes two letters, so a single one can't launch
+     * something you didn't mean, and a search that starts with a space never does. [composing] is
+     * a word a Chinese, Japanese or Korean keyboard hasn't finished yet.
      */
-    fun shouldAutoOpenUniqueResult(
-        query: CharSequence,
-        resultCount: Int,
-        enabled: Boolean,
-        composing: Boolean,
-    ): Boolean {
-        val normalized = normalize(query)
-        return enabled &&
-            normalized.length >= 2 &&
-            resultCount == 1 &&
+    fun opensOnlyMatch(query: CharSequence, matches: Int, composing: Boolean): Boolean =
+        matches == 1 &&
+            !composing &&
             query.firstOrNull()?.isWhitespace() != true &&
-            !composing
-    }
+            normalize(query).length >= 2
 }
