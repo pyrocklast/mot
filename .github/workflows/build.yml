@@ -1,5 +1,5 @@
-# Checks every push: unit tests, Android lint and an (unsigned) release build.
-# Nothing is published; use the Release workflow for that.
+# Checks every push: unit tests, Android lint and an (unsigned) release build, with its size in
+# the run summary and the APK kept for a few days. Nothing is published; use the Release workflow for that.
 
 name: Build
 
@@ -27,6 +27,17 @@ jobs:
 
       - name: Test, lint and build
         run: ./gradlew testDebugUnitTest lintDebug assembleRelease
+
+      - name: Report the APK's size
+        run: |
+          apk=app/build/outputs/apk/release/app-release-unsigned.apk
+          echo "Release APK: $(stat -c %s "$apk") bytes ($(du -h "$apk" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Keep the lint report
         if: always()
