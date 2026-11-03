@@ -327,6 +327,6 @@ class HomeScreen(
          * When a long press on a home app shows its menu: straight away (true), or once the finger
          * lifts without dragging (false), so the menu never covers the spots an app is dragged to.
          */
-        const val MENU_WHILE_HOLDING = true
+        const val MENU_WHILE_HOLDING = false
     }
 }

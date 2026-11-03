@@ -39,7 +39,7 @@ class HomeReorder(
      */
     fun arm(index: Int, rawY: Float, lift: Boolean) {
         views = apps()
-        if (index !in views.indices || views.size < 2) return
+        if (index !in views.indices) return
         from = index
         to = index
         startY = rawY
@@ -54,7 +54,8 @@ class HomeReorder(
             MotionEvent.ACTION_MOVE -> {
                 val dy = event.rawY - startY
                 if (!dragging) {
-                    if (abs(dy) < views[from].height / 2f) return false
+                    // A single home app has nowhere to go: letting go still opens its menu
+                    if (views.size < 2 || abs(dy) < views[from].height / 2f) return false
                     start()
                 }
                 follow(dy)
