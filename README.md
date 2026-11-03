@@ -9,7 +9,7 @@ It's for Android 15 and up, in English and French.
 
 ## What it does
 
-- Up to 8 apps on the home screen. Long press and drag one to move it.
+- Up to 10 apps on the home screen. Long press and drag one to move it.
 - Swipe up for all your apps, down for notifications, left and right for two apps you pick. Long press anywhere for settings.
 - Tap the time or the date to open your clock or calendar, or any app you choose.
 - Search ignores accents and case, puts the best matches first, and opens the app once it's the only one left.

@@ -214,8 +214,8 @@ class StyleFragment : PreferenceFragmentCompat() {
         showPreview()
     }
 
-    // The time and date each in their own style. The one being styled shows even when it's
-    // switched off, faded; the other shows only if it's on, as on the home screen.
+    // The time and date each in their own style, showing exactly what the home screen shows:
+    // either of them switched off is gone from the preview too.
     private fun showPreview() {
         val binding = preview ?: return
         val res = resources
@@ -230,11 +230,8 @@ class StyleFragment : PreferenceFragmentCompat() {
         binding.previewDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.date_size) * prefs.dateScale)
         binding.previewDate.text = DateText.date(requireContext(), prefs.dateStyle)
 
-        val editingTime = element == Element.TIME
-        binding.previewClock.isVisible = editingTime || prefs.showTime
-        binding.previewDate.isVisible = !editingTime || prefs.showDate
-        binding.previewClock.alpha = if (editingTime && !prefs.showTime) HIDDEN_ALPHA else 1f
-        binding.previewDate.alpha = if (!editingTime && !prefs.showDate) HIDDEN_ALPHA else 1f
+        binding.previewClock.isVisible = prefs.showTime
+        binding.previewDate.isVisible = prefs.showDate
     }
 
     // Dialogs
@@ -274,7 +271,6 @@ class StyleFragment : PreferenceFragmentCompat() {
 
     companion object {
         private const val ARG_ELEMENT = "element"
-        private const val HIDDEN_ALPHA = 0.4f
         private val DATE_FORMATS = intArrayOf(Prefs.DATE_SHORT, Prefs.DATE_FULL, Prefs.DATE_NUMERIC)
 
         fun appNames() = of(Element.NAMES)

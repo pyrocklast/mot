@@ -221,7 +221,7 @@ class Prefs(context: Context) {
     }
 
     companion object {
-        const val MAX_HOME_APPS = 8
+        const val MAX_HOME_APPS = 10
 
         const val DATE_SHORT = 0
         const val DATE_FULL = 1
