@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">mot launcher</string>
+    <!-- The app's name as people see it: "lanceur mot" in French, since "mot launcher" reads as
+         two words with no grammar there -->
+    <string name="app_name">mot launcher</string>
 
     <!-- Home screen -->
     <string name="app_placeholder">App</string>

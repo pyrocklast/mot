@@ -31,8 +31,6 @@ sealed interface DrawerRow {
     /** At the end of Private Space's apps. */
     data object LockPrivateSpace : Action
 
-    /** mot launcher's own settings, listed and searched among your apps. */
-    data class Settings(val label: String) : DrawerRow
 }
 
 class DrawerAdapter(
@@ -99,12 +97,6 @@ class DrawerAdapter(
                 if (work) description = context.getString(R.string.work_app, description)
                 if (row.isNew) description = context.getString(R.string.new_app, description)
                 binding.root.contentDescription = description
-            }
-            is DrawerRow.Settings -> {
-                val binding = (holder as AppHolder).binding
-                binding.name.text = row.label
-                binding.name.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null)
-                binding.root.contentDescription = null
             }
             is DrawerRow.OpenPrivateSpace -> {
                 val action = (holder as ActionHolder).binding.action
