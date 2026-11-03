@@ -1,8 +1,7 @@
-<img src="art/icon-outlined.svg" width="96" alt="">
 
 # mot launcher
 
-a **M**inimum **o**f **t**hings, a launcher.
+a launcher, with a **m**inimum **o**f **t**hings.
 
 Your apps as words on your wallpaper, with the time and the date. No icons, no widgets, no internet, nothing collected.
 
@@ -34,7 +33,7 @@ Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR
 
 ## Made with AI
 
-Claude, Anthropic's AI, wrote the code. The repository's owner decides what it does and tests it on their phone. Nobody has gone through the code line by line.
+Claude, a LLM, wrote the code. No human has gone through the code line by line.
 
 ## Licence
 
