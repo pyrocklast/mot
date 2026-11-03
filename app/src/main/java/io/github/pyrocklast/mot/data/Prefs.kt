@@ -75,6 +75,11 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean("auto_keyboard", true)
         set(value) = prefs.edit { putBoolean("auto_keyboard", value) }
 
+    /** Open a search result automatically once it is the only match. Off by default. */
+    var autoOpenSingleResult: Boolean
+        get() = prefs.getBoolean("auto_open_single_result", false)
+        set(value) = prefs.edit { putBoolean("auto_open_single_result", value) }
+
     /** The apps hidden from the drawer, by [AppTarget.appKey]. */
     var hiddenApps: Set<String>
         get() = prefs.getStringSet("hidden_apps", null).orEmpty().toSet()
