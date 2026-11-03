@@ -34,7 +34,7 @@ Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR
 
 ## Made with AI
 
-Claude, Anthropic's AI, wrote the code. I decide what it does and test it on my phone. Nobody has gone through the code line by line.
+Claude, Anthropic's AI, wrote the code. The repository's owner decides what it does and tests it on their phone. Nobody has gone through the code line by line.
 
 ## Licence
 
