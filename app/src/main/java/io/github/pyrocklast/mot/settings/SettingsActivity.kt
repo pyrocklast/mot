@@ -38,13 +38,14 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var hiddenApps: Row
     private lateinit var privateSpace: Row
     private lateinit var textColour: Row
+    private lateinit var tintText: SwitchRow
     private lateinit var nameStyle: Row
     private lateinit var statusBar: SwitchRow
     private lateinit var swipeLeft: SplitSwitchRow
     private lateinit var swipeRight: SplitSwitchRow
 
     private val alignments = intArrayOf(Gravity.START, Gravity.CENTER, Gravity.END)
-    private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_DARK, Prefs.TEXT_LIGHT, Prefs.TEXT_FOLLOW_DARK_MODE)
+    private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_LIGHT, Prefs.TEXT_DARK)
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         refresh()
@@ -107,6 +108,10 @@ class SettingsActivity : SettingsScreen() {
             textColour = item(R.string.text_colour) {
                 choose(R.string.text_colour, textColours, prefs.textColour, ::textColourLabel) { prefs.textColour = it }
             }
+            tintText = switch(R.string.tint_text, prefs.tintText) {
+                prefs.tintText = it
+                refresh()
+            }
             nameStyle = item(R.string.app_names) { startActivity(StyleActivity.appNames(this@SettingsActivity)) }
             time = item(R.string.time) { startActivity(StyleActivity.time(this@SettingsActivity)) }
             date = item(R.string.date) { startActivity(StyleActivity.date(this@SettingsActivity)) }
@@ -164,6 +169,8 @@ class SettingsActivity : SettingsScreen() {
         } ?: if (isHome) getString(R.string.not_set_up) else null
 
         textColour.summary = getString(textColourLabel(prefs.textColour))
+        tintText.isChecked = prefs.tintText
+        tintText.summary = getString(if (prefs.tintText) R.string.tint_text_on else R.string.tint_text_off)
         nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
         // With the status bar hidden, the battery level follows the date (when the date shows)
         statusBar.isChecked = prefs.showStatusBar
@@ -208,7 +215,6 @@ class SettingsActivity : SettingsScreen() {
     private fun textColourLabel(colour: Int) = when (colour) {
         Prefs.TEXT_DARK -> R.string.dark_text
         Prefs.TEXT_LIGHT -> R.string.light_text
-        Prefs.TEXT_FOLLOW_DARK_MODE -> R.string.text_follows_dark_mode
         else -> R.string.text_matches_wallpaper
     }
 }

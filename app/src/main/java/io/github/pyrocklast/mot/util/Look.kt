@@ -42,15 +42,12 @@ object Look {
         return Typeface.create(family, weight, false)
     }
 
-    /**
-     * Light text for dark wallpapers, dark text for light ones: as the wallpaper suits, as set,
-     * or following dark mode.
-     */
+    /** Light text for dark wallpapers, dark text for light ones: as set, or as the wallpaper suits. */
     fun lightText(context: Context, prefs: Prefs): Boolean = when (prefs.textColour) {
         Prefs.TEXT_DARK -> false
         Prefs.TEXT_LIGHT -> true
-        Prefs.TEXT_FOLLOW_DARK_MODE -> darkMode(context)
-        // Nothing to go on: the phone's dark mode is the next best guess at the light in the room
+        // With a wallpaper that says nothing about itself, the phone's dark mode is the next best
+        // guess at the light in the room
         else -> wallpaperSuitsDarkText(context)?.not() ?: darkMode(context)
     }
 
@@ -98,8 +95,13 @@ object Look {
     }
 
     /** Launcher text colours and shadow, for previews outside the launcher. */
-    fun applyTextColour(view: TextView, light: Boolean) {
-        view.setTextColor(view.context.getColor(if (light) LIGHT_TEXT else DARK_TEXT))
+    fun applyTextColour(view: TextView, light: Boolean, tinted: Boolean) {
+        val colour = when {
+            tinted -> view.context.getColor(if (light) LIGHT_TEXT else DARK_TEXT)
+            light -> android.graphics.Color.WHITE
+            else -> android.graphics.Color.BLACK
+        }
+        view.setTextColor(colour)
         view.setShadowLayer(4f, 0f, 2f, if (light) 0x80000000.toInt() else 0x80FFFFFF.toInt())
     }
 }

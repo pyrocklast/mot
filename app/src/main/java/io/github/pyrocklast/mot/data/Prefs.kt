@@ -86,9 +86,18 @@ class Prefs(context: Context) {
 
     // Appearance (home screen and drawer only)
 
+    /** Light text, dark text, or whichever the wallpaper suits. */
     var textColour: Int
         get() = prefs.getInt("text_colour", TEXT_MATCH_WALLPAPER)
+            // Version 0.1 could follow the phone's dark mode; that's what matching does with a
+            // wallpaper that says nothing about itself
+            .let { if (it == LEGACY_FOLLOW_DARK_MODE) TEXT_MATCH_WALLPAPER else it }
         set(value) = prefs.edit { putInt("text_colour", value) }
+
+    /** Whether the text takes its colour from the wallpaper, rather than being plain white or black. */
+    var tintText: Boolean
+        get() = prefs.getBoolean("tint_text", true)
+        set(value) = prefs.edit { putBoolean("tint_text", value) }
 
     // App names (home screen and drawer), the time and the date each have a font, a weight and a
     // size. Weights are CSS-style numbers: 100 thin, 300 light, 400 regular, 500 medium, 700 bold.
@@ -270,7 +279,7 @@ class Prefs(context: Context) {
             "clock_font", "clock_weight", "clock_scale",
             "date_font", "date_weight", "date_scale",
             "name_font", "name_weight", "app_name_scale", "bolder_names",
-            "text_colour", "show_status_bar", "drawer_alignment",
+            "text_colour", "tint_text", "show_status_bar", "drawer_alignment",
         )
 
         const val DATE_SHORT = 0
@@ -281,7 +290,7 @@ class Prefs(context: Context) {
         const val TEXT_DARK = 0
         /** Light text, for dark wallpapers. */
         const val TEXT_LIGHT = 1
-        const val TEXT_FOLLOW_DARK_MODE = 2
+        private const val LEGACY_FOLLOW_DARK_MODE = 2
         /** Dark or light text, whichever Android says suits the wallpaper. */
         const val TEXT_MATCH_WALLPAPER = 3
 

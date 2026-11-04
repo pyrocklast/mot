@@ -95,10 +95,12 @@
     <string name="appearance">Apparence</string>
     <string name="appearance_summary">Écran d\'accueil et tiroir d\'applications</string>
     <string name="text_colour">Couleur du texte</string>
-    <string name="dark_text">Texte sombre, pour fonds d\'écran clairs</string>
-    <string name="light_text">Texte clair, pour fonds d\'écran sombres</string>
-    <string name="text_follows_dark_mode">Selon le mode sombre du téléphone</string>
-    <string name="text_matches_wallpaper">Selon le fond d\'écran</string>
+    <string name="dark_text">Sombre</string>
+    <string name="light_text">Clair</string>
+    <string name="text_matches_wallpaper">Automatique</string>
+    <string name="tint_text">Couleur du fond d\'écran</string>
+    <string name="tint_text_on">La plus claire ou la plus sombre des couleurs de votre fond d\'écran</string>
+    <string name="tint_text_off">Blanc ou noir, pour un contraste maximal</string>
     <string name="app_names">Noms d\'applications</string>
     <string name="font">Police</string>
     <string name="font_sans">Sans empattement</string>

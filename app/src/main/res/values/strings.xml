@@ -108,10 +108,13 @@
     <string name="appearance">Appearance</string>
     <string name="appearance_summary">Home screen and app drawer</string>
     <string name="text_colour">Text colour</string>
-    <string name="dark_text">Dark text, for light wallpapers</string>
-    <string name="light_text">Light text, for dark wallpapers</string>
-    <string name="text_follows_dark_mode">Match the phone\'s dark mode</string>
-    <string name="text_matches_wallpaper">Match the wallpaper</string>
+    <string name="dark_text">Dark</string>
+    <string name="light_text">Light</string>
+    <!-- Dark or light, whichever suits the wallpaper -->
+    <string name="text_matches_wallpaper">Automatic</string>
+    <string name="tint_text">Colour from the wallpaper</string>
+    <string name="tint_text_on">The lightest or darkest of your wallpaper\'s colours</string>
+    <string name="tint_text_off">Plain white or black, for the most contrast</string>
     <string name="app_names">App names</string>
     <string name="font">Font</string>
     <string name="font_sans">Sans serif</string>

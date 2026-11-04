@@ -164,7 +164,8 @@ class StyleActivity : SettingsScreen() {
         }
         binding.clockPreview.gravity = prefs.homeAlignment or Gravity.CENTER_VERTICAL
         val light = Look.lightText(this, prefs)
-        listOf(binding.namePreview, binding.previewClock, binding.previewDate).forEach { Look.applyTextColour(it, light) }
+        listOf(binding.namePreview, binding.previewClock, binding.previewDate)
+            .forEach { Look.applyTextColour(it, light, prefs.tintText) }
     }
 
     override fun onResume() {
