@@ -4,7 +4,6 @@ import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.Context
 import android.content.res.Configuration
-import android.graphics.Color
 import android.graphics.Typeface
 import android.widget.TextView
 import io.github.pyrocklast.mot.data.Prefs
@@ -13,10 +12,16 @@ import io.github.pyrocklast.mot.data.Prefs
 object Look {
 
     /**
-     * Light enough for dark text, when the wallpaper leaves it to us. Below this, white text with
-     * its shadow reads better; a picture's own hint is trusted over this either way.
+     * Light enough for dark text. Android's own hint can say so too, but it is cautious and some
+     * wallpapers send none at all, so how light the wallpaper's colours are decides as well.
      */
     private const val LIGHT_ENOUGH_FOR_DARK_TEXT = 0.4f
+
+    // The text takes the lightest and darkest of the colours Android works out from the wallpaper,
+    // rather than plain white and black, so the words belong to the picture behind them. The
+    // launcher's own text uses these through launcherTextColor (themes.xml).
+    private const val LIGHT_TEXT = android.R.color.system_neutral1_50
+    private const val DARK_TEXT = android.R.color.system_neutral1_900
 
     /** The weights offered, from thin to bold. */
     val WEIGHTS = intArrayOf(100, 300, 400, 500, 700)
@@ -53,14 +58,14 @@ object Look {
         context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
     /**
-     * Whether dark text reads on the wallpaper, or null when the wallpaper says nothing about
-     * itself. Android works this out for a picture and says so in the hints. A live wallpaper
-     * reports its own colours and often sends none of those hints, so when there are none, how
-     * light the colours are decides instead.
+     * Whether dark text reads on the wallpaper, or null when the wallpaper has no colours at all.
+     * Android hints at this for a picture, but errs towards light text — a wallpaper with one
+     * dark corner gets no hint — and a live wallpaper usually sends no hint either. So the hint
+     * is taken when it says dark text reads, and otherwise the colours themselves decide.
      */
     private fun wallpaperSuitsDarkText(context: Context): Boolean? {
         val colours = WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) ?: return null
-        if (colours.colorHints != 0) return colours.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0
+        if (colours.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0) return true
         return brightness(colours) > LIGHT_ENOUGH_FOR_DARK_TEXT
     }
 
@@ -94,7 +99,7 @@ object Look {
 
     /** Launcher text colours and shadow, for previews outside the launcher. */
     fun applyTextColour(view: TextView, light: Boolean) {
-        view.setTextColor(if (light) Color.WHITE else Color.BLACK)
+        view.setTextColor(view.context.getColor(if (light) LIGHT_TEXT else DARK_TEXT))
         view.setShadowLayer(4f, 0f, 2f, if (light) 0x80000000.toInt() else 0x80FFFFFF.toInt())
     }
 }

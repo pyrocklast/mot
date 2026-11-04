@@ -29,23 +29,24 @@
         <item name="android:windowAnimationStyle">@style/Mot.WindowAnimation</item>
         <item name="android:forceDarkAllowed">false</item>
 
-        <item name="launcherTextColor">@android:color/white</item>
+        <item name="launcherTextColor">@android:color/system_neutral1_50</item>
         <item name="launcherHintColor">#99FFFFFF</item>
         <item name="launcherShadowColor">#80000000</item>
         <item name="launcherVeilColor">#40000000</item>
     </style>
 
-    <!-- Light text, for dark wallpapers -->
+    <!-- Light text, for dark wallpapers: not white but the lightest of the colours Android takes
+         from your wallpaper, so the words belong to the picture behind them -->
     <style name="ThemeOverlay.Mot.LightText" parent="">
-        <item name="launcherTextColor">@android:color/white</item>
+        <item name="launcherTextColor">@android:color/system_neutral1_50</item>
         <item name="launcherHintColor">#99FFFFFF</item>
         <item name="launcherShadowColor">#80000000</item>
         <item name="launcherVeilColor">#40000000</item>
     </style>
 
-    <!-- Dark text, for light wallpapers -->
+    <!-- Dark text, for light wallpapers: the darkest of your wallpaper's colours -->
     <style name="ThemeOverlay.Mot.DarkText" parent="">
-        <item name="launcherTextColor">@android:color/black</item>
+        <item name="launcherTextColor">@android:color/system_neutral1_900</item>
         <item name="launcherHintColor">#99000000</item>
         <item name="launcherShadowColor">#80FFFFFF</item>
         <item name="launcherVeilColor">#40FFFFFF</item>
