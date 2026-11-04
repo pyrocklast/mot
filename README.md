@@ -33,7 +33,8 @@ Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR
 
 ## Made with AI
 
-Claude, a LLM, wrote the code. No human has gone through the code line by line.
+This project was, obviously, heavily AI-assisted. No human has gone through the code line by line.
+
 
 ## Licence
 
