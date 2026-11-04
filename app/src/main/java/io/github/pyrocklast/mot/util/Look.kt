@@ -3,6 +3,7 @@ package io.github.pyrocklast.mot.util
 import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.Context
+import android.graphics.Color
 import android.content.res.Configuration
 import android.graphics.Typeface
 import android.widget.TextView
@@ -10,12 +11,6 @@ import io.github.pyrocklast.mot.data.Prefs
 
 /** The launcher's look: fonts, weights and the text colour, shared by the launcher and settings' previews. */
 object Look {
-
-    /**
-     * Light enough for dark text. Android's own hint can say so too, but it is cautious and some
-     * wallpapers send none at all, so how light the wallpaper's colours are decides as well.
-     */
-    private const val LIGHT_ENOUGH_FOR_DARK_TEXT = 0.4f
 
     // The text takes the lightest and darkest of the colours Android works out from the wallpaper,
     // rather than plain white and black, so the words belong to the picture behind them. The
@@ -48,7 +43,7 @@ object Look {
         Prefs.TEXT_LIGHT -> true
         // With a wallpaper that says nothing about itself, the phone's dark mode is the next best
         // guess at the light in the room
-        else -> wallpaperSuitsDarkText(context)?.not() ?: darkMode(context)
+        else -> wallpaperSuitsDarkText(context, prefs.tintText)?.not() ?: darkMode(context)
     }
 
     private fun darkMode(context: Context): Boolean =
@@ -60,11 +55,30 @@ object Look {
      * dark corner gets no hint — and a live wallpaper usually sends no hint either. So the hint
      * is taken when it says dark text reads, and otherwise the colours themselves decide.
      */
-    private fun wallpaperSuitsDarkText(context: Context): Boolean? {
+    private fun wallpaperSuitsDarkText(context: Context, tinted: Boolean): Boolean? {
         val colours = WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) ?: return null
         if (colours.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0) return true
-        return brightness(colours) > LIGHT_ENOUGH_FOR_DARK_TEXT
+        // Whichever of the two stands out more against the wallpaper. Dark text wins sooner than
+        // it looks like it should: against a mid orange, dark is three times the contrast of light.
+        val wallpaper = brightness(colours)
+        return contrast(wallpaper, textLuminance(context, tinted, light = false)) >
+            contrast(wallpaper, textLuminance(context, tinted, light = true))
     }
+
+    /** How light the text itself is: the wallpaper's lightest or darkest colour, or plain white or black. */
+    private fun textLuminance(context: Context, tinted: Boolean, light: Boolean): Float = when {
+        tinted -> Color.valueOf(context.getColor(if (light) LIGHT_TEXT else DARK_TEXT)).luminance()
+        light -> 1f
+        else -> 0f
+    }
+
+    /**
+     * How far apart two brightnesses are to the eye, from 1 (the same) to 21 (black on white).
+     * The 0.05 is the light a screen reflects even at its blackest, which is why dark text beats
+     * light text on anything but a genuinely dark wallpaper.
+     */
+    internal fun contrast(one: Float, other: Float): Float =
+        (maxOf(one, other) + 0.05f) / (minOf(one, other) + 0.05f)
 
     /**
      * How light a wallpaper's colours are, from 0 to 1. Brightness here is what the eye makes of
@@ -98,8 +112,8 @@ object Look {
     fun applyTextColour(view: TextView, light: Boolean, tinted: Boolean) {
         val colour = when {
             tinted -> view.context.getColor(if (light) LIGHT_TEXT else DARK_TEXT)
-            light -> android.graphics.Color.WHITE
-            else -> android.graphics.Color.BLACK
+            light -> Color.WHITE
+            else -> Color.BLACK
         }
         view.setTextColor(colour)
         view.setShadowLayer(4f, 0f, 2f, if (light) 0x80000000.toInt() else 0x80FFFFFF.toInt())
