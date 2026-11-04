@@ -3,26 +3,25 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
+    android:background="?android:attr/colorBackground"
     android:orientation="vertical">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/searchLayout"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+    <include
+        android:id="@+id/appBar"
+        layout="@layout/settings_app_bar" />
+
+    <EditText
+        android:id="@+id/search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginVertical="8dp"
-        android:hint="@string/search_apps">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/search"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:imeOptions="actionDone"
-            android:inputType="text|textNoSuggestions"
-            android:maxLines="1" />
-    </com.google.android.material.textfield.TextInputLayout>
+        android:importantForAutofill="no"
+        android:hint="@string/search_apps"
+        android:imeOptions="actionDone"
+        android:inputType="text|textNoSuggestions"
+        android:maxLines="1"
+        android:minHeight="48dp" />
 
     <TextView
         android:id="@+id/empty"
@@ -30,8 +29,8 @@
         android:layout_height="wrap_content"
         android:padding="24dp"
         android:text="@string/no_hidden_apps"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textAppearance="?android:attr/textAppearanceListItem"
+        android:textColor="?android:attr/textColorSecondary"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView

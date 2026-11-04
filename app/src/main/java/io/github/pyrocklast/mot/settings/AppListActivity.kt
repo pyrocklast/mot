@@ -1,13 +1,13 @@
 package io.github.pyrocklast.mot.settings
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -20,7 +20,7 @@ import io.github.pyrocklast.mot.data.AppEntry
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.data.Profile
-import io.github.pyrocklast.mot.databinding.FragmentAppListBinding
+import io.github.pyrocklast.mot.databinding.ActivityAppListBinding
 import io.github.pyrocklast.mot.databinding.ItemSettingsAppBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
@@ -32,12 +32,12 @@ import kotlinx.coroutines.launch
  * - choosing the app a swipe, the time or the date opens (hidden apps included), or
  * - hidden apps: tap one to open it, or turn its switch off to show it in the drawer again.
  */
-class AppListFragment : Fragment() {
+class AppListActivity : SettingsScreen() {
 
-    private var binding: FragmentAppListBinding? = null
+    private lateinit var binding: ActivityAppListBinding
     private lateinit var prefs: Prefs
     private lateinit var repo: AppRepository
-    private val slot: Slot? by lazy { Slot.decode(arguments?.getString(ARG_SLOT)) }
+    private val slot: Slot? by lazy { Slot.decode(intent.getStringExtra(EXTRA_SLOT)) }
 
     // The hidden apps list keeps the apps it opened with, so a switch turned off by mistake can
     // be turned back on
@@ -48,43 +48,31 @@ class AppListFragment : Fragment() {
 
     private val adapter = Adapter()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        prefs = Prefs(requireContext())
-        repo = AppRepository.get(requireContext())
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        prefs = Prefs(this)
+        repo = AppRepository.get(this)
         listed = prefs.hiddenApps
         hidden = listed
-        return FragmentAppListBinding.inflate(inflater, container, false).also { binding = it }.root
-    }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val binding = binding ?: return
-        binding.list.layoutManager = LinearLayoutManager(requireContext())
+        binding = ActivityAppListBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        val title = getString(if (slot != null) R.string.choose_an_app else R.string.hidden_apps)
+        setUpFrame(binding.root, binding.appBar, binding.list, title)
+
+        binding.list.layoutManager = LinearLayoutManager(this)
         binding.list.adapter = adapter
-        binding.list.padForNavigationBar()
-        binding.searchLayout.isVisible = slot != null
+        binding.search.isVisible = slot != null
         binding.search.doAfterTextChanged { update() }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 repo.apps.collect { update() }
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        (requireActivity() as SettingsActivity).setScreenTitle(
-            getString(if (slot != null) R.string.choose_an_app else R.string.hidden_apps)
-        )
-    }
-
-    override fun onDestroyView() {
-        binding = null
-        super.onDestroyView()
-    }
-
     private fun update() {
-        val binding = binding ?: return
         hidden = prefs.hiddenApps
         val apps = repo.apps.value.orEmpty()
         val rows = if (slot != null) {
@@ -103,9 +91,9 @@ class AppListFragment : Fragment() {
         val slot = slot
         if (slot != null) {
             slot.save(prefs, entry.target)
-            parentFragmentManager.popBackStack()
+            finish()
         } else {
-            Apps.open(requireContext(), entry.target, view)
+            Apps.open(this, entry.target, view)
         }
     }
 
@@ -155,10 +143,11 @@ class AppListFragment : Fragment() {
     }
 
     companion object {
-        private const val ARG_SLOT = "slot"
+        private const val EXTRA_SLOT = "slot"
 
-        fun chooseApp(slot: Slot) = AppListFragment().apply { arguments = bundleOf(ARG_SLOT to slot.encode()) }
+        fun chooseApp(context: Context, slot: Slot): Intent =
+            Intent(context, AppListActivity::class.java).putExtra(EXTRA_SLOT, slot.encode())
 
-        fun hiddenApps() = AppListFragment()
+        fun hiddenApps(context: Context) = Intent(context, AppListActivity::class.java)
     }
 }

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A style screen: a preview over your wallpaper (this area has no background, and the settings
-     window shows the wallpaper), then the settings list below it. -->
+<!-- A style screen: the title bar, a preview over your wallpaper (this area has no background,
+     and the settings window shows the wallpaper), then the rows below it. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+
+    <include
+        android:id="@+id/appBar"
+        layout="@layout/settings_app_bar" />
 
     <!-- A fixed height, so the preview stays put as things in it change size, or come and go -->
     <FrameLayout
@@ -49,11 +53,19 @@
         </LinearLayout>
     </FrameLayout>
 
-    <FrameLayout
-        android:id="@+id/listContainer"
+    <ScrollView
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="?attr/colorSurface" />
+        android:background="?android:attr/colorBackground"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:id="@+id/rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
 
 </LinearLayout>

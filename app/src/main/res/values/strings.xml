@@ -73,7 +73,6 @@
     <string name="centre">Centre</string>
     <string name="right">Right</string>
 
-    <string name="clock_and_date">Clock and date</string>
     <string name="time">Time</string>
     <string name="date">Date</string>
     <!-- The Time and Date settings: shown on the home screen or not, and the date's format -->
