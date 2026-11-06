@@ -166,8 +166,9 @@ class SettingsActivity : SettingsScreen() {
         // A hidden, locked Private Space must not be disclosed by a status summary.
         // Android only shows its profile to the Home app, so otherwise it's unknown until mot is Home.
         val space = repo.privateSpace.value
+        // Do not reveal that a Private Space exists while it is locked and its entry point is hidden.
+        privateSpace.isVisible = space?.entrypointVisible != false
         privateSpace.summary = when {
-            space?.entrypointVisible == false -> null
             space != null -> getString(if (space.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary)
             isHome -> getString(R.string.not_set_up)
             else -> null
