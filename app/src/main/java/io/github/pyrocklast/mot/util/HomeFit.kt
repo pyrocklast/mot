@@ -105,10 +105,13 @@ object HomeFit {
         minimumTop: Int,
         groupHeight: Int,
     ): Int {
-        val usableBottom = (screenHeight - bottomInset).coerceAtLeast(topInset)
-        val centered = topInset + (usableBottom - topInset - groupHeight) / 2
-        val latest = (usableBottom - groupHeight).coerceAtLeast(topInset)
-        return centered.coerceAtLeast(minimumTop).coerceAtMost(latest.coerceAtLeast(minimumTop))
+        // Balance *below* the information block, not around the whole display midpoint.
+        // Otherwise the clock can push a large app group high up against itself.
+        val usableTop = maxOf(topInset, minimumTop)
+        val usableBottom = (screenHeight - bottomInset).coerceAtLeast(usableTop)
+        val centered = usableTop + (usableBottom - usableTop - groupHeight) / 2
+        val latest = (usableBottom - groupHeight).coerceAtLeast(usableTop)
+        return centered.coerceIn(usableTop, latest)
     }
 
     /** How many assigned rows are actually visible on the fixed (never scrolling) home surface. */
