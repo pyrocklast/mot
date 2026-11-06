@@ -117,17 +117,33 @@
             android:layout_height="0dp"
             android:layout_weight="0.06" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/appList"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginBottom="24dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:fadingEdgeLength="24dp"
-            android:layoutAnimation="@anim/layout_anim_from_bottom"
-            android:overScrollMode="ifContentScrolls"
-            android:requiresFadingEdge="vertical" />
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/appList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="24dp"
+                android:clipToPadding="false"
+                android:fadingEdgeLength="24dp"
+                android:layoutAnimation="@anim/layout_anim_from_bottom"
+                android:overScrollMode="ifContentScrolls"
+                android:requiresFadingEdge="vertical" />
+
+            <TextView
+                android:id="@+id/drawerEmpty"
+                style="@style/Mot.Text.Small"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:padding="24dp"
+                android:visibility="gone" />
+
+        </FrameLayout>
     </LinearLayout>
 
 </FrameLayout>

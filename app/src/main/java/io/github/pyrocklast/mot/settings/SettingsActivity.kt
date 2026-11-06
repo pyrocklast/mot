@@ -122,7 +122,7 @@ class SettingsActivity : SettingsScreen() {
         }
 
         // One row per swipe: the text chooses the app, the switch turns the swipe on or off
-        group(R.string.gestures) {
+        group(R.string.gestures, summary = R.string.gesture_summary) {
             swipeLeft = splitSwitch(R.string.swipe_left, prefs.swipeLeftOn, onChange = { prefs.swipeLeftOn = it }) {
                 chooseApp(R.string.swipe_left_opens, R.string.default_camera_app, prefs.swipeLeftApp, Slot.SwipeLeft)
             }
@@ -174,7 +174,9 @@ class SettingsActivity : SettingsScreen() {
         nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
         // With the status bar hidden, the battery level follows the date (when the date shows)
         statusBar.isChecked = prefs.showStatusBar
-        statusBar.summaryOff = if (prefs.showDate) getString(R.string.status_bar_off_summary) else null
+        statusBar.summaryOff = getString(
+            if (prefs.showDate) R.string.status_bar_off_summary else R.string.status_bar_off_no_date_summary
+        )
 
         swipeLeft.isChecked = prefs.swipeLeftOn
         swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
