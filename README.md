@@ -13,7 +13,7 @@ It's for Android 15 and up, in English and French.
 - Swipe up for all your apps, down for notifications, left and right for two apps you pick. Settings: long press the home screen, or the gear in the app drawer.
 - Tap the time or the date to open your clock or calendar, or any app you choose.
 - Search ignores accents and case, puts the best matches first, and opens the app once two letters leave it the only one.
-- Long press an app to rename it, hide it or uninstall it. Work apps get a small dot, and Private Space has its own list.
+- Long press an app to rename it, hide it or uninstall it. Work apps get a small dot, and Private Space has its own list. Its entry point follows Android's hide-while-locked setting.
 - Choose the font, weight and size of app names, the time and the date. You see the result on your wallpaper as you go.
 - The text colour matches your wallpaper. Settings follow your phone's theme.
 - With the status bar hidden, the battery level shows after the date.
