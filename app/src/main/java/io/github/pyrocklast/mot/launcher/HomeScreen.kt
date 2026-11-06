@@ -162,7 +162,17 @@ class HomeScreen(
         val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
         val namePadding = HomeFit.namePadding(context, count, nameHeight.toFloat(), room.toFloat())
         appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
-        val groupHeight = appViews.sumOf { heightOf(it) }
+        // A launcher home is not scrollable: reserve the gesture surface. On constrained
+        // screens show only complete touch targets; assignments remain saved in preferences.
+        // The drawer still provides access to every installed app.
+        var remaining = room
+        appViews.forEach { view ->
+            val rowHeight = heightOf(view)
+            val fits = rowHeight <= remaining
+            view.isVisible = fits
+            if (fits) remaining -= rowHeight
+        }
+        val groupHeight = appViews.filter { it.isVisible }.sumOf { heightOf(it) }
         val balancedTop = HomeFit.balancedTop(
             displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
         )
