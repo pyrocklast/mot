@@ -31,6 +31,25 @@ object HomeSlots {
         return count.takeIf { it < slots.size }
     }
 
+    internal data class Restored<T : Any>(
+        val active: List<T>,
+        val restoredIndices: List<Int>,
+        val remainingDormant: List<Pair<Int, T>>,
+    )
+
+    /** Explicit recovery only. Restore what fits and keep the rest for a later request. */
+    internal fun <T : Any> restore(
+        active: List<T>, dormant: List<Pair<Int, T>>, capacity: Int,
+    ): Restored<T> {
+        val available = (capacity - active.size).coerceAtLeast(0)
+        val chosen = dormant.take(available)
+        return Restored(
+            active = active + chosen.map { it.second },
+            restoredIndices = chosen.map { it.first },
+            remainingDormant = dormant.drop(chosen.size),
+        )
+    }
+
     /** One-place removal, with the later rows shifted towards the top. */
     internal fun <T : Any> removeAt(active: List<T>, index: Int): List<T> =
         if (index in active.indices) active.toMutableList().also { it.removeAt(index) }
