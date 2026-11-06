@@ -6,6 +6,7 @@ import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.Prefs
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.ceil
 
 /**
  * How much room the home screen's names take, and how much it has for them. Text sizes follow
@@ -82,7 +83,7 @@ object HomeFit {
      */
     internal fun namePadding(count: Int, nameHeight: Float, room: Float, usual: Int, touchTarget: Int, safety: Int): Int {
         if (count <= 0 || nameHeight <= 0f) return usual
-        val leastForTouch = floor((maxOf(touchTarget.toFloat(), nameHeight) - nameHeight) / 2).toInt().coerceAtLeast(0)
+        val leastForTouch = ceil((maxOf(touchTarget.toFloat(), nameHeight) - nameHeight) / 2).toInt().coerceAtLeast(0)
         val toFit = floor(((room - safety) / count - nameHeight) / 2).toInt()
         return toFit.coerceIn(leastForTouch, maxOf(usual, leastForTouch))
     }
