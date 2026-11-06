@@ -50,6 +50,14 @@ class SearchTest {
     }
 
     @Test
+    fun `automatic opening is disabled unless explicitly enabled`() {
+        assertFalse(Search.shouldAutoOpenOnlyMatch(enabled = false, query = "maps", matches = 1, composing = false))
+        assertTrue(Search.shouldAutoOpenOnlyMatch(enabled = true, query = "maps", matches = 1, composing = false))
+        assertFalse(Search.shouldAutoOpenOnlyMatch(enabled = true, query = "maps", matches = 2, composing = false))
+        assertFalse(Search.shouldAutoOpenOnlyMatch(enabled = true, query = "maps", matches = 1, composing = true))
+    }
+
+    @Test
     fun `normalises to plain lower case`() {
         assertEquals("cafecreme", Search.normalize("Café Crème"))
     }
