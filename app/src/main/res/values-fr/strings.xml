@@ -30,6 +30,13 @@
     <string name="work_app">%1$s, travail</string>
     <string name="new_app">%1$s, nouvelle</string>
     <string name="add_to_home">Ajouter à l\'écran d\'accueil</string>
+    <string name="home_add_first_app">Ajouter une application</string>
+    <string name="restore_previous_home_apps">Applications d\'accueil enregistrées</string>
+    <string name="restore_previous_home_apps_prompt">Restaurer les anciens emplacements masqués ? Certaines applications précédemment retirées de l\'écran peuvent y réapparaître. Le tiroir d\'applications ne change pas.</string>
+    <string name="restore">Restaurer</string>
+    <string name="home_full">Retirez une application de l\'accueil avant de restaurer les anciennes</string>
+    <string name="previous_home_apps_restored">Applications d\'accueil restaurées</string>
+
     <string name="change_app">Changer d\'application</string>
     <string name="remove_from_home">Retirer de l\'écran d\'accueil</string>
     <string name="rename">Renommer</string>
