@@ -75,6 +75,11 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean("auto_keyboard", true)
         set(value) = prefs.edit { putBoolean("auto_keyboard", value) }
 
+    /** Whether typing a query that leaves one result opens that app without a tap. Off by default. */
+    var autoOpenUniqueSearchResult: Boolean
+        get() = prefs.getBoolean("auto_open_unique_search_result", false)
+        set(value) = prefs.edit { putBoolean("auto_open_unique_search_result", value) }
+
     /** The apps hidden from the drawer, by [AppTarget.appKey]. */
     var hiddenApps: Set<String>
         get() = prefs.getStringSet("hidden_apps", null).orEmpty().toSet()
