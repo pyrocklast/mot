@@ -347,13 +347,6 @@ class Drawer(
                 else -> R.string.search_hint
             }
         )
-        // Keep the spoken hint in step with the visible one in every drawer mode.
-        ViewCompat.setAccessibilityDelegate(search, object : AccessibilityDelegateCompat() {
-            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
-                super.onInitializeAccessibilityNodeInfo(host, info)
-                info.hintText = host.hint
-            }
-        })
     }
 
     // Keyboard
@@ -385,7 +378,7 @@ class Drawer(
         ViewCompat.setAccessibilityDelegate(search, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
-                if (choosingFor == null && !inPrivateSpace) info.hintText = activity.getString(R.string.search_apps)
+                info.hintText = host.hint
             }
         })
     }
