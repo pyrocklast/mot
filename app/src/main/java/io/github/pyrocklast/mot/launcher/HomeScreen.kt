@@ -175,7 +175,7 @@ class HomeScreen(
             view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
             view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             view.typeface = Look.typeface(Prefs.FONT_SANS, 400)
-            view.minHeight = (48 * context.resources.displayMetrics.density).toInt()
+            view.minHeight = kotlin.math.ceil(48.0 * context.resources.displayMetrics.density).toInt()
             // Do not make this view touch-clickable: that would swallow swipe-up gestures.
             // The home detector handles taps; TalkBack gets an explicit open action.
             describeForTalkBack(
