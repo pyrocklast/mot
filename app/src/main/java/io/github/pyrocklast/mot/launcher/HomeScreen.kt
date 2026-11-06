@@ -165,10 +165,20 @@ class HomeScreen(
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         }
 
-        // Measure before positioning: the group is optically balanced around the usable
-        // display midpoint, but cannot collide with the clock/date or system navigation.
+        // Onboarding is drawn over the home; reserve its bottom area so app rows cannot
+        // overlap first-run instructions or the action to set mot as the default launcher.
+        binding.tips.isVisible = !prefs.settingsOpened
+        binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
+
+        // Balance the app list between the information block and navigation/onboarding.
         val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
-        val bottomPadding = HomeFit.bottomPadding(context, bottomInset)
+        val overlayClearance = listOf(binding.tips, binding.setDefault)
+            .filter { it.isVisible }
+            .maxOfOrNull {
+                (it.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin +
+                    heightOf(it) + (8 * context.resources.displayMetrics.density).toInt()
+            } ?: 0
+        val bottomPadding = maxOf(HomeFit.bottomPadding(context, bottomInset), overlayClearance)
         val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
         val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
         // Each app row is measured independently so every slot preserves its 48dp target,
@@ -219,10 +229,6 @@ class HomeScreen(
         )
 
 
-        // First run: how to reach the drawer and settings, and making mot launcher the Home app.
-        // Afterwards settings has a row for that.
-        binding.tips.isVisible = !prefs.settingsOpened
-        binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
     }
 
     // How tall a view comes out at its current text, size and font
@@ -232,7 +238,8 @@ class HomeScreen(
         val screenWidth = binding.homeApps.width.takeIf { it > 0 }
             ?: binding.home.width.takeIf { it > 0 }
             ?: context.resources.displayMetrics.widthPixels
-        val horizontal = if (view === binding.clockBlock) {
+        val horizontal = if (view === binding.clockBlock || view === binding.tips ||
+            view === binding.setDefault) {
             val margins = view.layoutParams as? ViewGroup.MarginLayoutParams
             (margins?.leftMargin ?: 0) + (margins?.rightMargin ?: 0)
         } else {
