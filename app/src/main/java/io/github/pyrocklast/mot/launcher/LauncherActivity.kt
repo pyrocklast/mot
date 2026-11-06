@@ -43,7 +43,13 @@ class LauncherActivity : ComponentActivity() {
 
     // A new wallpaper can call for the other text colour (with "Match the wallpaper")
     private val wallpaperColours = WallpaperManager.OnColorsChangedListener { _, which ->
-        if (which and WallpaperManager.FLAG_SYSTEM != 0 && currentLook() != look) recreate()
+        if (which and WallpaperManager.FLAG_SYSTEM != 0 &&
+            (prefs.textColour == Prefs.TEXT_MATCH_WALLPAPER || prefs.tintText)
+        ) {
+            // A wallpaper can change its dynamic colour palette without changing whether
+            // light or dark text wins. Recreate to refresh the actual themed text colours.
+            recreate()
+        }
     }
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
