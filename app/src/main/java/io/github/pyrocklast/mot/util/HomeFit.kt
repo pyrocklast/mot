@@ -111,6 +111,31 @@ object HomeFit {
         return centered.coerceAtLeast(minimumTop).coerceAtMost(latest.coerceAtLeast(minimumTop))
     }
 
+    /** How many assigned rows are actually visible on the fixed (never scrolling) home surface. */
+    internal data class VisibleRows(val count: Int, val showAllApps: Boolean)
+
+    /**
+     * Preserve the prefix of assigned apps and their full touch targets. If the apps overflow,
+     * reserve one complete row for the drawer shortcut. If even that won't fit, the existing
+     * swipe-up gesture remains the only way into the drawer; don't render a clipped shortcut.
+     */
+    internal fun visibleRows(rowHeights: List<Int>, availableHeight: Int, overflowHeight: Int): VisibleRows {
+        val room = availableHeight.coerceAtLeast(0)
+        val heights = rowHeights.map { it.coerceAtLeast(0) }
+        if (heights.sumOf { it.toLong() } <= room.toLong()) return VisibleRows(heights.size, false)
+
+        val showAllApps = overflowHeight > 0 && overflowHeight <= room
+        val rowsRoom = if (showAllApps) room - overflowHeight else room
+        var remaining = rowsRoom
+        var visibleCount = 0
+        for (height in heights) {
+            if (height > remaining) break
+            remaining -= height
+            visibleCount++
+        }
+        return VisibleRows(visibleCount, showAllApps)
+    }
+
     /** How many names fit on screen, with their gaps closed up as far as they go. */
     fun namesThatFit(context: Context, prefs: Prefs): Int {
         val row = tightestRow(context, prefs)
