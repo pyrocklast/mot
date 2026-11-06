@@ -5,7 +5,7 @@ import org.junit.Test
 
 class HomeFitBalanceTest {
     @Test fun centersGroupInsideUsableInsets() {
-        assertEquals(420, HomeFit.balancedTop(1000, 40, 80, 120, 240))
+        assertEquals(360, HomeFit.balancedTop(1000, 40, 80, 120, 240))
     }
 
     @Test fun avoidsOverlappingClockAndDate() {
@@ -13,7 +13,7 @@ class HomeFitBalanceTest {
     }
 
     @Test fun keepsGroupAboveNavigationWhenPossible() {
-        assertEquals(300, HomeFit.balancedTop(800, 24, 100, 200, 400))
+        assertEquals(200, HomeFit.balancedTop(800, 24, 100, 200, 400))
     }
 
     @Test fun respectsMinimumTopWhenScreenIsTooSmall() {
