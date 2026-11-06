@@ -27,6 +27,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.Collator
 
+/** The entry point is hidden only when Android requests it and the Private Space is locked. */
+internal fun isPrivateSpaceEntryPointVisible(locked: Boolean, entrypointHidden: Boolean): Boolean =
+    !locked || !entrypointHidden
+
 /**
  * Every app and pinned shortcut, in every profile, sorted by name. The list is loaded once when
  * mot launcher starts and again only when Android reports a change (an app installed, updated or removed,
