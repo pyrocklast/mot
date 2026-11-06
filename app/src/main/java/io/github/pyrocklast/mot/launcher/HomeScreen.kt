@@ -110,6 +110,10 @@ class HomeScreen(
     init {
         // Taps reach TalkBack users through the actions set up in describeForTalkBack
         binding.home.setOnTouchListener(::onTouch)
+        // The scroll container fills the home; keep clock/date above it for direct touch.
+        binding.clockBlock.bringToFront()
+        binding.tips.bringToFront()
+        binding.setDefault.bringToFront()
         // ScrollView handles vertical movement only when content actually overflows. Forward
         // taps and long presses to the existing detector; leave drag-to-scroll to Android.
         binding.homeScroll.setOnTouchListener { _, event ->
