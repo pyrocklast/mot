@@ -31,8 +31,8 @@ object HomeFit {
     private const val TYPICAL_STATUS_BAR_DP = 32
 
     /** How far the clock sits below the status bar, and the gap kept under the date. */
-    private const val CLOCK_TOP_DP = 32
-    private const val UNDER_CLOCK_DP = 16
+    private const val CLOCK_TOP_DP = 24
+    private const val UNDER_CLOCK_DP = 20
 
     /**
      * How far down the clock and date sit: below the status bar and any cutout, by [topInset].
@@ -91,6 +91,24 @@ object HomeFit {
     fun topPadding(context: Context, prefs: Prefs, topInset: Int, clockHeight: Int): Int {
         if (!prefs.showTime && !prefs.showDate) return clockTop(context, topInset)
         return clockTop(context, topInset) + clockHeight + dp(context, UNDER_CLOCK_DP)
+    }
+
+    /**
+     * Position the whole app group around the usable screen's midpoint, while keeping it
+     * below the information group. All values are pixels, measured after text scaling.
+     * The bottom limit is preferred whenever the two constraints can both be satisfied.
+     */
+    internal fun balancedTop(
+        screenHeight: Int,
+        topInset: Int,
+        bottomInset: Int,
+        minimumTop: Int,
+        groupHeight: Int,
+    ): Int {
+        val usableBottom = (screenHeight - bottomInset).coerceAtLeast(topInset)
+        val centered = topInset + (usableBottom - topInset - groupHeight) / 2
+        val latest = (usableBottom - groupHeight).coerceAtLeast(topInset)
+        return centered.coerceAtLeast(minimumTop).coerceAtMost(latest.coerceAtLeast(minimumTop))
     }
 
     /** How many names fit on screen, with their gaps closed up as far as they go. */
