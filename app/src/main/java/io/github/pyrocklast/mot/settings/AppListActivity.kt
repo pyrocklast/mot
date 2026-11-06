@@ -57,7 +57,14 @@ class AppListActivity : SettingsScreen() {
 
         binding = ActivityAppListBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        val title = getString(if (slot != null) R.string.choose_an_app else R.string.hidden_apps)
+        val title = when (val target = slot) {
+            null -> getString(R.string.hidden_apps)
+            Slot.Clock -> getString(R.string.choose_clock_app)
+            Slot.Calendar -> getString(R.string.choose_calendar_app)
+            Slot.SwipeLeft -> getString(R.string.choose_left_swipe_app)
+            Slot.SwipeRight -> getString(R.string.choose_right_swipe_app)
+            is Slot.Home -> getString(R.string.choose_home_app, target.index + 1)
+        }
         setUpFrame(binding.root, binding.appBar, binding.list, title)
 
         binding.list.layoutManager = LinearLayoutManager(this)
@@ -74,17 +81,26 @@ class AppListActivity : SettingsScreen() {
 
     private fun update() {
         hidden = prefs.hiddenApps
-        val apps = repo.apps.value.orEmpty()
+        val loadedApps = repo.apps.value
+        val apps = loadedApps.orEmpty()
+        val query = if (slot != null) Search.normalize(binding.search.text ?: "") else ""
         val rows = if (slot != null) {
             // Best matches first, as in the drawer
-            val query = Search.normalize(binding.search.text ?: "")
             val matches = apps.filter { Search.matches(it.searchText, query) }
             if (query.isEmpty()) matches else matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
         } else {
             apps.filter { it.appKey in listed }
         }
         adapter.submitList(rows)
-        binding.empty.isVisible = slot == null && rows.isEmpty() && repo.apps.value != null
+        binding.empty.isVisible = rows.isEmpty()
+        binding.empty.setText(
+            when {
+                loadedApps == null -> R.string.loading_apps
+                slot != null && query.isNotEmpty() -> R.string.no_search_results
+                slot != null -> R.string.no_apps_available
+                else -> R.string.no_hidden_apps
+            }
+        )
     }
 
     private fun onRowClick(entry: AppEntry, view: View) {
