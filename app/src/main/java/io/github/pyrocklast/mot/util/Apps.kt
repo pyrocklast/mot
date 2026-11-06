@@ -1,6 +1,5 @@
 package io.github.pyrocklast.mot.util
 
-import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.app.role.RoleManager
 import android.content.ActivityNotFoundException
