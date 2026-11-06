@@ -187,9 +187,9 @@ class HomeScreen(
         // App count can grow after the indicator was first created.
         indicator.bringToFront()
         indicator.setText(R.string.home_all_apps)
-        // Measure the real full-height drawer shortcut before deciding whether it fits.
-        indicator.isVisible = true
-        val indicatorHeight = heightOf(indicator)
+        // Avoid showing and re-measuring the shortcut on ordinary homes that already fit.
+        indicator.isVisible = rowHeights.sumOf { it.toLong() } > room.toLong()
+        val indicatorHeight = if (indicator.isVisible) heightOf(indicator) else 0
         val layout = HomeFit.visibleRows(rowHeights, room, indicatorHeight)
         appViews.forEachIndexed { index, view -> view.isVisible = index < layout.count }
         indicator.isVisible = layout.showAllApps
