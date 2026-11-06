@@ -28,7 +28,7 @@ object HomeSlots {
     internal fun <T : Any> nextAddSlot(slots: List<T?>, activeCount: Int, target: T): Int? {
         val count = activeCount.coerceIn(0, slots.size)
         if (slots.take(count).contains(target)) return null
-        return count.takeIf { it < slots.size }
+        return count.takeIf { it < slots.size && slots[it] == null }
     }
 
     internal data class Restored<T : Any>(
