@@ -338,7 +338,7 @@ class Drawer(
         if (show) showKeyboardIfWanted()
     }
 
-    // Underscores normally; "Choose an app" when choosing one; "Private space" inside it
+    // A quiet search label normally; "Choose an app" or "Private space" in those contexts
     private fun setSearchHint() {
         search.hint = activity.getString(
             when {
@@ -347,6 +347,13 @@ class Drawer(
                 else -> R.string.search_hint
             }
         )
+        // Keep the spoken hint in step with the visible one in every drawer mode.
+        ViewCompat.setAccessibilityDelegate(search, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.hintText = host.hint
+            }
+        })
     }
 
     // Keyboard
