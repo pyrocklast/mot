@@ -106,6 +106,22 @@ class HomeScreen(
     init {
         // Taps reach TalkBack users through the actions set up in describeForTalkBack
         binding.home.setOnTouchListener(::onTouch)
+        // Gestures remain the primary interaction, but screen-level actions expose their main
+        // destinations to TalkBack, Voice Access and Switch Access.
+        binding.home.isFocusable = true
+        binding.home.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_app_drawer)) { _, _ ->
+            openDrawer(null)
+            true
+        }
+        ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_settings)) { _, _ ->
+            openSettings()
+            true
+        }
+        ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_notifications)) { _, _ ->
+            Apps.expandNotifications(context)
+            true
+        }
         binding.setDefault.setOnClickListener { requestHomeRole() }
         describeForTalkBack(binding.clock, R.string.action_open_clock, R.string.action_choose_clock) { tap(it) }
         describeForTalkBack(binding.date, R.string.action_open_calendar, R.string.action_choose_calendar) { tap(it) }
