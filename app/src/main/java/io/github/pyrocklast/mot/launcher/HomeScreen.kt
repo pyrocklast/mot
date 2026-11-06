@@ -54,9 +54,13 @@ class HomeScreen(
     private var bottomInset = (40 * context.resources.displayMetrics.density).toInt()
     private val config = ViewConfiguration.get(context)
     private val minSwipeDistance = SWIPE_DISTANCE_DP * context.resources.displayMetrics.density
-    private val appNameSize = context.resources.getDimension(R.dimen.app_name_size)
-    private val clockSize = context.resources.getDimension(R.dimen.clock_size)
-    private val dateSize = context.resources.getDimension(R.dimen.date_size)
+    private val clockSize = sp(42f)
+    private val dateSize = sp(14f)
+    private val homeNameSize = sp(20f)
+
+    private fun sp(value: Float): Float = android.util.TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_SP, value, context.resources.displayMetrics,
+    )
 
     private val gestures = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent) = true
@@ -113,8 +117,10 @@ class HomeScreen(
 
     /** Draws the home screen from the current settings and app names. Cheap enough to call often. */
     fun render() {
-        val alignment = prefs.homeAlignment
-        binding.homeApps.gravity = alignment or (if (prefs.homeAtBottom) Gravity.BOTTOM else Gravity.CENTER_VERTICAL)
+        // The home has one deliberate composition; legacy alignment preferences remain stored
+        // until the settings migration, but no longer control the home screen.
+        val alignment = Gravity.START
+        binding.homeApps.gravity = Gravity.TOP or alignment
         binding.clockBlock.gravity = alignment
 
         // The clock and date first: where the names start depends on how tall they come out.
@@ -123,39 +129,42 @@ class HomeScreen(
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         // The time and the date each have their own style
-        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize * prefs.timeScale)
-        binding.clock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
-        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize * prefs.dateScale)
-        binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
+        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize)
+        binding.clock.typeface = Look.typeface(Prefs.FONT_SANS, 300)
+        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize)
+        binding.date.typeface = Look.typeface(Prefs.FONT_SANS, 400)
         updateDate()
 
         val count = prefs.homeAppCount
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
+        val nameTypeface = Look.typeface(Prefs.FONT_SANS, 400)
         appViews.forEachIndexed { index, view ->
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
-            view.gravity = alignment
-            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
+            view.gravity = alignment or Gravity.CENTER_VERTICAL
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, homeNameSize)
             view.typeface = nameTypeface
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         }
 
-        // The names start below the clock and date, and their gaps close up only when that's what
-        // it takes to fit them all in. Both come from measuring: a name laid out a few pixels
-        // taller than expected would have the last one cut off.
-        binding.homeApps.setPadding(
-            binding.homeApps.paddingLeft,
-            HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock)),
-            binding.homeApps.paddingRight,
-            HomeFit.bottomPadding(context, bottomInset),
-        )
+        // Measure before positioning: the group is optically balanced around the usable
+        // display midpoint, but cannot collide with the clock/date or system navigation.
+        val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
+        val bottomPadding = HomeFit.bottomPadding(context, bottomInset)
+        val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
         val nameHeight = appViews.firstOrNull()?.let { heightOf(it) } ?: 0
-        val room = (if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()) -
-            binding.homeApps.paddingTop - binding.homeApps.paddingBottom
+        val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
         val namePadding = HomeFit.namePadding(context, count, nameHeight.toFloat(), room.toFloat())
         appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
+        val groupHeight = appViews.sumOf { heightOf(it) }
+        val balancedTop = HomeFit.balancedTop(
+            displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
+        )
+        binding.homeApps.setPadding(
+            binding.homeApps.paddingLeft, balancedTop,
+            binding.homeApps.paddingRight, bottomPadding,
+        )
 
         // First run: how to reach the drawer and settings, and making mot launcher the Home app.
         // Afterwards settings has a row for that.
@@ -283,7 +292,7 @@ class HomeScreen(
         menu.show(
             anchor = view,
             entry = entry,
-            alignment = prefs.homeAlignment,
+            alignment = Gravity.START,
             // Hiding is about the drawer: it's done there
             canHide = false,
             extras = listOf(
