@@ -129,15 +129,6 @@ object Apps {
         }.onFailure { toast(context, R.string.cant_open) }
     }
 
-    /** Pulls down the notification shade. Android has no public way, so this calls its hidden one. */
-    @SuppressLint("WrongConstant", "PrivateApi", "DiscouragedPrivateApi", "SoonBlockedPrivateApi")
-    fun expandNotifications(context: Context) {
-        runCatching {
-            val service = context.getSystemService("statusbar")
-            Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel").invoke(service)
-        }
-    }
-
     fun isDefaultLauncher(context: Context): Boolean =
         context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_HOME)
 
