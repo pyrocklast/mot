@@ -127,6 +127,7 @@
     <string name="weight_bold">Grasse</string>
     <string name="show_status_bar">Afficher la barre d\'état</string>
     <string name="status_bar_off_summary">Le niveau de batterie s\'affiche après la date</string>
+    <string name="status_bar_off_no_date_summary">Le niveau de batterie ne s\'affiche qu\'après la date</string>
 
     <string name="gestures">Gestes</string>
     <string name="gesture_summary">Balayez vers le haut pour les applications, vers le bas pour les notifications et à gauche ou à droite pour vos applications choisies. Appuyez sur l\'heure ou la date pour ouvrir leur application. Faites un appui long sur l\'écran d\'accueil pour les paramètres.</string>
