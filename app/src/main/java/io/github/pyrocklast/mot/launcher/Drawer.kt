@@ -386,7 +386,7 @@ class Drawer(
         ViewCompat.setAccessibilityDelegate(search, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
-                info.hintText = host.hint
+                info.hintText = search.hint
             }
         })
     }
