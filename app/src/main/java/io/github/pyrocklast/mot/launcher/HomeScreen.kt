@@ -116,6 +116,11 @@ class HomeScreen(
         binding.homeApps.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) render()
         }
+        // The date can change height at midnight or after a locale/font adjustment, even
+        // when the viewport stays the same size.
+        binding.clockBlock.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop) render()
+        }
         binding.setDefault.setOnClickListener { requestHomeRole() }
         describeForTalkBack(binding.clock, R.string.action_open_clock, R.string.action_choose_clock) { tap(it) }
         describeForTalkBack(binding.date, R.string.action_open_calendar, R.string.action_choose_calendar) { tap(it) }
@@ -131,7 +136,12 @@ class HomeScreen(
 
         // The clock and date first: where the names start depends on how tall they come out.
         // With the status bar hidden, they move up into its space.
-        (binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams).topMargin = HomeFit.clockTop(context, topInset)
+        val clockParams = binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams
+        val clockTop = HomeFit.clockTop(context, topInset)
+        if (clockParams.topMargin != clockTop) {
+            clockParams.topMargin = clockTop
+            binding.clockBlock.layoutParams = clockParams
+        }
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         // The time and the date each have their own style
