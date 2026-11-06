@@ -174,13 +174,13 @@ class HomeScreen(
             view.minHeight = (48 * context.resources.displayMetrics.density).toInt()
             view.setOnClickListener { openDrawer(null) }
             view.setOnLongClickListener { openDrawer(null); true }
-            view.contentDescription = "Open all apps"
+            view.contentDescription = context.getString(R.string.home_all_apps_description)
             overflowView = view
             binding.homeApps.addView(view)
         }
         // App count can grow after the indicator was first created.
         indicator.bringToFront()
-        indicator.text = "All apps  ·  ↑"
+        indicator.setText(R.string.home_all_apps)
         indicator.isVisible = false
         val allFit = rowHeights.sum() <= room
         var remaining = room
