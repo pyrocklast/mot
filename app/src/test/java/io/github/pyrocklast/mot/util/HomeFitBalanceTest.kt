@@ -4,6 +4,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class HomeFitBalanceTest {
+    @Test fun oddTextHeightStillMeetsTouchTarget() {
+        val padding = HomeFit.namePadding(
+            count = 5, nameHeight = 23f, room = 500f,
+            usual = 8, touchTarget = 48, safety = 2,
+        )
+        assertEquals(13, padding)
+    }
+
     @Test fun centersGroupInsideUsableInsets() {
         assertEquals(360, HomeFit.balancedTop(1000, 40, 80, 120, 240))
     }
