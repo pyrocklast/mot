@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.WindowInsets
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
@@ -118,8 +119,10 @@ class HomeScreen(
             openSettings()
             true
         }
-        ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_notifications)) { _, _ ->
-            Apps.expandNotifications(context)
+        // There is no public API to expand the shade itself. Revealing the status bar gives
+        // users who hide it a visible, accessible starting point for Android's native pull-down.
+        ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_show_status_bar)) { _, _ ->
+            binding.home.windowInsetsController?.show(WindowInsets.Type.statusBars())
             true
         }
         binding.setDefault.setOnClickListener { requestHomeRole() }
