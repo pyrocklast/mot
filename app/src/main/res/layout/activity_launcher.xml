@@ -36,17 +36,27 @@
                 tools:text="lun. 2 nov." />
         </LinearLayout>
 
-        <!-- The top and bottom padding are set in code, from how tall the clock and names are -->
-        <LinearLayout
-            android:id="@+id/homeApps"
+        <!-- A scroll fallback keeps every home app reachable at large system font scales.
+             When content fits, the list remains visually centered and does not scroll. -->
+        <ScrollView
+            android:id="@+id/homeScroll"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="top|start"
-            android:orientation="vertical"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="112dp"
-            android:paddingBottom="48dp"
-            tools:ignore="RtlSymmetry" />
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:verticalScrollBarEnabled="false">
+
+            <LinearLayout
+                android:id="@+id/homeApps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:orientation="vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingTop="112dp"
+                android:paddingBottom="48dp"
+                tools:ignore="RtlSymmetry" />
+        </ScrollView>
 
         <TextView
             android:id="@+id/tips"
