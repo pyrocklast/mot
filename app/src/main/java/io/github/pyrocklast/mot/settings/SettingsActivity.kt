@@ -35,7 +35,6 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var time: Row
     private lateinit var date: Row
     private lateinit var drawerAlignment: Row
-    private lateinit var autoOpenUniqueSearchResult: SwitchRow
     private lateinit var hiddenApps: Row
     private lateinit var privateSpace: Row
     private lateinit var textColour: Row
