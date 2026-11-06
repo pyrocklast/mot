@@ -29,7 +29,7 @@ class HomeFitTest {
 
     @Test
     fun `tighter than the names fit, the gap stops at a row you can still tap`() {
-        assertEquals(11, gap(count = 20, nameHeight = 109f))  // an 11px gap makes the row 48dp
+        assertEquals(12, gap(count = 20, nameHeight = 109f))  // round up: 109 + 2 x 12 >= 132px
         assertEquals(0, gap(count = 20, nameHeight = 164f))   // taller than 48dp on its own
     }
 
@@ -37,7 +37,7 @@ class HomeFitTest {
     fun `small names are padded out to a row you can tap, even past the usual gap`() {
         assertEquals(39, gap(count = 4, nameHeight = 54f))    // 54 + 2 x 39 = 48dp
         assertEquals(39, gap(count = 40, nameHeight = 54f))   // and no tighter, however many there are
-        assertEquals(22, gap(count = 4, nameHeight = 87f))
+        assertEquals(23, gap(count = 4, nameHeight = 87f))
     }
 
     @Test
@@ -48,6 +48,6 @@ class HomeFitTest {
 
     @Test
     fun `before the screen is measured, the gap is as tight as it goes`() {
-        assertEquals(11, gap(count = 4, nameHeight = 109f, room = 0f))
+        assertEquals(12, gap(count = 4, nameHeight = 109f, room = 0f))
     }
 }
