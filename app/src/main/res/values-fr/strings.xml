@@ -16,7 +16,7 @@
     <string name="action_choose_calendar">Choisir l\'application d\'agenda</string>
     <string name="action_open_app_drawer">Ouvrir le tiroir d\'applications</string>
     <string name="action_open_settings">Ouvrir les paramètres</string>
-    <string name="action_open_notifications">Ouvrir les notifications</string>
+    <string name="action_show_status_bar">Afficher la barre d\'état</string>
     <string name="move_up">Déplacer vers le haut</string>
     <string name="move_down">Déplacer vers le bas</string>
 
