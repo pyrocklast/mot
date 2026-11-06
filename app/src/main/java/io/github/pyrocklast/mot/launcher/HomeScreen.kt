@@ -178,6 +178,8 @@ class HomeScreen(
             overflowView = view
             binding.homeApps.addView(view)
         }
+        // App count can grow after the indicator was first created.
+        indicator.bringToFront()
         indicator.text = "All apps  ·  ↑"
         indicator.isVisible = false
         val allFit = rowHeights.sum() <= room
@@ -289,6 +291,7 @@ class HomeScreen(
     }
 
     private fun viewAt(event: MotionEvent): View? {
+        overflowView?.let { if (it.isVisible && it.contains(event.rawX, event.rawY)) return it }
         appViews.forEach { if (it.isVisible && it.contains(event.rawX, event.rawY)) return it }
         if (binding.clock.isVisible && binding.clock.contains(event.rawX, event.rawY)) return binding.clock
         if (binding.date.isVisible && binding.date.contains(event.rawX, event.rawY)) return binding.date
@@ -300,6 +303,7 @@ class HomeScreen(
             null -> Unit
             binding.clock -> openOrDefault(prefs.clockApp, DefaultApp.CLOCK, view)
             binding.date -> openOrDefault(prefs.calendarApp, DefaultApp.CALENDAR, view)
+            overflowView -> openDrawer(null)
             else -> {
                 // A blank spot is empty, its app is gone, or it's in a locked Private Space: that
                 // one asks to unlock it, like any app whose profile is away
@@ -316,6 +320,7 @@ class HomeScreen(
             null -> openSettings()
             binding.clock -> openDrawer(Slot.Clock)
             binding.date -> openDrawer(Slot.Calendar)
+            overflowView -> openDrawer(null)
             else -> homeAppMenu(view, view.tag as Int)
         }
     }
