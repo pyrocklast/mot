@@ -174,7 +174,9 @@ class SettingsActivity : SettingsScreen() {
         nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
         // With the status bar hidden, the battery level follows the date (when the date shows)
         statusBar.isChecked = prefs.showStatusBar
-        statusBar.summaryOff = if (prefs.showDate) getString(R.string.status_bar_off_summary) else null
+        statusBar.summaryOff = getString(
+            if (prefs.showDate) R.string.status_bar_off_summary else R.string.status_bar_off_no_date_summary
+        )
 
         swipeLeft.isChecked = prefs.swipeLeftOn
         swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
