@@ -6,7 +6,7 @@
     <string name="app_placeholder">Application</string>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
-    <string name="tips">Balayez vers le haut pour vos applications\nAppui long n\'importe où pour les paramètres\nAppui long puis glisser pour déplacer une application</string>
+    <string name="tips">Balayez vers le haut ; appui long sur une application pour l\'ajouter\nAppui long sur le fond pour les paramètres\nAppui long puis glisser pour réorganiser l\'accueil</string>
     <string name="set_as_home">Définir le lanceur mot comme application d\'accueil</string>
     <string name="set_as_home_underlined"><u>Définir le lanceur mot comme application d\'accueil</u></string>
     <string name="long_press_to_choose">Appui long pour choisir une application</string>
