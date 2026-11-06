@@ -6,7 +6,7 @@
 
     <!-- Home screen -->
     <string name="app_placeholder">App</string>
-    <string name="tips">Swipe up for your apps\nLong press anywhere for settings\nLong press and drag an app to move it</string>
+    <string name="tips">Swipe up for your apps\nSwipe down for notifications\nSwipe left or right for your chosen apps\nTap the time or date to open their apps\nLong press anywhere for settings\nLong press and drag an app to move it</string>
     <string name="set_as_home">Set mot launcher as your Home app</string>
     <string name="set_as_home_underlined"><u>Set mot launcher as your Home app</u></string>
     <string name="long_press_to_choose">Long press to choose an app</string>
@@ -17,14 +17,24 @@
     <string name="action_choose_clock">Choose the clock app</string>
     <string name="action_open_calendar">Open calendar</string>
     <string name="action_choose_calendar">Choose the calendar app</string>
+    <string name="action_open_app_drawer">Open app drawer</string>
+    <string name="action_open_settings">Open settings</string>
+    <string name="action_open_notifications">Open notifications</string>
     <string name="move_up">Move up</string>
     <string name="move_down">Move down</string>
 
     <!-- App drawer -->
-    <!-- The search box's visible hint: a few underscores -->
-    <string name="search_hint" translatable="false">___</string>
+    <string name="search_hint">Search</string>
     <string name="search_apps">Search apps</string>
     <string name="choose_an_app">Choose an app</string>
+    <string name="choose_clock_app">Choose the clock app</string>
+    <string name="choose_calendar_app">Choose the calendar app</string>
+    <string name="choose_left_swipe_app">Choose the app for swipe left</string>
+    <string name="choose_right_swipe_app">Choose the app for swipe right</string>
+    <string name="choose_home_app">Choose the app for home screen spot %1$d</string>
+    <string name="loading_apps">Loading apps…</string>
+    <string name="no_search_results">No matching apps</string>
+    <string name="no_apps_available">No apps available</string>
     <string name="private_space">Private space</string>
     <string name="private_space_locked">Private space, locked</string>
     <string name="private_space_unlocked">Private space, unlocked</string>
@@ -131,6 +141,7 @@
     <string name="status_bar_off_summary">Battery level shows after the date</string>
 
     <string name="gestures">Gestures</string>
+    <string name="gesture_summary">Swipe up for apps, down for notifications, and left or right for your chosen apps. Tap the time or date to open their apps. Long press the home screen for settings.</string>
     <string name="swipe_left">Swipe left</string>
     <string name="swipe_right">Swipe right</string>
     <string name="swipe_left_opens">Swipe left opens</string>
