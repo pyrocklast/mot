@@ -3,6 +3,7 @@ package io.github.pyrocklast.mot.data
 import android.content.Context
 import android.view.Gravity
 import androidx.core.content.edit
+import io.github.pyrocklast.mot.util.HomeSlots
 
 /**
  * All of mot launcher's settings. Names chosen for apps live in their own file, keyed by [AppTarget.appKey].
@@ -23,6 +24,22 @@ class Prefs(context: Context) {
     fun setHomeApp(slot: Int, target: AppTarget?) = prefs.edit { putTarget("home_app_$slot", target) }
 
     val homeApps: List<AppTarget?> get() = (0 until MAX_HOME_APPS).map { homeApp(it) }
+
+    /** The next safe home slot: never overwrite an assignment that was previously hidden
+     * by reducing the configured slot count. Null if this app is already visible or no room. */
+    fun nextHomeSlot(target: AppTarget): Int? =
+        HomeSlots.nextAddSlot(homeApps, homeAppCount, target)
+
+    /** Adds an app directly from the drawer, in a single preference transaction. */
+    fun addHomeApp(target: AppTarget): Boolean {
+        val count = homeAppCount
+        val slot = nextHomeSlot(target) ?: return false
+        prefs.edit {
+            putTarget("home_app_$slot", target)
+            if (slot >= count) putInt("home_app_count", slot + 1)
+        }
+        return true
+    }
 
     /** Moves the home app at [from] to [to]; the ones in between shift by one spot. Empty spots move too. */
     fun moveHomeApp(from: Int, to: Int, count: Int) {
