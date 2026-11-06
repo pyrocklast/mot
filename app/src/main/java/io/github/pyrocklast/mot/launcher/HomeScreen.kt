@@ -145,6 +145,7 @@ class HomeScreen(
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
         val nameTypeface = Look.typeface(Prefs.FONT_SANS, 400)
         appViews.forEachIndexed { index, view ->
+            view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
             view.gravity = alignment or Gravity.CENTER_VERTICAL
