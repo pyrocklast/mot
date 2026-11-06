@@ -318,13 +318,22 @@ class Drawer(
     private fun onRowLongClick(row: DrawerRow, view: View) {
         when (row) {
             is DrawerRow.OpenPrivateSpace, DrawerRow.LockPrivateSpace -> Apps.openPrivateSpaceSettings(activity)
-            is DrawerRow.App -> menu.show(
-                anchor = view,
-                entry = row.entry,
-                alignment = prefs.drawerAlignment,
-                canHide = choosingFor == null,
-                onHidden = { update() },
-            )
+            is DrawerRow.App -> {
+                val canAdd = choosingFor == null && prefs.nextHomeSlot(row.entry.target) != null
+                menu.show(
+                    anchor = view,
+                    entry = row.entry,
+                    alignment = prefs.drawerAlignment,
+                    extras = if (canAdd) listOf(AppMenu.Extra(R.string.add_to_home) {
+                        if (prefs.addHomeApp(row.entry.target)) {
+                            close()
+                            onChosen()
+                        }
+                    }) else emptyList(),
+                    canHide = choosingFor == null,
+                    onHidden = { update() },
+                )
+            }
         }
     }
 
