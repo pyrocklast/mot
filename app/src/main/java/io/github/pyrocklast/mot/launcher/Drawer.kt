@@ -72,9 +72,11 @@ class Drawer(
     private val list = binding.appList
 
     private val adapter = DrawerAdapter(
-        nameSizePx = activity.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale,
-        nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight),
-        gravity = prefs.drawerAlignment,
+        nameSizePx = android.util.TypedValue.applyDimension(
+            android.util.TypedValue.COMPLEX_UNIT_SP, 20f, activity.resources.displayMetrics,
+        ),
+        nameTypeface = Look.typeface(Prefs.FONT_SANS, 400),
+        gravity = Gravity.START,
         onClick = ::onRowClick,
         onLongClick = ::onRowLongClick,
     )
@@ -121,10 +123,9 @@ class Drawer(
             }
         })
 
-        val textSize = activity.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale
-        search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, textSize)
-        search.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
-        search.gravity = prefs.drawerAlignment or Gravity.CENTER_VERTICAL
+        search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 20f)
+        search.typeface = Look.typeface(Prefs.FONT_SANS, 400)
+        search.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         search.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
@@ -323,7 +324,7 @@ class Drawer(
                 menu.show(
                     anchor = view,
                     entry = row.entry,
-                    alignment = prefs.drawerAlignment,
+                    alignment = Gravity.START,
                     extras = if (canAdd) listOf(AppMenu.Extra(R.string.add_to_home) {
                         if (prefs.addHomeApp(row.entry.target)) {
                             close()
