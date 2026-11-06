@@ -101,7 +101,7 @@ class HomeScreen(
     })
 
     private val reorder = HomeReorder(
-        apps = { appViews },
+        apps = { appViews.filter { it.isVisible } },
         others = { listOf(binding.clockBlock) },
         onStart = { menu.dismiss() },
         onRelease = { index -> if (!MENU_WHILE_HOLDING) appViews.getOrNull(index)?.let { homeAppMenu(it, index) } },
@@ -183,23 +183,14 @@ class HomeScreen(
         // App count can grow after the indicator was first created.
         indicator.bringToFront()
         indicator.setText(R.string.home_all_apps)
-        indicator.isVisible = false
-        val allFit = rowHeights.sum() <= room
-        var remaining = room
-        if (!allFit) remaining = (room - heightOf(indicator)).coerceAtLeast(0)
-        var visibleCount = 0
-        appViews.forEachIndexed { index, view ->
-            // Keep order stable: no later app jumps ahead of an earlier hidden app.
-            val fits = index == visibleCount && rowHeights[index] <= remaining
-            view.isVisible = fits
-            if (fits) {
-                remaining -= rowHeights[index]
-                visibleCount++
-            }
-        }
-        indicator.isVisible = !allFit
-        val groupHeight = rowHeights.take(visibleCount).sum() +
-            if (indicator.isVisible) heightOf(indicator) else 0
+        // Measure the real full-height drawer shortcut before deciding whether it fits.
+        indicator.isVisible = true
+        val indicatorHeight = heightOf(indicator)
+        val layout = HomeFit.visibleRows(rowHeights, room, indicatorHeight)
+        appViews.forEachIndexed { index, view -> view.isVisible = index < layout.count }
+        indicator.isVisible = layout.showAllApps
+        val groupHeight = rowHeights.take(layout.count).sum() +
+            if (layout.showAllApps) indicatorHeight else 0
         val balancedTop = HomeFit.balancedTop(
             displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
         )
@@ -217,8 +208,21 @@ class HomeScreen(
 
     // How tall a view comes out at its current text, size and font
     private fun heightOf(view: View): Int {
+        // Measure with the real content width: UNSPECIFIED width incorrectly treats long app
+        // names as one line, and underestimates their height on narrow screens.
+        val screenWidth = binding.homeApps.width.takeIf { it > 0 }
+            ?: binding.home.width.takeIf { it > 0 }
+            ?: context.resources.displayMetrics.widthPixels
+        val horizontal = if (view === binding.clockBlock) {
+            val margins = view.layoutParams as? ViewGroup.MarginLayoutParams
+            (margins?.leftMargin ?: 0) + (margins?.rightMargin ?: 0)
+        } else {
+            binding.homeApps.paddingLeft + binding.homeApps.paddingRight
+        }
+        val width = (screenWidth - horizontal).coerceAtLeast(1)
+        val atMost = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.AT_MOST)
         val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        view.measure(unspecified, unspecified)
+        view.measure(atMost, unspecified)
         return view.measuredHeight
     }
 
@@ -397,7 +401,7 @@ class HomeScreen(
                 val index = host.tag as? Int ?: return
                 if (!canBeMoved || !canMove(index)) return
                 if (index > 0) info.addAction(AccessibilityActionCompat(R.id.action_move_up, context.getString(R.string.move_up)))
-                if (index < appViews.lastIndex) {
+                if (appViews.getOrNull(index + 1)?.isVisible == true) {
                     info.addAction(AccessibilityActionCompat(R.id.action_move_down, context.getString(R.string.move_down)))
                 }
             }
@@ -421,7 +425,8 @@ class HomeScreen(
     // Moves the app one spot, and TalkBack follows it there
     private fun moveForTalkBack(index: Int, step: Int): Boolean {
         val to = index + step
-        if (to !in appViews.indices || !canMove(index)) return false
+        if (to !in appViews.indices || !appViews[index].isVisible ||
+            !appViews[to].isVisible || !canMove(index)) return false
         move(index, to)
         appViews[to].performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null)
         return true
