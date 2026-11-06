@@ -6,7 +6,6 @@ import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.Prefs
 import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.math.ceil
 
 /**
  * How much room the home screen's names take, and how much it has for them. Text sizes follow
