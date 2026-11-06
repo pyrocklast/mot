@@ -161,8 +161,8 @@ class HomeScreen(
         val bottomPadding = HomeFit.bottomPadding(context, bottomInset)
         val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
         val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
-        // A long app name may wrap while its neighbours remain on one line. Each row must
-        // independently preserve its 48dp target rather than copying the first row's padding.
+        // Each app row is measured independently so every slot preserves its 48dp target,
+        // including when fonts or view metrics differ.
         val textHeights = appViews.map { heightOf(it) }
         appViews.forEachIndexed { index, view ->
             val padding = HomeFit.namePadding(context, count, textHeights[index].toFloat(), room.toFloat())
@@ -171,7 +171,12 @@ class HomeScreen(
         // Keep the home fixed and gesture-driven. If all rows cannot fit, reserve a
         // final row that explicitly opens the drawer rather than silently losing apps.
         val rowHeights = appViews.map { heightOf(it) }
-        val indicator = overflowView ?: TextView(context).also { view ->
+        val indicator = overflowView ?: (LayoutInflater.from(binding.homeApps.context)
+            .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView).also { view ->
+            // Reuse themed launcher typography (wallpaper contrast + shadow), not default
+            // Android TextView colours, which may be unreadable on the user's wallpaper.
+            view.hint = null
+            view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
             view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
             view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             view.typeface = Look.typeface(Prefs.FONT_SANS, 400)
@@ -212,8 +217,8 @@ class HomeScreen(
 
     // How tall a view comes out at its current text, size and font
     private fun heightOf(view: View): Int {
-        // Measure with the real content width: UNSPECIFIED width incorrectly treats long app
-        // names as one line, and underestimates their height on narrow screens.
+        // Measure with the real content width: UNSPECIFIED width may undercount height
+        // when text (for example the date) needs to fit a narrow screen.
         val screenWidth = binding.homeApps.width.takeIf { it > 0 }
             ?: binding.home.width.takeIf { it > 0 }
             ?: context.resources.displayMetrics.widthPixels
