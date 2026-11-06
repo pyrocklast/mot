@@ -172,9 +172,11 @@ class HomeScreen(
             view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             view.typeface = Look.typeface(Prefs.FONT_SANS, 400)
             view.minHeight = (48 * context.resources.displayMetrics.density).toInt()
-            view.setOnClickListener { openDrawer(null) }
-            view.setOnLongClickListener { openDrawer(null); true }
-            view.contentDescription = context.getString(R.string.home_all_apps_description)
+            // Do not make this view touch-clickable: that would swallow swipe-up gestures.
+            // The home detector handles taps; TalkBack gets an explicit open action.
+            describeForTalkBack(
+                view, R.string.home_all_apps_description, R.string.home_all_apps_description,
+            ) { openDrawer(null) }
             overflowView = view
             binding.homeApps.addView(view)
         }
