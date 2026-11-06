@@ -160,10 +160,14 @@ class HomeScreen(
         val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
         val bottomPadding = HomeFit.bottomPadding(context, bottomInset)
         val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
-        val nameHeight = appViews.firstOrNull()?.let { heightOf(it) } ?: 0
         val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
-        val namePadding = HomeFit.namePadding(context, count, nameHeight.toFloat(), room.toFloat())
-        appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
+        // A long app name may wrap while its neighbours remain on one line. Each row must
+        // independently preserve its 48dp target rather than copying the first row's padding.
+        val textHeights = appViews.map { heightOf(it) }
+        appViews.forEachIndexed { index, view ->
+            val padding = HomeFit.namePadding(context, count, textHeights[index].toFloat(), room.toFloat())
+            view.setPadding(view.paddingLeft, padding, view.paddingRight, padding)
+        }
         // Keep the home fixed and gesture-driven. If all rows cannot fit, reserve a
         // final row that explicitly opens the drawer rather than silently losing apps.
         val rowHeights = appViews.map { heightOf(it) }
