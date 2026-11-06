@@ -85,16 +85,15 @@ class Prefs(context: Context) {
     /** An explicit recovery action, adding as many archived rows as space allows. Remaining
      * archives survive for a later retry. No names or assignments are revealed automatically. */
     fun restoreArchivedHomeApps(): Int {
-        val active = (0 until homeAppCount).mapNotNull(::homeApp).toMutableList()
-        val toRestore = archivedHomeEntries().take(MAX_HOME_APPS - active.size)
-        if (toRestore.isEmpty()) return 0
-        active.addAll(toRestore.map { it.second })
+        val active = (0 until homeAppCount).mapNotNull(::homeApp)
+        val result = HomeSlots.restore(active, archivedHomeEntries(), MAX_HOME_APPS)
+        if (result.restoredIndices.isEmpty()) return 0
         prefs.edit {
-            for (slot in 0 until MAX_HOME_APPS) putTarget("home_app_$slot", active.getOrNull(slot))
-            putInt("home_app_count", active.size)
-            toRestore.forEach { (legacyIndex, _) -> remove("archived_home_app_$legacyIndex") }
+            for (slot in 0 until MAX_HOME_APPS) putTarget("home_app_$slot", result.active.getOrNull(slot))
+            putInt("home_app_count", result.active.size)
+            result.restoredIndices.forEach { legacyIndex -> remove("archived_home_app_$legacyIndex") }
         }
-        return toRestore.size
+        return result.restoredIndices.size
     }
 
     var homeAlignment: Int
@@ -360,7 +359,7 @@ class Prefs(context: Context) {
         // Everything that decides how the home screen is drawn, and so what a crash while drawing
         // is likely to have come from
         private val LOOK_KEYS = listOf(
-            "home_app_count", "home_alignment", "home_at_bottom",
+            "home_alignment", "home_at_bottom",
             "show_time", "show_date", "date_style", "clock_mode",
             "clock_font", "clock_weight", "clock_scale",
             "date_font", "date_weight", "date_scale",
