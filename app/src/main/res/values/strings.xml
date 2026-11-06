@@ -139,6 +139,7 @@
     <string name="weight_bold">Bold</string>
     <string name="show_status_bar">Show status bar</string>
     <string name="status_bar_off_summary">Battery level shows after the date</string>
+    <string name="status_bar_off_no_date_summary">Battery level is only shown after the date</string>
 
     <string name="gestures">Gestures</string>
     <string name="gesture_summary">Swipe up for apps, down for notifications, and left or right for your chosen apps. Tap the time or date to open their apps. Long press the home screen for settings.</string>
