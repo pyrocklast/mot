@@ -110,6 +110,16 @@ class HomeScreen(
     init {
         // Taps reach TalkBack users through the actions set up in describeForTalkBack
         binding.home.setOnTouchListener(::onTouch)
+        // ScrollView handles vertical movement only when content actually overflows. Forward
+        // taps and long presses to the existing detector; leave drag-to-scroll to Android.
+        binding.homeScroll.setOnTouchListener { _, event ->
+            if (binding.homeApps.height > binding.homeScroll.height) {
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) gestures.onTouchEvent(event)
+                false
+            } else {
+                onTouch(binding.home, event)
+            }
+        }
         // The first render can precede layout. Recalculate when the actual viewport arrives
         // or changes size, without triggering another render on padding-only layout passes.
         binding.homeApps.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
@@ -157,7 +167,7 @@ class HomeScreen(
         // display midpoint, but cannot collide with the clock/date or system navigation.
         val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
         val bottomPadding = HomeFit.bottomPadding(context, bottomInset)
-        val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
+        val displayHeight = if (binding.homeScroll.height > 0) binding.homeScroll.height else screenHeight()
         val nameHeight = appViews.firstOrNull()?.let { heightOf(it) } ?: 0
         val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
         val namePadding = HomeFit.namePadding(context, count, nameHeight.toFloat(), room.toFloat())
@@ -170,6 +180,10 @@ class HomeScreen(
             binding.homeApps.paddingLeft, balancedTop,
             binding.homeApps.paddingRight, bottomPadding,
         )
+        // A change in app count or font scale should not strand the user halfway down the list.
+        if (binding.homeScroll.scrollY > 0 && binding.homeApps.height <= displayHeight) {
+            binding.homeScroll.scrollTo(0, 0)
+        }
 
         // First run: how to reach the drawer and settings, and making mot launcher the Home app.
         // Afterwards settings has a row for that.
