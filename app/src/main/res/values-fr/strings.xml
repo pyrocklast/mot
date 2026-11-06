@@ -4,7 +4,7 @@
 
     <!-- Écran d'accueil -->
     <string name="app_placeholder">Application</string>
-    <string name="home_all_apps">Toutes les applications ↑</string>
+    <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
     <string name="tips">Balayez vers le haut pour vos applications\nAppui long n\'importe où pour les paramètres\nAppui long puis glisser pour déplacer une application</string>
     <string name="set_as_home">Définir le lanceur mot comme application d\'accueil</string>
