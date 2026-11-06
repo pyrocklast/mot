@@ -15,38 +15,86 @@ class Prefs(context: Context) {
 
     // Home screen
 
-    var homeAppCount: Int
-        get() = prefs.getInt("home_app_count", 5)
-        set(value) = prefs.edit { putInt("home_app_count", value.coerceIn(0, MAX_HOME_APPS)) }
+    /** Only assigned apps count; there are no blank slots in the new home layout. */
+    val homeAppCount: Int get() = prefs.getInt("home_app_count", 0).coerceIn(0, MAX_HOME_APPS)
 
-    fun homeApp(slot: Int): AppTarget? = AppTarget.decode(prefs.getString("home_app_$slot", null))
-
-    fun setHomeApp(slot: Int, target: AppTarget?) = prefs.edit { putTarget("home_app_$slot", target) }
+    fun homeApp(slot: Int): AppTarget? =
+        if (slot in 0 until homeAppCount) AppTarget.decode(prefs.getString("home_app_$slot", null))
+        else null
 
     val homeApps: List<AppTarget?> get() = (0 until MAX_HOME_APPS).map { homeApp(it) }
 
-    /** The next safe home slot: never overwrite an assignment that was previously hidden
-     * by reducing the configured slot count. Null if this app is already visible or no room. */
+    /** Write all active slots in one transaction. The archive is intentionally untouched. */
+    private fun saveActiveHome(apps: List<AppTarget>) {
+        require(apps.size <= MAX_HOME_APPS)
+        prefs.edit {
+            for (slot in 0 until MAX_HOME_APPS) putTarget("home_app_$slot", apps.getOrNull(slot))
+            putInt("home_app_count", apps.size)
+        }
+    }
+
+    /** Replaces an existing app, removes it and closes the gap, or appends at the end.
+     * A stale or out-of-range slot cannot overwrite an unrelated assignment. */
+    fun setHomeApp(slot: Int, target: AppTarget?) {
+        val active = (0 until homeAppCount).mapNotNull(::homeApp).toMutableList()
+        if (target == null) {
+            if (slot !in active.indices) return
+            saveActiveHome(HomeSlots.removeAt(active, slot))
+        } else {
+            when {
+                slot in active.indices -> {
+                    active[slot] = target
+                    saveActiveHome(active)
+                }
+                slot == active.size && active.size < MAX_HOME_APPS -> {
+                    active.add(target)
+                    saveActiveHome(active)
+                }
+            }
+        }
+    }
+
+    /** Drawer action: append only if this target is not already on the active home. */
     fun nextHomeSlot(target: AppTarget): Int? =
         HomeSlots.nextAddSlot(homeApps, homeAppCount, target)
 
-    /** Adds an app directly from the drawer, in a single preference transaction. */
     fun addHomeApp(target: AppTarget): Boolean {
-        val count = homeAppCount
         val slot = nextHomeSlot(target) ?: return false
-        prefs.edit {
-            putTarget("home_app_$slot", target)
-            if (slot >= count) putInt("home_app_count", slot + 1)
-        }
+        setHomeApp(slot, target)
         return true
     }
 
-    /** Moves the home app at [from] to [to]; the ones in between shift by one spot. Empty spots move too. */
+    /** Reorder existing rows only, never the separately archived assignments. */
     fun moveHomeApp(from: Int, to: Int, count: Int) {
-        if (from == to || from !in 0 until count || to !in 0 until count) return
-        val apps = (0 until count).map { homeApp(it) }.toMutableList()
-        apps.add(to, apps.removeAt(from))
-        prefs.edit { apps.forEachIndexed { slot, target -> putTarget("home_app_$slot", target) } }
+        val active = (0 until homeAppCount).mapNotNull(::homeApp).toMutableList()
+        if (count != active.size || from == to ||
+            from !in active.indices || to !in active.indices) return
+        active.add(to, active.removeAt(from))
+        saveActiveHome(active)
+    }
+
+    /** Assignments previously outside the user's selected legacy slot count stay private
+     * until the user explicitly asks for them to be restored. */
+    private fun archivedHomeEntries(): List<Pair<Int, AppTarget>> =
+        (0 until MAX_HOME_APPS).mapNotNull { slot ->
+            AppTarget.decode(prefs.getString("archived_home_app_$slot", null))?.let { slot to it }
+        }
+
+    val archivedHomeAppCount: Int get() = archivedHomeEntries().size
+
+    /** An explicit recovery action, adding as many archived rows as space allows. Remaining
+     * archives survive for a later retry. No names or assignments are revealed automatically. */
+    fun restoreArchivedHomeApps(): Int {
+        val active = (0 until homeAppCount).mapNotNull(::homeApp).toMutableList()
+        val toRestore = archivedHomeEntries().take(MAX_HOME_APPS - active.size)
+        if (toRestore.isEmpty()) return 0
+        active.addAll(toRestore.map { it.second })
+        prefs.edit {
+            for (slot in 0 until MAX_HOME_APPS) putTarget("home_app_$slot", active.getOrNull(slot))
+            putInt("home_app_count", active.size)
+            toRestore.forEach { (legacyIndex, _) -> remove("archived_home_app_$legacyIndex") }
+        }
+        return toRestore.size
     }
 
     var homeAlignment: Int
@@ -240,6 +288,27 @@ class Prefs(context: Context) {
     fun migrate() {
         migrateAppKeys()
         splitDateStyle()
+        migrateCompactHome()
+    }
+
+    /** One-time, atomic migration. Visible assignments compact in their original order;
+     * dormant slots are archived under separate keys with their original positions intact.
+     * An interrupted migration is retried, and never uses archive entries as active defaults. */
+    private fun migrateCompactHome() {
+        if (prefs.getBoolean("home_compacted_v2", false)) return
+        val count = prefs.getInt("home_app_count", 5).coerceIn(0, MAX_HOME_APPS)
+        val legacy = (0 until MAX_HOME_APPS).map { slot ->
+            AppTarget.decode(prefs.getString("home_app_$slot", null))
+        }
+        val compact = HomeSlots.compact(legacy, count)
+        prefs.edit(commit = true) {
+            for (slot in 0 until MAX_HOME_APPS) putTarget("home_app_$slot", compact.active.getOrNull(slot))
+            compact.dormant.forEach { (slot, target) ->
+                putTarget("archived_home_app_$slot", target)
+            }
+            putInt("home_app_count", compact.active.size)
+            putBoolean("home_compacted_v2", true)
+        }
     }
 
     /** The date had the time's style until it got its own: it starts from the time's, so nothing changes. */
