@@ -48,6 +48,7 @@ class HomeScreen(
     private val requestHomeRole: () -> Unit,
 ) {
     private val appViews = ArrayList<TextView>()
+    private var overflowView: TextView? = null
 
     // Where the system bars are, until Android says otherwise: the home screen draws under them
     private var topInset = (24 * context.resources.displayMetrics.density).toInt()
@@ -163,17 +164,38 @@ class HomeScreen(
         val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
         val namePadding = HomeFit.namePadding(context, count, nameHeight.toFloat(), room.toFloat())
         appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
-        // A launcher home is not scrollable: reserve the gesture surface. On constrained
-        // screens show only complete touch targets; assignments remain saved in preferences.
-        // The drawer still provides access to every installed app.
-        var remaining = room
-        appViews.forEach { view ->
-            val rowHeight = heightOf(view)
-            val fits = rowHeight <= remaining
-            view.isVisible = fits
-            if (fits) remaining -= rowHeight
+        // Keep the home fixed and gesture-driven. If all rows cannot fit, reserve a
+        // final row that explicitly opens the drawer rather than silently losing apps.
+        val rowHeights = appViews.map { heightOf(it) }
+        val indicator = overflowView ?: TextView(context).also { view ->
+            view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            view.typeface = Look.typeface(Prefs.FONT_SANS, 400)
+            view.minHeight = (48 * context.resources.displayMetrics.density).toInt()
+            view.setOnClickListener { openDrawer(null) }
+            view.setOnLongClickListener { openDrawer(null); true }
+            view.contentDescription = "Open all apps"
+            overflowView = view
+            binding.homeApps.addView(view)
         }
-        val groupHeight = appViews.filter { it.isVisible }.sumOf { heightOf(it) }
+        indicator.text = "All apps  ·  ↑"
+        indicator.isVisible = false
+        val allFit = rowHeights.sum() <= room
+        var remaining = room
+        if (!allFit) remaining = (room - heightOf(indicator)).coerceAtLeast(0)
+        var visibleCount = 0
+        appViews.forEachIndexed { index, view ->
+            // Keep order stable: no later app jumps ahead of an earlier hidden app.
+            val fits = index == visibleCount && rowHeights[index] <= remaining
+            view.isVisible = fits
+            if (fits) {
+                remaining -= rowHeights[index]
+                visibleCount++
+            }
+        }
+        indicator.isVisible = !allFit
+        val groupHeight = rowHeights.take(visibleCount).sum() +
+            if (indicator.isVisible) heightOf(indicator) else 0
         val balancedTop = HomeFit.balancedTop(
             displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
         )
