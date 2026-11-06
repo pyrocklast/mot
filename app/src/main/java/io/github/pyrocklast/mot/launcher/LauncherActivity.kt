@@ -1,5 +1,6 @@
 package io.github.pyrocklast.mot.launcher
 
+import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.Intent
 import android.os.Bundle
@@ -41,14 +42,27 @@ class LauncherActivity : ComponentActivity() {
     /** The look this screen was drawn with; when settings change it, the screen is redrawn. */
     private var look = ""
 
-    // A new wallpaper can call for the other text colour (with "Match the wallpaper")
-    private val wallpaperColours = WallpaperManager.OnColorsChangedListener { _, which ->
+    // Recreate when a relevant palette actually changes, not for duplicate OEM callbacks.
+    private var wallpaperPalette: List<Int>? = null
+    private fun palette(colours: WallpaperColors?): List<Int>? = colours?.let {
+        listOf(
+            it.primaryColor.toArgb(),
+            it.secondaryColor?.toArgb() ?: -1,
+            it.tertiaryColor?.toArgb() ?: -1,
+            it.colorHints,
+        )
+    }
+
+    private val wallpaperColours = WallpaperManager.OnColorsChangedListener { colours, which ->
         if (which and WallpaperManager.FLAG_SYSTEM != 0 &&
             (prefs.textColour == Prefs.TEXT_MATCH_WALLPAPER || prefs.tintText)
         ) {
-            // A wallpaper can change its dynamic colour palette without changing whether
-            // light or dark text wins. Recreate to refresh the actual themed text colours.
-            recreate()
+            val next = palette(colours)
+            if (next != wallpaperPalette) {
+                wallpaperPalette = next
+                // Dynamic theme colours can change while light/dark contrast stays the same.
+                recreate()
+            }
         }
     }
 
@@ -97,7 +111,11 @@ class LauncherActivity : ComponentActivity() {
         }
 
         // With "Match the wallpaper", a new wallpaper can call for the other text colour
-        WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
+        val wallpaperManager = WallpaperManager.getInstance(this)
+        wallpaperPalette = runCatching {
+            palette(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM))
+        }.getOrNull()
+        wallpaperManager.addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
 
         // Back leaves Private Space, or closes the drawer, which follows the back gesture as you
         // swipe (Android 15's predictive back). On the home screen it does nothing.
