@@ -71,7 +71,7 @@ object HomeFit {
         nameHeight = nameHeight,
         room = room,
         usual = dp(context, USUAL_PADDING_DP),
-        touchTarget = dp(context, TOUCH_TARGET_DP),
+        touchTarget = ceil(context.resources.displayMetrics.density * TOUCH_TARGET_DP).toInt(),
         safety = dp(context, SAFETY_DP),
     )
 
