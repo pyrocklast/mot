@@ -29,6 +29,7 @@
     <string name="lock_private_space">Verrouiller l\'espace privé</string>
     <string name="work_app">%1$s, travail</string>
     <string name="new_app">%1$s, nouvelle</string>
+    <string name="add_to_home">Ajouter à l\'écran d\'accueil</string>
     <string name="change_app">Changer d\'application</string>
     <string name="remove_from_home">Retirer de l\'écran d\'accueil</string>
     <string name="rename">Renommer</string>
