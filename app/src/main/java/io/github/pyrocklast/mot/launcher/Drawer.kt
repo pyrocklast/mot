@@ -273,6 +273,14 @@ class Drawer(
             rows += if (inPrivateSpace) DrawerRow.LockPrivateSpace else DrawerRow.OpenPrivateSpace(space.locked)
         }
 
+        binding.drawerEmpty.isVisible = rows.isEmpty()
+        binding.drawerEmpty.setText(
+            when {
+                repo.apps.value == null -> R.string.loading_apps
+                query.isNotEmpty() -> R.string.no_search_results
+                else -> R.string.no_apps_available
+            }
+        )
         adapter.submitList(rows) {
             if (fromTop) list.scrollToPosition(0)
             if (typed && !choosing) maybeOpenOnlyMatch()
