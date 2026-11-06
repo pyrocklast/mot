@@ -36,6 +36,10 @@ class HomeSlotsTest {
         assertNull(HomeSlots.nextAddSlot(listOf("phone", "camera", null), 2, "phone"))
     }
 
+    @Test fun drawerNeverOverwritesOccupiedNextSlot() {
+        assertNull(HomeSlots.nextAddSlot(listOf("visible", "dormant"), 1, "new"))
+    }
+
     @Test fun drawerCanFillEmptyHomeWithoutRestoringArchive() {
         assertEquals(0, HomeSlots.nextAddSlot(listOf(null, null), 0, "phone"))
     }
