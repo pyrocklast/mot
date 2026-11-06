@@ -36,6 +36,7 @@
     <string name="work_app">%1$s, work</string>
     <string name="new_app">%1$s, new</string>
     <!-- Home screen long-press menu, above the drawer's items -->
+    <string name="add_to_home">Add to home screen</string>
     <string name="change_app">Change app</string>
     <string name="remove_from_home">Remove from home screen</string>
     <string name="rename">Rename</string>
