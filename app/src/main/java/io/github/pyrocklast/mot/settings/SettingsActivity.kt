@@ -163,10 +163,15 @@ class SettingsActivity : SettingsScreen() {
         val hidden = repo.apps.value?.mapNotNullTo(HashSet()) { it.appKey.takeIf { key -> key in hiddenKeys } }?.size
             ?: hiddenKeys.size
         hiddenApps.summary = if (hidden == 0) getString(R.string.none) else resources.getQuantityString(R.plurals.app_count, hidden, hidden)
-        // Android only shows Private Space to the Home app, so it's unknown until mot launcher is the Home app
-        privateSpace.summary = repo.privateSpace.value?.let {
-            getString(if (it.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary)
-        } ?: if (isHome) getString(R.string.not_set_up) else null
+        // A hidden, locked Private Space must not be disclosed by a status summary.
+        // Android only shows its profile to the Home app, so otherwise it's unknown until mot is Home.
+        val space = repo.privateSpace.value
+        privateSpace.summary = when {
+            space?.entrypointVisible == false -> null
+            space != null -> getString(if (space.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary)
+            isHome -> getString(R.string.not_set_up)
+            else -> null
+        }
 
         textColour.summary = getString(textColourLabel(prefs.textColour))
         tintText.isChecked = prefs.tintText
