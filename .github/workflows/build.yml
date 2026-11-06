@@ -26,7 +26,7 @@ jobs:
           cache: gradle
 
       - name: Test, lint and build
-        run: ./gradlew testDebugUnitTest lintDebug assembleRelease
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
 
       - name: Report the APK's size
         run: |
@@ -38,6 +38,13 @@ jobs:
         with:
           name: apk
           path: app/build/outputs/apk/release/app-release-unsigned.apk
+
+      # A debug-signed APK is installable for device validation, unlike the unsigned release APK.
+      - name: Keep the debug APK
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Keep the lint report
         if: always()
