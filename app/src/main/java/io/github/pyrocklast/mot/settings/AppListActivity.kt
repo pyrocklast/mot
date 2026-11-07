@@ -91,6 +91,7 @@ class AppListActivity : SettingsScreen() {
         val slot = slot
         if (slot != null) {
             slot.save(prefs, entry.target)
+            setResult(android.app.Activity.RESULT_OK)
             finish()
         } else {
             Apps.open(this, entry.target, view)
