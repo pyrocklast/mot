@@ -18,6 +18,8 @@
     <string name="action_open">Open</string>
     <string name="action_more_options">More options</string>
     <string name="action_open_clock">Open clock</string>
+    <string name="action_open_app_drawer">Open app drawer</string>
+    <string name="action_open_settings">Open settings</string>
     <string name="action_choose_clock">Choose the clock app</string>
     <string name="action_open_calendar">Open calendar</string>
     <string name="action_choose_calendar">Choose the calendar app</string>
@@ -26,9 +28,16 @@
 
     <!-- App drawer -->
     <!-- The search box's visible hint: a few underscores -->
-    <string name="search_hint" translatable="false">___</string>
+    <string name="search_hint">Search</string>
     <string name="search_apps">Search apps</string>
     <string name="choose_an_app">Choose an app</string>
+    <string name="choose_clock_app">Choose a clock app</string>
+    <string name="choose_calendar_app">Choose a calendar app</string>
+    <string name="choose_left_swipe_app">Choose the app for swipe left</string>
+    <string name="choose_right_swipe_app">Choose the app for swipe right</string>
+    <string name="loading_apps">Loading apps…</string>
+    <string name="no_search_results">No matching apps</string>
+    <string name="no_apps_available">No apps available</string>
     <string name="private_space">Private space</string>
     <string name="private_space_locked">Private space, locked</string>
     <string name="private_space_unlocked">Private space, unlocked</string>
