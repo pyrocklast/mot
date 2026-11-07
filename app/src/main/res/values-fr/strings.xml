@@ -93,6 +93,7 @@
 
     <string name="app_drawer">Tiroir d\'applications</string>
     <string name="drawer_alignment">Alignement du tiroir d\'applications</string>
+    <string name="auto_open_unique_search_result">Ouvrir automatiquement le seul résultat de recherche</string>
     <string name="show_keyboard">Afficher le clavier automatiquement</string>
     <string name="hidden_apps">Applications masquées</string>
     <string name="no_hidden_apps">Aucune application masquée</string>
