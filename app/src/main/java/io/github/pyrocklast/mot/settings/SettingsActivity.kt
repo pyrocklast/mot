@@ -205,13 +205,21 @@ class SettingsActivity : SettingsScreen() {
 
     private fun showHomeAppActions(slot: Int) {
         val dialog = android.app.AlertDialog.Builder(this)
-            .setItems(arrayOf(getString(R.string.change_app), getString(R.string.remove_from_home))) { _, selected ->
-                if (selected == 0) {
-                    startActivity(AppListActivity.chooseApp(this, Slot.Home(slot)))
-                } else {
-                    prefs.setHomeApp(slot, null)
-                    refresh()
-                    manageHomeApps()
+            .setItems(arrayOf(
+                getString(R.string.action_open),
+                getString(R.string.change_app),
+                getString(R.string.remove_from_home),
+            )) { _, selected ->
+                when (selected) {
+                    // An assigned app hidden from the drawer can still be opened from this
+                    // explicit management screen, without making it visible in the drawer.
+                    0 -> prefs.homeApp(slot)?.let { Apps.open(this, it) }
+                    1 -> startActivity(AppListActivity.chooseApp(this, Slot.Home(slot)))
+                    else -> {
+                        prefs.setHomeApp(slot, null)
+                        refresh()
+                        manageHomeApps()
+                    }
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
