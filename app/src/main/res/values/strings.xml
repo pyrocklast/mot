@@ -6,9 +6,11 @@
 
     <!-- Home screen -->
     <string name="app_placeholder">App</string>
+    <string name="add_to_home">Add app to home</string>
+    <string name="home_apps_full">Home screen full (10 apps)</string>
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
-    <string name="tips">Swipe up for your apps\nLong press anywhere for settings\nLong press and drag an app to move it</string>
+    <string name="tips">Swipe up for your apps\nLong press to add apps or open settings\nLong press and drag an app to move it</string>
     <string name="set_as_home">Set mot launcher as your Home app</string>
     <string name="set_as_home_underlined"><u>Set mot launcher as your Home app</u></string>
     <string name="long_press_to_choose">Long press to choose an app</string>
