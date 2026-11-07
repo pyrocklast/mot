@@ -42,6 +42,11 @@ object Search {
      * something you didn't mean, and a search that starts with a space never does. [composing] is
      * a word a Chinese, Japanese or Korean keyboard hasn't finished yet.
      */
+    /** Matching always works; launching without a tap is allowed only when opted in. */
+    fun shouldAutoOpenOnlyMatch(
+        enabled: Boolean, query: CharSequence, matches: Int, composing: Boolean,
+    ): Boolean = enabled && opensOnlyMatch(query, matches, composing)
+
     fun opensOnlyMatch(query: CharSequence, matches: Int, composing: Boolean): Boolean =
         matches == 1 &&
             !composing &&
