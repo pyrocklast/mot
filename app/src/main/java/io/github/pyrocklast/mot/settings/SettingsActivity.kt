@@ -172,9 +172,9 @@ class SettingsActivity : SettingsScreen() {
         tintText.isChecked = prefs.tintText
         tintText.summary = getString(if (prefs.tintText) R.string.tint_text_on else R.string.tint_text_off)
         nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
-        // With the status bar hidden, the battery level follows the date (when the date shows)
+        // The status bar can be hidden without changing the date or drawing fake indicators.
         statusBar.isChecked = prefs.showStatusBar
-        statusBar.summaryOff = if (prefs.showDate) getString(R.string.status_bar_off_summary) else null
+        statusBar.summaryOff = getString(R.string.status_bar_off_summary)
 
         swipeLeft.isChecked = prefs.swipeLeftOn
         swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)

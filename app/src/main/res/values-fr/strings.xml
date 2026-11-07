@@ -116,7 +116,7 @@
     <string name="weight_medium">Moyenne</string>
     <string name="weight_bold">Grasse</string>
     <string name="show_status_bar">Afficher la barre d\'état</string>
-    <string name="status_bar_off_summary">Le niveau de batterie s\'affiche après la date</string>
+    <string name="status_bar_off_summary">Balayez vers le bas pour les notifications</string>
 
     <string name="gestures">Gestes</string>
     <string name="swipe_left">Balayer vers la gauche</string>
