@@ -344,15 +344,9 @@ class HomeScreen(
     } ?: false
 
     private fun move(from: Int, to: Int) {
-        // Some saved assignments may be unavailable (e.g. locked Private Space). Map
-        // visible positions through their stored slots before rearranging all assignments.
-        val slots = prefs.homeApps.mapIndexedNotNull { slot, target -> slot.takeIf { target != null } }
         val fromSlot = appViews.getOrNull(from)?.tag as? Int ?: return
         val toSlot = appViews.getOrNull(to)?.tag as? Int ?: return
-        val savedFrom = slots.indexOf(fromSlot)
-        val savedTo = slots.indexOf(toSlot)
-        if (savedFrom < 0 || savedTo < 0) return
-        prefs.moveAssignedHomeApp(savedFrom, savedTo)
+        prefs.moveHomeAppBySlot(fromSlot, toSlot)
         render()
     }
 
