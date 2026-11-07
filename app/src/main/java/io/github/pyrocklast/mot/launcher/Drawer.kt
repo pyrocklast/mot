@@ -259,13 +259,15 @@ class Drawer(
         val query = Search.normalize(search.text ?: "")
         val choosing = choosingFor != null
         val hidden = if (choosing) emptySet() else prefs.hiddenApps
+        val alreadyAssigned = if (choosingFor == Slot.AddHome) prefs.assignedHomeApps.toSet() else emptySet()
         val now = System.currentTimeMillis()
 
         // Your apps, then a small "Private space" row; or Private Space's apps, then "Lock".
         // The two never mix, in the list or in search.
         val rows = ArrayList<DrawerRow>()
         var matches = apps.filter {
-            (it.profile == Profile.PRIVATE) == inPrivateSpace && it.appKey !in hidden && Search.matches(it.searchText, query)
+            (it.profile == Profile.PRIVATE) == inPrivateSpace && it.appKey !in hidden &&
+                it.target !in alreadyAssigned && Search.matches(it.searchText, query)
         }
         // Searching, the names that start with what you typed come first, then those with a word
         // that does, then the rest; alphabetical within each (the sort keeps the list's order)

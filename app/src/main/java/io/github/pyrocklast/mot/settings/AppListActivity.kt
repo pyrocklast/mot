@@ -78,7 +78,8 @@ class AppListActivity : SettingsScreen() {
         val rows = if (slot != null) {
             // Best matches first, as in the drawer
             val query = Search.normalize(binding.search.text ?: "")
-            val matches = apps.filter { Search.matches(it.searchText, query) }
+            val alreadyAssigned = if (slot == Slot.AddHome) prefs.assignedHomeApps.toSet() else emptySet()
+            val matches = apps.filter { it.target !in alreadyAssigned && Search.matches(it.searchText, query) }
             if (query.isEmpty()) matches else matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
         } else {
             apps.filter { it.appKey in listed }

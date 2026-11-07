@@ -16,7 +16,6 @@ import io.github.pyrocklast.mot.databinding.ActivitySettingsBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
-import io.github.pyrocklast.mot.util.HomeFit
 
 /**
  * mot launcher's settings, grouped by the part of the home screen each setting changes. Rows
@@ -29,9 +28,7 @@ class SettingsActivity : SettingsScreen() {
 
     private lateinit var setAsHome: Row
     private lateinit var changeHome: Row
-    private lateinit var homeAppCount: SliderRow
-    private lateinit var homeAlignment: Row
-    private lateinit var homeAtBottom: SwitchRow
+    private lateinit var homeApps: Row
     private lateinit var time: Row
     private lateinit var date: Row
     private lateinit var drawerAlignment: Row
@@ -80,15 +77,7 @@ class SettingsActivity : SettingsScreen() {
         }
 
         group(R.string.home_screen) {
-            homeAppCount = slider(R.string.number_of_apps, 0, Prefs.MAX_HOME_APPS, prefs.homeAppCount) {
-                prefs.homeAppCount = it
-                showHomeAppCountWarning()
-            }
-            homeAppCount.formatValue = { resources.getQuantityString(R.plurals.app_count, it, it) }
-            homeAlignment = item(R.string.alignment) {
-                choose(R.string.home_alignment, alignments, prefs.homeAlignment, ::alignmentLabel) { prefs.homeAlignment = it }
-            }
-            homeAtBottom = switch(R.string.align_bottom, prefs.homeAtBottom) { prefs.homeAtBottom = it }
+            homeApps = item(R.string.home_apps) { manageHomeApps() }
         }
 
         group(R.string.app_drawer) {
@@ -146,10 +135,12 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
-        homeAppCount.value = prefs.homeAppCount
-        showHomeAppCountWarning()
-        homeAlignment.summary = getString(alignmentLabel(prefs.homeAlignment))
-        homeAtBottom.isChecked = prefs.homeAtBottom
+        val assignedCount = prefs.assignedHomeApps.size
+        homeApps.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
+            getString(R.string.home_apps_full)
+        } else {
+            resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
+        }
 
         // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
         time.summary = if (!prefs.showTime) getString(R.string.hidden)
@@ -182,10 +173,59 @@ class SettingsActivity : SettingsScreen() {
         swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
     }
 
-    // Big names on a small screen: say so rather than quietly cutting the list off
-    private fun showHomeAppCountWarning() {
-        val fit = HomeFit.namesThatFit(this, prefs)  // from the screen's height, with typical system bars
-        homeAppCount.summary = if (prefs.homeAppCount > fit) getString(R.string.too_many_apps) else null
+    /**
+     * Also manages saved apps that do not currently fit on the fixed home screen. Slot indexes
+     * are retained: changing or removing a legacy assignment cannot affect its neighbours.
+     */
+    private fun manageHomeApps() {
+        val assigned = prefs.homeApps.mapIndexedNotNull { index, target ->
+            target?.let { index to it }
+        }
+        val options = assigned.map { (_, target) ->
+            repo.nameFor(target) ?: getString(
+                if (repo.isLockedPrivateSpace(target.userSerial)) R.string.private_space_locked
+                else R.string.app_not_found,
+            )
+        }.toMutableList()
+        if (assigned.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.home_apps)
+            .setItems(options.toTypedArray()) { _, selected ->
+                if (selected == assigned.size) {
+                    startActivity(AppListActivity.chooseApp(this, Slot.AddHome))
+                } else {
+                    showHomeAppActions(assigned[selected].first)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        showDialog(dialog)
+        dialog.show()
+    }
+
+    private fun showHomeAppActions(slot: Int) {
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setItems(arrayOf(
+                getString(R.string.action_open),
+                getString(R.string.change_app),
+                getString(R.string.remove_from_home),
+            )) { _, selected ->
+                when (selected) {
+                    // An assigned app hidden from the drawer can still be opened from this
+                    // explicit management screen, without making it visible in the drawer.
+                    0 -> prefs.homeApp(slot)?.let { Apps.open(this, it) }
+                    1 -> startActivity(AppListActivity.chooseApp(this, Slot.Home(slot)))
+                    else -> {
+                        prefs.setHomeApp(slot, null)
+                        refresh()
+                        manageHomeApps()
+                    }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        showDialog(dialog)
+        dialog.show()
     }
 
     // Dialogs
