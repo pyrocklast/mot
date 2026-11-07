@@ -265,16 +265,15 @@ class HomeScreen(
         return view
     }
 
-    // The date, and the battery level after it while the status bar is hidden
+    // Date remains independent of the status bar; no simulated battery/status indicators.
     private fun updateDate() {
         if (!prefs.showDate) return
-        var text = DateText.date(context, prefs.dateStyle)
-        if (!prefs.showStatusBar) DateText.battery(context)?.let { text = "$text, $it" }
+        val text = DateText.date(context, prefs.dateStyle)
         if (binding.date.text.toString() != text) binding.date.text = text
     }
 
-    // Keeps the date and battery level current while the home screen shows, e.g. past midnight
-    // or while charging. It follows the clock's once-a-minute tick, so it adds no wake-ups.
+    // Keeps the date current while the home screen shows, e.g. past midnight.
+    // It follows Android's once-a-minute tick, so it adds no wake-ups.
     private var ticking = false
     private val ticker = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) = updateDate()
