@@ -37,6 +37,27 @@ class Prefs(context: Context) {
 
     val homeApps: List<AppTarget?> get() = (0 until MAX_HOME_APPS).map { homeApp(it) }
 
+    /** Assigned apps, in legacy slot order. Empty slots are never displayed. */
+    val assignedHomeApps: List<AppTarget> get() = HomeSelection.assigned(homeApps)
+
+    /** Append only after the user actually chooses an app; cancelling changes nothing. */
+    fun appendHomeApp(target: AppTarget): Boolean {
+        val next = HomeSelection.append(homeApps, target, MAX_HOME_APPS) ?: return false
+        saveHomeAssignments(next)
+        return true
+    }
+
+    /** Move a visible app within the assigned list, preserving all selected targets. */
+    fun moveAssignedHomeApp(from: Int, to: Int) {
+        val next = HomeSelection.move(homeApps, from, to) ?: return
+        saveHomeAssignments(next)
+    }
+
+    private fun saveHomeAssignments(apps: List<AppTarget>) = prefs.edit {
+        (0 until MAX_HOME_APPS).forEach { index -> putTarget("home_app_$index", apps.getOrNull(index)) }
+    }
+
+
     /** Moves the home app at [from] to [to]; the ones in between shift by one spot. Empty spots move too. */
     fun moveHomeApp(from: Int, to: Int, count: Int) {
         if (from == to || from !in 0 until count || to !in 0 until count) return
