@@ -16,7 +16,6 @@ import io.github.pyrocklast.mot.databinding.ActivitySettingsBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
-import io.github.pyrocklast.mot.util.HomeFit
 
 /**
  * mot launcher's settings, grouped by the part of the home screen each setting changes. Rows
@@ -29,9 +28,7 @@ class SettingsActivity : SettingsScreen() {
 
     private lateinit var setAsHome: Row
     private lateinit var changeHome: Row
-    private lateinit var homeAppCount: SliderRow
-    private lateinit var homeAlignment: Row
-    private lateinit var homeAtBottom: SwitchRow
+    private lateinit var addHomeApp: Row
     private lateinit var time: Row
     private lateinit var date: Row
     private lateinit var drawerAlignment: Row
@@ -80,15 +77,11 @@ class SettingsActivity : SettingsScreen() {
         }
 
         group(R.string.home_screen) {
-            homeAppCount = slider(R.string.number_of_apps, 0, Prefs.MAX_HOME_APPS, prefs.homeAppCount) {
-                prefs.homeAppCount = it
-                showHomeAppCountWarning()
+            addHomeApp = item(R.string.add_to_home) {
+                if (prefs.assignedHomeApps.size < Prefs.MAX_HOME_APPS) {
+                    startActivity(AppListActivity.chooseApp(this@SettingsActivity, Slot.AddHome))
+                }
             }
-            homeAppCount.formatValue = { resources.getQuantityString(R.plurals.app_count, it, it) }
-            homeAlignment = item(R.string.alignment) {
-                choose(R.string.home_alignment, alignments, prefs.homeAlignment, ::alignmentLabel) { prefs.homeAlignment = it }
-            }
-            homeAtBottom = switch(R.string.align_bottom, prefs.homeAtBottom) { prefs.homeAtBottom = it }
         }
 
         group(R.string.app_drawer) {
@@ -146,10 +139,13 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
-        homeAppCount.value = prefs.homeAppCount
-        showHomeAppCountWarning()
-        homeAlignment.summary = getString(alignmentLabel(prefs.homeAlignment))
-        homeAtBottom.isChecked = prefs.homeAtBottom
+        val assignedCount = prefs.assignedHomeApps.size
+        addHomeApp.isEnabled = assignedCount < Prefs.MAX_HOME_APPS
+        addHomeApp.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
+            getString(R.string.home_apps_full)
+        } else {
+            resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
+        }
 
         // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
         time.summary = if (!prefs.showTime) getString(R.string.hidden)
@@ -180,12 +176,6 @@ class SettingsActivity : SettingsScreen() {
         swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
         swipeRight.isChecked = prefs.swipeRightOn
         swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
-    }
-
-    // Big names on a small screen: say so rather than quietly cutting the list off
-    private fun showHomeAppCountWarning() {
-        val fit = HomeFit.namesThatFit(this, prefs)  // from the screen's height, with typical system bars
-        homeAppCount.summary = if (prefs.homeAppCount > fit) getString(R.string.too_many_apps) else null
     }
 
     // Dialogs
