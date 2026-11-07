@@ -10,7 +10,6 @@ import androidx.annotation.StringRes
 import io.github.pyrocklast.mot.BuildConfig
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
-import io.github.pyrocklast.mot.data.AppTarget
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.ActivitySettingsBinding
 import io.github.pyrocklast.mot.launcher.Slot
