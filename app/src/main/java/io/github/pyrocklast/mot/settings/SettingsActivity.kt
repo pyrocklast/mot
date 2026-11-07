@@ -28,7 +28,7 @@ class SettingsActivity : SettingsScreen() {
 
     private lateinit var setAsHome: Row
     private lateinit var changeHome: Row
-    private lateinit var addHomeApp: Row
+    private lateinit var homeApps: Row
     private lateinit var time: Row
     private lateinit var date: Row
     private lateinit var drawerAlignment: Row
@@ -77,11 +77,7 @@ class SettingsActivity : SettingsScreen() {
         }
 
         group(R.string.home_screen) {
-            addHomeApp = item(R.string.add_to_home) {
-                if (prefs.assignedHomeApps.size < Prefs.MAX_HOME_APPS) {
-                    startActivity(AppListActivity.chooseApp(this@SettingsActivity, Slot.AddHome))
-                }
-            }
+            homeApps = item(R.string.home_apps) { manageHomeApps() }
         }
 
         group(R.string.app_drawer) {
@@ -140,8 +136,7 @@ class SettingsActivity : SettingsScreen() {
         changeHome.isVisible = isHome
 
         val assignedCount = prefs.assignedHomeApps.size
-        addHomeApp.isEnabled = assignedCount < Prefs.MAX_HOME_APPS
-        addHomeApp.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
+        homeApps.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
             getString(R.string.home_apps_full)
         } else {
             resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
@@ -176,6 +171,53 @@ class SettingsActivity : SettingsScreen() {
         swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
         swipeRight.isChecked = prefs.swipeRightOn
         swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
+    }
+
+    /**
+     * Also manages saved apps that do not currently fit on the fixed home screen. Slot indexes
+     * are retained: changing or removing a legacy assignment cannot affect its neighbours.
+     */
+    private fun manageHomeApps() {
+        val assigned = prefs.homeApps.mapIndexedNotNull { index, target ->
+            target?.let { index to it }
+        }
+        val options = assigned.map { (_, target) ->
+            repo.nameFor(target) ?: getString(
+                if (repo.isLockedPrivateSpace(target.userSerial)) R.string.private_space_locked
+                else R.string.app_not_found,
+            )
+        }.toMutableList()
+        if (assigned.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.home_apps)
+            .setItems(options.toTypedArray()) { _, selected ->
+                if (selected == assigned.size) {
+                    startActivity(AppListActivity.chooseApp(this, Slot.AddHome))
+                } else {
+                    showHomeAppActions(assigned[selected].first)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        showDialog(dialog)
+        dialog.show()
+    }
+
+    private fun showHomeAppActions(slot: Int) {
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setItems(arrayOf(getString(R.string.change_app), getString(R.string.remove_from_home))) { _, selected ->
+                if (selected == 0) {
+                    startActivity(AppListActivity.chooseApp(this, Slot.Home(slot)))
+                } else {
+                    prefs.setHomeApp(slot, null)
+                    refresh()
+                    manageHomeApps()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        showDialog(dialog)
+        dialog.show()
     }
 
     // Dialogs
