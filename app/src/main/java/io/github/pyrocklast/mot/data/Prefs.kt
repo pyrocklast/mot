@@ -47,9 +47,9 @@ class Prefs(context: Context) {
         return true
     }
 
-    /** Move a visible app within the assigned list, preserving all selected targets. */
-    fun moveAssignedHomeApp(from: Int, to: Int) {
-        val next = HomeSelection.move(homeApps, from, to) ?: return
+    /** Move an assigned app between stored slots, preserving all targets and legacy gaps. */
+    fun moveHomeAppBySlot(fromSlot: Int, toSlot: Int) {
+        val next = HomeSelection.moveBySlot(homeApps, fromSlot, toSlot) ?: return
         saveHomeAssignments(next)
     }
 
