@@ -162,8 +162,11 @@ class HomeScreen(
 
         // Keep every existing assignment, including ones stored beyond the old slot count.
         // A null slot is not an app and never occupies home-screen space.
+        // Android 16 may hide a locked Private Space's entry point. Do not expose its
+        // previously assigned apps as visible home rows while Android requests concealment.
+        val concealedSpace = repo.privateSpace.value?.takeIf { !it.entrypointVisible }
         val assignments = prefs.homeApps.mapIndexedNotNull { slot, target ->
-            target?.let { slot to it }
+            target?.takeUnless { concealedSpace?.concealsTarget(it) == true }?.let { slot to it }
         }
         val count = assignments.size
         while (appViews.size < count) appViews += newAppView(appViews.size)
