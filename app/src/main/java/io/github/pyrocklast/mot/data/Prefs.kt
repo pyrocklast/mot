@@ -74,10 +74,22 @@ class Prefs(context: Context) {
         return true
     }
 
-    /** Move an assigned app between stored slots, preserving all targets and legacy gaps. */
-    fun moveHomeAppBySlot(fromSlot: Int, toSlot: Int) {
-        val next = HomeSelection.moveBySlot(homeApps, fromSlot, toSlot) ?: return
-        saveHomeAssignments(next)
+    /** Reorder visible apps while preserving any concealed Private Space slot exactly. */
+    fun moveHomeAppBySlot(fromSlot: Int, toSlot: Int, concealedSerial: Long? = null) {
+        val slots = homeApps
+        if (concealedSerial == null) {
+            val next = HomeSelection.moveBySlot(slots, fromSlot, toSlot) ?: return
+            saveHomeAssignments(next)
+            return
+        }
+        val protectedSlots = slots.indices.filterTo(HashSet()) { index ->
+            slots[index]?.userSerial == concealedSerial
+        }
+        val next = HomeSelection.moveBySlotKeeping(slots, fromSlot, toSlot, protectedSlots) ?: return
+        prefs.edit {
+            next.forEachIndexed { index, target -> putTarget("home_app_$index", target) }
+            putInt("home_app_count", next.count { it != null })
+        }
     }
 
     private fun saveHomeAssignments(apps: List<AppTarget>) = prefs.edit {
@@ -87,21 +99,8 @@ class Prefs(context: Context) {
     }
 
 
-    /** Moves the home app at [from] to [to]; the ones in between shift by one spot. Empty spots move too. */
-    fun moveHomeApp(from: Int, to: Int, count: Int) {
-        if (from == to || from !in 0 until count || to !in 0 until count) return
-        val apps = (0 until count).map { homeApp(it) }.toMutableList()
-        apps.add(to, apps.removeAt(from))
-        prefs.edit { apps.forEachIndexed { slot, target -> putTarget("home_app_$slot", target) } }
-    }
-
-    var homeAlignment: Int
-        get() = prefs.getInt("home_alignment", Gravity.START)
-        set(value) = prefs.edit { putInt("home_alignment", value) }
-
-    var homeAtBottom: Boolean
-        get() = prefs.getBoolean("home_at_bottom", false)
-        set(value) = prefs.edit { putBoolean("home_at_bottom", value) }
+    // Historical home alignment/bottom keys remain on disk for migration compatibility,
+    // but the fixed start-aligned layout no longer exposes or reads them.
 
     // Clock and date
 
