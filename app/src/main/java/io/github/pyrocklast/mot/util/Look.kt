@@ -56,7 +56,11 @@ object Look {
      * is taken when it says dark text reads, and otherwise the colours themselves decide.
      */
     private fun wallpaperSuitsDarkText(context: Context, tinted: Boolean): Boolean? {
-        val colours = WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) ?: return null
+        // Some OEM/live wallpaper providers do not expose colours reliably. Fail closed to
+        // the system theme instead of crashing the Home activity.
+        val colours = runCatching {
+            WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
+        }.getOrNull() ?: return null
         if (colours.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0) return true
         // Whichever of the two stands out more against the wallpaper. Dark text wins sooner than
         // it looks like it should: against a mid orange, dark is three times the contrast of light.

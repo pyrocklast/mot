@@ -2,8 +2,6 @@ package io.github.pyrocklast.mot.util
 
 import android.content.Context
 import android.icu.text.DateFormat
-import android.icu.text.NumberFormat
-import android.os.BatteryManager
 import io.github.pyrocklast.mot.data.Prefs
 import java.util.Date
 import java.util.Locale
@@ -37,14 +35,6 @@ object DateText {
             lastLocale = locale
             lastFormat = it
         }
-    }
-
-    /** The battery level, e.g. "85 %" in French, for when the status bar is hidden. */
-    fun battery(context: Context): String? {
-        val level = context.getSystemService(BatteryManager::class.java)
-            .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        if (level !in 0..100) return null
-        return NumberFormat.getPercentInstance(locale(context)).format(level / 100.0)
     }
 
     // The app's resources already use the language chosen for mot launcher in Android's settings, if any

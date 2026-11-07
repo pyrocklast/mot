@@ -13,6 +13,19 @@ class Prefs(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("mot", Context.MODE_PRIVATE)
     private val names = context.applicationContext.getSharedPreferences("mot_names", Context.MODE_PRIVATE)
 
+    init {
+        // Existing installations without an explicit status-bar preference must retain their
+        // historical hidden default. Only a genuinely new installation starts with it shown.
+        // This runs before migrate(), which writes its own preferences on first launch.
+        if (!prefs.contains("status_bar_default_v2")) {
+            val hadExistingData = prefs.all.isNotEmpty() || names.all.isNotEmpty()
+            prefs.edit {
+                putBoolean("status_bar_initial_default", defaultStatusBarForInstall(hadExistingData))
+                putBoolean("status_bar_default_v2", true)
+            }
+        }
+    }
+
     // Home screen
 
     /** Only assigned apps count; there are no blank slots in the new home layout. */
@@ -204,8 +217,9 @@ class Prefs(context: Context) {
         get() = prefs.getFloat("date_scale", 1f)
         set(value) = prefs.edit { putFloat("date_scale", value) }
 
+    /** Visible by default on new installs; explicit or historic choices are preserved. */
     var showStatusBar: Boolean
-        get() = prefs.getBoolean("show_status_bar", false)
+        get() = prefs.getBoolean("show_status_bar", prefs.getBoolean("status_bar_initial_default", false))
         set(value) = prefs.edit { putBoolean("show_status_bar", value) }
 
     // Gestures
@@ -351,6 +365,9 @@ class Prefs(context: Context) {
     }
 
     companion object {
+        /** Separate pure policy so the first-install vs upgrade behavior has regression tests. */
+        internal fun defaultStatusBarForInstall(hadExistingData: Boolean): Boolean = !hadExistingData
+
         const val MAX_HOME_APPS = 10
 
         private const val CRASHES_BEFORE_RESET = 3
