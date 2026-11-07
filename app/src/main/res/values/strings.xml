@@ -38,6 +38,7 @@
     <!-- Home screen long-press menu, above the drawer's items -->
     <string name="add_to_home">Add to home screen</string>
     <string name="home_add_first_app">Add an app</string>
+    <string name="manage_home_apps">Manage home apps</string>
     <string name="restore_previous_home_apps">Previously saved home apps</string>
     <string name="restore_previous_home_apps_prompt">Restore previously hidden home slots? Apps you had removed from view may become visible on the home screen. Nothing changes in the app drawer.</string>
     <string name="restore">Restore</string>
