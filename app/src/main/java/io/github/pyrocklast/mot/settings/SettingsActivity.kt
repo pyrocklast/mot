@@ -142,13 +142,18 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
+        val concealedSpace = repo.privateSpace.value?.takeIf { !it.entrypointVisible }
         val assignedCount = prefs.assignedHomeApps.size
+        val hasConcealedHomeTarget = prefs.assignedHomeApps.any {
+            concealedSpace?.concealsTarget(it) == true
+        }
         // Never show legacy dormant assignments on Home without explicit consent.
         archivedHomeApps.isVisible = prefs.archivedHomeAppCount > 0
-        homeApps.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
-            getString(R.string.home_apps_full)
-        } else {
-            resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
+        homeApps.summary = when {
+            // Avoid revealing that additional home assignments belong to hidden Private Space.
+            hasConcealedHomeTarget -> null
+            assignedCount == Prefs.MAX_HOME_APPS -> getString(R.string.home_apps_full)
+            else -> resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
         }
 
         // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
@@ -163,10 +168,16 @@ class SettingsActivity : SettingsScreen() {
         val hidden = repo.apps.value?.mapNotNullTo(HashSet()) { it.appKey.takeIf { key -> key in hiddenKeys } }?.size
             ?: hiddenKeys.size
         hiddenApps.summary = if (hidden == 0) getString(R.string.none) else resources.getQuantityString(R.plurals.app_count, hidden, hidden)
-        // Android only shows Private Space to the Home app, so it's unknown until mot launcher is the Home app
-        privateSpace.summary = repo.privateSpace.value?.let {
-            getString(if (it.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary)
-        } ?: if (isHome) getString(R.string.not_set_up) else null
+        // Android's hidden entry-point preference must also suppress Settings disclosure.
+        val space = repo.privateSpace.value
+        privateSpace.isVisible = space?.entrypointVisible != false
+        privateSpace.summary = when {
+            space != null -> getString(
+                if (space.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary,
+            )
+            isHome -> getString(R.string.not_set_up)
+            else -> null
+        }
 
         textColour.summary = getString(textColourLabel(prefs.textColour))
         tintText.isChecked = prefs.tintText
@@ -211,8 +222,9 @@ class SettingsActivity : SettingsScreen() {
      * are retained: changing or removing a legacy assignment cannot affect its neighbours.
      */
     private fun manageHomeApps() {
+        val concealedSpace = repo.privateSpace.value?.takeIf { !it.entrypointVisible }
         val assigned = prefs.homeApps.mapIndexedNotNull { index, target ->
-            target?.let { index to it }
+            target?.takeUnless { concealedSpace?.concealsTarget(it) == true }?.let { index to it }
         }
         val options = assigned.map { (_, target) ->
             repo.nameFor(target) ?: getString(
@@ -220,7 +232,7 @@ class SettingsActivity : SettingsScreen() {
                 else R.string.app_not_found,
             )
         }.toMutableList()
-        if (assigned.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
+        if (prefs.assignedHomeApps.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
         val dialog = android.app.AlertDialog.Builder(this)
             .setTitle(R.string.home_apps)
             .setItems(options.toTypedArray()) { _, selected ->
