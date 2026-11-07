@@ -1,5 +1,6 @@
 package io.github.pyrocklast.mot.launcher
 
+import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.Intent
 import android.os.Bundle
@@ -41,9 +42,38 @@ class LauncherActivity : ComponentActivity() {
     /** The look this screen was drawn with; when settings change it, the screen is redrawn. */
     private var look = ""
 
-    // A new wallpaper can call for the other text colour (with "Match the wallpaper")
-    private val wallpaperColours = WallpaperManager.OnColorsChangedListener { _, which ->
-        if (which and WallpaperManager.FLAG_SYSTEM != 0 && currentLook() != look) recreate()
+    // Recreate when a relevant palette actually changes, not for duplicate OEM callbacks.
+    private var wallpaperPalette: List<Int>? = null
+    private var wallpaperId: Int = -1
+    private fun systemWallpaperId(): Int = runCatching {
+        WallpaperManager.getInstance(this).getWallpaperId(WallpaperManager.FLAG_SYSTEM)
+    }.getOrDefault(-1)
+
+    private fun palette(colours: WallpaperColors?): List<Int>? = colours?.let {
+        listOf(
+            it.primaryColor.toArgb(),
+            it.secondaryColor?.toArgb() ?: -1,
+            it.tertiaryColor?.toArgb() ?: -1,
+            it.colorHints,
+        )
+    }
+
+    private val wallpaperColours = WallpaperManager.OnColorsChangedListener { colours, which ->
+        if (which and WallpaperManager.FLAG_SYSTEM != 0 &&
+            (prefs.textColour == Prefs.TEXT_MATCH_WALLPAPER || prefs.tintText)
+        ) {
+            val next = palette(colours)
+            if (next != wallpaperPalette) {
+                wallpaperPalette = next
+                // A wallpaper's ID changes when the wallpaper is replaced; live wallpaper
+                // colour samples can change without a new ID. Refresh the full theme when
+                // the wallpaper changes, but don't recreate Home for every live colour sample.
+                val nextId = systemWallpaperId()
+                val wallpaperReplaced = nextId >= 0 && nextId != wallpaperId
+                wallpaperId = nextId
+                if (wallpaperReplaced || currentLook() != look) recreate()
+            }
+        }
     }
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -91,7 +121,12 @@ class LauncherActivity : ComponentActivity() {
         }
 
         // With "Match the wallpaper", a new wallpaper can call for the other text colour
-        WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
+        val wallpaperManager = WallpaperManager.getInstance(this)
+        wallpaperId = systemWallpaperId()
+        wallpaperPalette = runCatching {
+            palette(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM))
+        }.getOrNull()
+        wallpaperManager.addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
 
         // Back leaves Private Space, or closes the drawer, which follows the back gesture as you
         // swipe (Android 15's predictive back). On the home screen it does nothing.

@@ -141,7 +141,7 @@
     <string name="weight_medium">Medium</string>
     <string name="weight_bold">Bold</string>
     <string name="show_status_bar">Show status bar</string>
-    <string name="status_bar_off_summary">Battery level shows after the date</string>
+    <string name="status_bar_off_summary">Swipe down for notifications</string>
 
     <string name="gestures">Gestures</string>
     <string name="swipe_left">Swipe left</string>
