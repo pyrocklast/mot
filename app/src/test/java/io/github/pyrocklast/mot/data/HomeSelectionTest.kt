@@ -38,6 +38,17 @@ class HomeSelectionTest {
         assertNull(HomeSelection.moveBySlot(slots, 0, 3))
     }
 
+    @Test fun hiddenPrivateSlotStaysInPlaceWhenVisibleAppsMove() {
+        val slots = listOf<String?>("A", null, "PRIVATE", "B", "C")
+        assertEquals(
+            listOf("C", null, "PRIVATE", "A", "B"),
+            HomeSelection.moveBySlotKeeping(slots, 4, 0, setOf(2)),
+        )
+        assertEquals(listOf<String?>("A", null, "PRIVATE", "B", "C"), slots)
+        assertNull(HomeSelection.moveBySlotKeeping(slots, 2, 4, setOf(2)))
+        assertNull(HomeSelection.moveBySlotKeeping(slots, 0, 2, setOf(2)))
+    }
+
     @Test fun invalidMovesHaveNoEffectOnSavedApps() {
         assertNull(HomeSelection.move(listOf("A", null, "B"), -1, 0))
         assertNull(HomeSelection.move(listOf("A", null, "B"), 0, 2))
