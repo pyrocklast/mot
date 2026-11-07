@@ -82,6 +82,8 @@
     <string name="format">Format</string>
     <string name="date_format">Format de la date</string>
     <string name="hidden">Masquée</string>
+    <string name="shown">Affichée</string>
+
     <string name="size">Taille</string>
     <string name="tap_time">Appuyer sur l\'heure ouvre</string>
     <string name="tap_date">Appuyer sur la date ouvre</string>

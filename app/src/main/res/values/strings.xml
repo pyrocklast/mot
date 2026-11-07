@@ -93,6 +93,8 @@
     <string name="date_format">Date format</string>
     <!-- Summary of the Time or Date setting while it's switched off -->
     <string name="hidden">Hidden</string>
+    <string name="shown">Shown</string>
+
     <string name="size">Size</string>
     <string name="tap_time">Tapping the time opens</string>
     <string name="tap_date">Tapping the date opens</string>

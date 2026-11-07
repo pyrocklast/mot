@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.view.Gravity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import io.github.pyrocklast.mot.BuildConfig
@@ -33,17 +32,14 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var archivedHomeApps: Row
     private lateinit var time: Row
     private lateinit var date: Row
-    private lateinit var drawerAlignment: Row
     private lateinit var hiddenApps: Row
     private lateinit var privateSpace: Row
     private lateinit var textColour: Row
     private lateinit var tintText: SwitchRow
-    private lateinit var nameStyle: Row
     private lateinit var statusBar: SwitchRow
     private lateinit var swipeLeft: SplitSwitchRow
     private lateinit var swipeRight: SplitSwitchRow
 
-    private val alignments = intArrayOf(Gravity.START, Gravity.CENTER, Gravity.END)
     private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_LIGHT, Prefs.TEXT_DARK)
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -103,18 +99,14 @@ class SettingsActivity : SettingsScreen() {
         }
 
         group(R.string.app_drawer) {
-            drawerAlignment = item(R.string.alignment) {
-                choose(R.string.drawer_alignment, alignments, prefs.drawerAlignment, ::alignmentLabel) { prefs.drawerAlignment = it }
-            }
             switch(R.string.show_keyboard, prefs.autoKeyboard) { prefs.autoKeyboard = it }
             hiddenApps = item(R.string.hidden_apps) { startActivity(AppListActivity.hiddenApps(this@SettingsActivity)) }
             // Private Space is set up in Android's settings; its apps show at the end of the drawer
             privateSpace = item(R.string.private_space) { Apps.openPrivateSpaceSettings(this@SettingsActivity) }
         }
 
-        // How the home screen and drawer look (this screen keeps the phone's look). App names, the
-        // time and the date each have their own screen, with a preview, for font, weight and size;
-        // the time's and date's screens also set what tapping them opens.
+        // Home typography is fixed; keep only the colour choice and functional time/date
+        // controls. The time and date screens configure visibility, actions and date format.
         group(R.string.appearance, summary = R.string.appearance_summary) {
             textColour = item(R.string.text_colour) {
                 choose(R.string.text_colour, textColours, prefs.textColour, ::textColourLabel) { prefs.textColour = it }
@@ -123,7 +115,6 @@ class SettingsActivity : SettingsScreen() {
                 prefs.tintText = it
                 refresh()
             }
-            nameStyle = item(R.string.app_names) { startActivity(StyleActivity.appNames(this@SettingsActivity)) }
             time = item(R.string.time) { startActivity(StyleActivity.time(this@SettingsActivity)) }
             date = item(R.string.date) { startActivity(StyleActivity.date(this@SettingsActivity)) }
             statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
@@ -166,13 +157,12 @@ class SettingsActivity : SettingsScreen() {
             R.plurals.app_count, prefs.archivedHomeAppCount, prefs.archivedHomeAppCount,
         )
 
-        // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
-        time.summary = if (!prefs.showTime) getString(R.string.hidden)
-        else styleSummary(prefs.timeFont, prefs.timeWeight, prefs.timeScale)
-        date.summary = if (!prefs.showDate) getString(R.string.hidden)
-        else DateText.date(this, prefs.dateStyle) + SEPARATOR + styleSummary(prefs.dateFont, prefs.dateWeight, prefs.dateScale)
+        // Fixed typography follows Android's system font scale. These summaries show only
+        // settings that actually affect the home: visibility and the date format.
+        time.summary = getString(if (prefs.showTime) R.string.shown else R.string.hidden)
+        date.summary = if (prefs.showDate) DateText.date(this, prefs.dateStyle)
+            else getString(R.string.hidden)
 
-        drawerAlignment.summary = getString(alignmentLabel(prefs.drawerAlignment))
         // Only apps still installed (the list keeps apps you uninstalled while hidden)
         val hiddenKeys = prefs.hiddenApps
         val hidden = repo.apps.value?.mapNotNullTo(HashSet()) { it.appKey.takeIf { key -> key in hiddenKeys } }?.size
@@ -186,7 +176,6 @@ class SettingsActivity : SettingsScreen() {
         textColour.summary = getString(textColourLabel(prefs.textColour))
         tintText.isChecked = prefs.tintText
         tintText.summary = getString(if (prefs.tintText) R.string.tint_text_on else R.string.tint_text_off)
-        nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
         // The status bar can be hidden without changing the date or drawing fake indicators.
         statusBar.isChecked = prefs.showStatusBar
         statusBar.summaryOff = getString(R.string.status_bar_off_summary)
@@ -262,13 +251,6 @@ class SettingsActivity : SettingsScreen() {
     }
 
     // Labels
-
-    @StringRes
-    private fun alignmentLabel(gravity: Int) = when (gravity) {
-        Gravity.CENTER -> R.string.centre
-        Gravity.END -> R.string.right
-        else -> R.string.left
-    }
 
     @StringRes
     private fun textColourLabel(colour: Int) = when (colour) {
