@@ -29,6 +29,7 @@ class SettingsActivity : SettingsScreen() {
 
     private lateinit var setAsHome: Row
     private lateinit var changeHome: Row
+    private lateinit var homeAppsRow: Row
     private lateinit var archivedHomeApps: Row
     private lateinit var time: Row
     private lateinit var date: Row
@@ -80,6 +81,7 @@ class SettingsActivity : SettingsScreen() {
         // The home list is now contextual, without empty slots or a slot-count slider.
         // Saved assignments from older, inactive slots remain recoverable only by request.
         group(R.string.home_screen) {
+            homeAppsRow = item(R.string.manage_home_apps) { showHomeApps() }
             archivedHomeApps = item(R.string.restore_previous_home_apps) {
                 val count = prefs.archivedHomeAppCount
                 if (count == 0) return@item
@@ -155,6 +157,10 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
+        homeAppsRow.isVisible = prefs.homeAppCount > 0
+        homeAppsRow.summary = resources.getQuantityString(
+            R.plurals.app_count, prefs.homeAppCount, prefs.homeAppCount,
+        )
         archivedHomeApps.isVisible = prefs.archivedHomeAppCount > 0
         archivedHomeApps.summary = resources.getQuantityString(
             R.plurals.app_count, prefs.archivedHomeAppCount, prefs.archivedHomeAppCount,
@@ -189,6 +195,56 @@ class SettingsActivity : SettingsScreen() {
         swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
         swipeRight.isChecked = prefs.swipeRightOn
         swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
+    }
+
+    /**
+     * Home itself only renders what fits, and the standard drawer must still respect hidden
+     * apps. Give all assigned apps (including overflowed home-only ones) a deliberate
+     * management route in Settings, without ever revealing them in the normal drawer.
+     */
+    private fun showHomeApps() {
+        val count = prefs.homeAppCount
+        if (count == 0) return
+        val labels = (0 until count).map { index ->
+            val app = prefs.homeApp(index)
+            val name = app?.let { repo.nameFor(it) } ?: getString(R.string.app_not_found)
+            "${index + 1}. $name"
+        }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.manage_home_apps)
+            .setItems(labels) { _, index -> homeAppActions(index) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun homeAppActions(index: Int) {
+        val count = prefs.homeAppCount
+        if (index !in 0 until count) return
+        val options = ArrayList<Pair<Int, () -> Unit>>()
+        options += R.string.change_app to {
+            appChoiceDialog(
+                prefs, R.string.change_app, R.string.none, prefs.homeApp(index), Slot.Home(index),
+            ) { refresh() }
+        }
+        if (index > 0) options += R.string.move_up to {
+            prefs.moveHomeApp(index, index - 1, count)
+            refresh()
+        }
+        if (index + 1 < count) options += R.string.move_down to {
+            prefs.moveHomeApp(index, index + 1, count)
+            refresh()
+        }
+        options += R.string.remove_from_home to {
+            prefs.setHomeApp(index, null)
+            refresh()
+        }
+        AlertDialog.Builder(this)
+            .setTitle(prefs.homeApp(index)?.let { repo.nameFor(it) } ?: getString(R.string.app_not_found))
+            .setItems(options.map { getString(it.first) }.toTypedArray()) { _, selected ->
+                options[selected].second.invoke()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     // Dialogs
