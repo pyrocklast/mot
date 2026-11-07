@@ -7,6 +7,10 @@ import android.provider.Settings
 import android.view.Gravity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import io.github.pyrocklast.mot.BuildConfig
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
@@ -61,6 +65,13 @@ class SettingsActivity : SettingsScreen() {
         prefs.settingsOpened = true
 
         addRows(Rows(binding.rows))
+        // A newly loaded/changed locked Private Space must be hidden immediately even if
+        // Settings was opened before the repository finished its first app query.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                repo.privateSpace.collect { refresh() }
+            }
+        }
     }
 
     override fun onResume() {
