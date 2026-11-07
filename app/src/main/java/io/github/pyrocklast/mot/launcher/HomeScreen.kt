@@ -60,13 +60,6 @@ class HomeScreen(
     private var bottomInset = (40 * context.resources.displayMetrics.density).toInt()
     private val config = ViewConfiguration.get(context)
     private val minSwipeDistance = SWIPE_DISTANCE_DP * context.resources.displayMetrics.density
-    private val clockSize = sp(42f)
-    private val dateSize = sp(14f)
-
-    private fun sp(value: Float): Float = android.util.TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_SP, value, context.resources.displayMetrics,
-    )
-
     private val gestures = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent) = true
 
@@ -149,10 +142,10 @@ class HomeScreen(
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         // The time and the date each have their own style
-        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize)
-        binding.clock.typeface = Look.typeface(Prefs.FONT_SANS, 300)
-        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize)
-        binding.date.typeface = Look.typeface(Prefs.FONT_SANS, 400)
+        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.timeSizePx(context, prefs))
+        binding.clock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
+        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.dateSizePx(context, prefs))
+        binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
         updateDate()
 
         // Keep every existing assignment, including ones stored beyond the old slot count.
@@ -163,7 +156,7 @@ class HomeScreen(
         val count = assignments.size
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameTypeface = Look.typeface(Prefs.FONT_SANS, 400)
+        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         val nameSizePx = HomeFit.appNameSizePx(context, prefs)
         appViews.forEachIndexed { index, view ->
             view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
