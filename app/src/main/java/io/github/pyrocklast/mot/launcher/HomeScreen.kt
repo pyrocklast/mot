@@ -34,6 +34,7 @@ import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.DefaultApp
 import io.github.pyrocklast.mot.util.HomeFit
 import io.github.pyrocklast.mot.util.Look
+import io.github.pyrocklast.mot.util.NotificationShade
 import kotlin.math.abs
 
 /**
@@ -91,7 +92,7 @@ class HomeScreen(
                 if (dx < 0) swipe(left = true) else swipe(left = false)
             } else {
                 if (abs(dy) < minSwipeDistance || abs(velocityY) < minVelocity) return false
-                if (dy < 0) openDrawer(null) else Apps.expandNotifications(context)
+                if (dy < 0) openDrawer(null) else NotificationShade.expand(context, binding.home)
             }
             return true
         }
