@@ -7,6 +7,41 @@ package io.github.pyrocklast.mot.data
 internal object HomeSelection {
     fun <T : Any> assigned(slots: List<T?>): List<T> = slots.filterNotNull()
 
+    internal data class LegacySplit<T : Any>(
+        val visible: List<T>,
+        val archived: List<Pair<Int, T>>,
+    )
+
+    /**
+     * The old slider made only slots below [visibleCount] visible. Never promote assignments
+     * outside that range automatically: they may have been deliberately kept out of sight.
+     */
+    internal fun <T : Any> splitLegacy(slots: List<T?>, visibleCount: Int): LegacySplit<T> {
+        val boundary = visibleCount.coerceIn(0, slots.size)
+        return LegacySplit(
+            visible = slots.take(boundary).filterNotNull(),
+            archived = slots.withIndex().drop(boundary).mapNotNull { (index, target) ->
+                target?.let { index to it }
+            },
+        )
+    }
+
+    internal data class Recovery<T : Any>(
+        val visible: List<T>,
+        val restoredIndices: List<Int>,
+    )
+
+    /** Explicit restoration never overwrites current apps and keeps unrecovered archives. */
+    internal fun <T : Any> recover(
+        visible: List<T>, archives: List<Pair<Int, T>>, maximum: Int,
+    ): Recovery<T> {
+        val restored = archives.take((maximum - visible.size).coerceAtLeast(0))
+        return Recovery(
+            visible = visible + restored.map { it.second },
+            restoredIndices = restored.map { it.first },
+        )
+    }
+
     fun <T : Any> append(slots: List<T?>, target: T, maximum: Int): List<T>? {
         val items = assigned(slots)
         if (items.size >= maximum || target in items) return null
