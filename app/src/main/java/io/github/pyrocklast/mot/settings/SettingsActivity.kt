@@ -29,6 +29,7 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var setAsHome: Row
     private lateinit var changeHome: Row
     private lateinit var homeApps: Row
+    private lateinit var archivedHomeApps: Row
     private lateinit var time: Row
     private lateinit var date: Row
     private lateinit var drawerAlignment: Row
@@ -78,6 +79,9 @@ class SettingsActivity : SettingsScreen() {
 
         group(R.string.home_screen) {
             homeApps = item(R.string.home_apps) { manageHomeApps() }
+            archivedHomeApps = item(R.string.restore_previous_home_apps) {
+                confirmRestoreHomeApps()
+            }
         }
 
         group(R.string.app_drawer) {
@@ -136,6 +140,8 @@ class SettingsActivity : SettingsScreen() {
         changeHome.isVisible = isHome
 
         val assignedCount = prefs.assignedHomeApps.size
+        // Never show legacy dormant assignments on Home without explicit consent.
+        archivedHomeApps.isVisible = prefs.archivedHomeAppCount > 0
         homeApps.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
             getString(R.string.home_apps_full)
         } else {
@@ -171,6 +177,30 @@ class SettingsActivity : SettingsScreen() {
         swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
         swipeRight.isChecked = prefs.swipeRightOn
         swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
+    }
+
+    /** Recovery is opt-in because old hidden home slots can contain sensitive app choices. */
+    private fun confirmRestoreHomeApps() {
+        if (prefs.archivedHomeAppCount == 0) return
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle(R.string.restore_previous_home_apps)
+            .setMessage(R.string.restore_previous_home_apps_prompt)
+            .setPositiveButton(R.string.restore_home_apps_action) { _, _ ->
+                val restored = prefs.restoreArchivedHomeApps()
+                if (restored == 0) {
+                    android.widget.Toast.makeText(this, R.string.home_apps_full,
+                        android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    android.widget.Toast.makeText(this,
+                        resources.getQuantityString(R.plurals.home_apps_restored, restored, restored),
+                        android.widget.Toast.LENGTH_SHORT).show()
+                }
+                refresh()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        showDialog(dialog)
+        dialog.show()
     }
 
     /**
