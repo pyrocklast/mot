@@ -277,6 +277,14 @@ class Drawer(
             rows += if (inPrivateSpace) DrawerRow.LockPrivateSpace else DrawerRow.OpenPrivateSpace(space.locked)
         }
 
+        binding.drawerEmpty.isVisible = rows.isEmpty()
+        if (rows.isEmpty()) {
+            binding.drawerEmpty.setText(when {
+                repo.apps.value == null -> R.string.loading_apps
+                query.isNotEmpty() -> R.string.no_search_results
+                else -> R.string.no_apps_available
+            })
+        }
         adapter.submitList(rows) {
             if (fromTop) list.scrollToPosition(0)
             if (typed && !choosing) maybeOpenOnlyMatch()
@@ -345,7 +353,7 @@ class Drawer(
         if (show) showKeyboardIfWanted()
     }
 
-    // Underscores normally; "Choose an app" when choosing one; "Private space" inside it
+    // Restrained, localized search hint; contextual in chooser and Private Space modes.
     private fun setSearchHint() {
         search.hint = activity.getString(
             when {
@@ -385,7 +393,7 @@ class Drawer(
         ViewCompat.setAccessibilityDelegate(search, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
-                if (choosingFor == null && !inPrivateSpace) info.hintText = activity.getString(R.string.search_apps)
+                info.hintText = search.hint
             }
         })
     }
