@@ -39,13 +39,22 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var tintText: SwitchRow
     private lateinit var nameStyle: Row
     private lateinit var statusBar: SwitchRow
-    private lateinit var swipeLeft: SplitSwitchRow
-    private lateinit var swipeRight: SplitSwitchRow
+    private lateinit var swipeLeft: Row
+    private lateinit var swipeRight: Row
 
     private val alignments = intArrayOf(Gravity.START, Gravity.CENTER, Gravity.END)
     private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_LIGHT, Prefs.TEXT_DARK)
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        refresh()
+    }
+    // Choosing an app enables that gesture only after a real selection; cancellation is inert.
+    private val leftSwipePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) prefs.swipeLeftOn = true
+        refresh()
+    }
+    private val rightSwipePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) prefs.swipeRightOn = true
         refresh()
     }
 
@@ -117,14 +126,10 @@ class SettingsActivity : SettingsScreen() {
             }
         }
 
-        // One row per swipe: the text chooses the app, the switch turns the swipe on or off
+        // One simple choice per direction instead of a split switch and a separate target.
         group(R.string.gestures) {
-            swipeLeft = splitSwitch(R.string.swipe_left, prefs.swipeLeftOn, onChange = { prefs.swipeLeftOn = it }) {
-                chooseApp(R.string.swipe_left_opens, R.string.default_camera_app, prefs.swipeLeftApp, Slot.SwipeLeft)
-            }
-            swipeRight = splitSwitch(R.string.swipe_right, prefs.swipeRightOn, onChange = { prefs.swipeRightOn = it }) {
-                chooseApp(R.string.swipe_right_opens, R.string.default_phone_app, prefs.swipeRightApp, Slot.SwipeRight)
-            }
+            swipeLeft = item(R.string.swipe_left) { chooseSwipe(left = true) }
+            swipeRight = item(R.string.swipe_right) { chooseSwipe(left = false) }
         }
 
         group(R.string.about) {
@@ -176,10 +181,10 @@ class SettingsActivity : SettingsScreen() {
         statusBar.isChecked = prefs.showStatusBar
         statusBar.summaryOff = getString(R.string.status_bar_off_summary)
 
-        swipeLeft.isChecked = prefs.swipeLeftOn
-        swipeLeft.summary = appName(repo, prefs.swipeLeftApp, R.string.default_camera_app)
-        swipeRight.isChecked = prefs.swipeRightOn
-        swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
+        swipeLeft.summary = if (prefs.swipeLeftOn)
+            appName(repo, prefs.swipeLeftApp, R.string.default_camera_app) else getString(R.string.none)
+        swipeRight.summary = if (prefs.swipeRightOn)
+            appName(repo, prefs.swipeRightApp, R.string.default_phone_app) else getString(R.string.none)
     }
 
     /** Recovery is opt-in because old hidden home slots can contain sensitive app choices. */
@@ -263,9 +268,46 @@ class SettingsActivity : SettingsScreen() {
 
     // Dialogs
 
-    /** Android's default app for something, or one you choose from the list of apps. */
-    private fun chooseApp(@StringRes title: Int, @StringRes defaultLabel: Int, current: AppTarget?, slot: Slot) =
-        appChoiceDialog(prefs, title, defaultLabel, current, slot) { refresh() }
+    /**
+     * A single, reversible setting per gesture. Disabling keeps its custom target, allowing
+     * a later re-enable without reselecting it. Choosing Default clears that target explicitly.
+     */
+    private fun chooseSwipe(left: Boolean) {
+        val title = if (left) R.string.swipe_left else R.string.swipe_right
+        val defaultLabel = if (left) R.string.default_camera_app else R.string.default_phone_app
+        val slot = if (left) Slot.SwipeLeft else Slot.SwipeRight
+        val target = if (left) prefs.swipeLeftApp else prefs.swipeRightApp
+        val enabled = if (left) prefs.swipeLeftOn else prefs.swipeRightOn
+        val options = mutableListOf<CharSequence>(getString(R.string.none), getString(defaultLabel))
+        if (target != null) options += appName(repo, target, defaultLabel)
+        options += getString(R.string.choose_app_ellipsis)
+        val checked = if (!enabled) 0 else if (target == null) 1 else 2
+        choiceDialog(title, options.toTypedArray(), checked) { selected ->
+            when {
+                selected == 0 -> {
+                    if (left) prefs.swipeLeftOn = false else prefs.swipeRightOn = false
+                }
+                selected == 1 -> {
+                    if (left) {
+                        prefs.swipeLeftApp = null
+                        prefs.swipeLeftOn = true
+                    } else {
+                        prefs.swipeRightApp = null
+                        prefs.swipeRightOn = true
+                    }
+                }
+                selected == 2 && target != null -> {
+                    if (left) prefs.swipeLeftOn = true else prefs.swipeRightOn = true
+                }
+                else -> {
+                    // Only Activity.RESULT_OK from the picker enables a disabled swipe.
+                    val intent = AppListActivity.chooseApp(this, slot)
+                    if (left) leftSwipePicker.launch(intent) else rightSwipePicker.launch(intent)
+                }
+            }
+            refresh()
+        }
+    }
 
     private fun choose(@StringRes title: Int, values: IntArray, current: Int, label: (Int) -> Int, onChoice: (Int) -> Unit) {
         val labels = Array<CharSequence>(values.size) { getString(label(values[it])) }
