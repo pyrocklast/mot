@@ -27,6 +27,7 @@ class Prefs(context: Context) {
 
     // Home screen
 
+    /** Legacy visible-slot count retained for upgrades; the home now shows assigned apps only. */
     var homeAppCount: Int
         get() = prefs.getInt("home_app_count", 5)
         set(value) = prefs.edit { putInt("home_app_count", value.coerceIn(0, MAX_HOME_APPS)) }
