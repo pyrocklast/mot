@@ -96,6 +96,23 @@ class HomeVisibilityMigrationTest {
         assertEquals(10, prefs.homeAppCount)
     }
 
+    @Test fun crashRecoveryDoesNotEraseTheFormerHomeVisibilityBoundary() {
+        val active = target("active")
+        val dormant = target("dormant")
+        raw.edit().putInt("home_app_count", 1)
+            .putString("home_app_0", active.encode())
+            .putString("home_app_8", dormant.encode()).commit()
+        val prefs = Prefs(context)
+        prefs.migrate()
+        raw.edit().putInt("crashes", 3).commit()
+        assertTrue(prefs.resetLookAfterCrashes())
+        assertEquals(1, prefs.homeAppCount)
+        assertEquals(listOf(active), prefs.assignedHomeApps)
+        assertEquals(1, prefs.archivedHomeAppCount)
+        prefs.migrate()
+        assertEquals(listOf(active), prefs.assignedHomeApps)
+    }
+
     @Test fun priorExperimentalMigrationIsNotAppliedTwice() {
         val active = target("active")
         val archived = target("archived")
