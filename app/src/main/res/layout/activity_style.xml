@@ -10,11 +10,12 @@
         android:id="@+id/appBar"
         layout="@layout/settings_app_bar" />
 
-    <!-- A fixed height, so the preview stays put as things in it change size, or come and go -->
+    <!-- Keep the preview compact normally, but grow for large accessibility text. -->
     <FrameLayout
         android:id="@+id/preview"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/preview_height"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/preview_height"
         android:paddingHorizontal="24dp"
         android:paddingVertical="24dp">
 
