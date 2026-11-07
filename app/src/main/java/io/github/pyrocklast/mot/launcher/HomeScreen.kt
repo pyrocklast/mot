@@ -20,6 +20,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.doOnLayout
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import androidx.core.view.isVisible
@@ -452,9 +453,9 @@ class HomeScreen(
         }
         homeMenuAnchor = anchor
         homeMenu = popup
-        // The one-pixel anchor needs a layout pass before Android can place the popup
-        // correctly at the user's finger. Do not show it after the home was left.
-        anchor.post {
+        // The one-pixel anchor must actually be laid out before Android positions its
+        // popup. A posted runnable alone does not guarantee that its coordinates exist.
+        anchor.doOnLayout {
             if (homeMenu === popup && anchor.parent === binding.home) popup.show()
         }
     }
