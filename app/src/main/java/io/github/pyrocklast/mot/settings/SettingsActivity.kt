@@ -45,6 +45,14 @@ class SettingsActivity : SettingsScreen() {
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         refresh()
     }
+    private val leftSwipePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) prefs.swipeLeftOn = true
+        refresh()
+    }
+    private val rightSwipePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) prefs.swipeRightOn = true
+        refresh()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -271,11 +279,11 @@ class SettingsActivity : SettingsScreen() {
                 previouslySelected -> {
                     if (left) prefs.swipeLeftOn = true else prefs.swipeRightOn = true
                 }
-                else -> appChoiceDialog(
-                    prefs, title, defaultLabel, savedTarget, slot,
-                ) {
-                    if (left) prefs.swipeLeftOn = true else prefs.swipeRightOn = true
-                    refresh()
+                else -> {
+                    // The picker reports RESULT_OK only when an app was really chosen.
+                    // Cancellation must not enable a previously disabled swipe.
+                    val intent = AppListActivity.chooseApp(this@SettingsActivity, slot)
+                    if (left) leftSwipePicker.launch(intent) else rightSwipePicker.launch(intent)
                 }
             }
             refresh()
