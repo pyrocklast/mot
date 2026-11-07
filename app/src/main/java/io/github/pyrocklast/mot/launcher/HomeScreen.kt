@@ -108,6 +108,18 @@ class HomeScreen(
     init {
         // Taps reach TalkBack users through the actions set up in describeForTalkBack
         binding.home.setOnTouchListener(::onTouch)
+        // TalkBack and switch-access users cannot rely on full-screen swipe/long-press
+        // gestures. Expose the two essential destinations without a visible home control.
+        binding.home.isFocusable = true
+        binding.home.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_app_drawer)) { _, _ ->
+            openDrawer(null)
+            true
+        }
+        ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_settings)) { _, _ ->
+            openSettings()
+            true
+        }
         // The first render can precede layout. Recalculate when the actual viewport arrives
         // or changes size, without triggering another render on padding-only layout passes.
         binding.homeApps.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
