@@ -273,7 +273,7 @@ class Drawer(
         // that does, then the rest; alphabetical within each (the sort keeps the list's order)
         if (query.isNotEmpty()) matches = matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
         matches.mapTo(rows) { DrawerRow.App(it, isNew = it.isNew(now)) }
-        if (query.isEmpty() && space != null) {
+        if (query.isEmpty() && space?.entrypointVisible == true) {
             rows += if (inPrivateSpace) DrawerRow.LockPrivateSpace else DrawerRow.OpenPrivateSpace(space.locked)
         }
 
