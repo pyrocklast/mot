@@ -44,6 +44,11 @@ class LauncherActivity : ComponentActivity() {
 
     // Recreate when a relevant palette actually changes, not for duplicate OEM callbacks.
     private var wallpaperPalette: List<Int>? = null
+    private var wallpaperId: Int = -1
+    private fun systemWallpaperId(): Int = runCatching {
+        WallpaperManager.getInstance(this).getWallpaperId(WallpaperManager.FLAG_SYSTEM)
+    }.getOrDefault(-1)
+
     private fun palette(colours: WallpaperColors?): List<Int>? = colours?.let {
         listOf(
             it.primaryColor.toArgb(),
@@ -60,13 +65,13 @@ class LauncherActivity : ComponentActivity() {
             val next = palette(colours)
             if (next != wallpaperPalette) {
                 wallpaperPalette = next
-                // Static wallpaper changes need a full theme refresh. Live wallpapers may
-                // publish new colour samples continuously; avoid repeatedly recreating Home
-                // unless the actual light/dark text choice needs to change.
-                val live = runCatching {
-                    WallpaperManager.getInstance(this).wallpaperInfo != null
-                }.getOrDefault(false)
-                if (!live || currentLook() != look) recreate()
+                // A wallpaper's ID changes when the wallpaper is replaced; live wallpaper
+                // colour samples can change without a new ID. Refresh the full theme when
+                // the wallpaper changes, but don't recreate Home for every live colour sample.
+                val nextId = systemWallpaperId()
+                val wallpaperReplaced = nextId >= 0 && nextId != wallpaperId
+                wallpaperId = nextId
+                if (wallpaperReplaced || currentLook() != look) recreate()
             }
         }
     }
@@ -117,6 +122,7 @@ class LauncherActivity : ComponentActivity() {
 
         // With "Match the wallpaper", a new wallpaper can call for the other text colour
         val wallpaperManager = WallpaperManager.getInstance(this)
+        wallpaperId = systemWallpaperId()
         wallpaperPalette = runCatching {
             palette(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM))
         }.getOrNull()
