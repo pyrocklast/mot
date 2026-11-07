@@ -469,9 +469,9 @@ class HomeScreen(
                 info.isLongClickable = true
                 info.addAction(AccessibilityActionCompat(AccessibilityNodeInfoCompat.ACTION_CLICK, context.getString(openLabel)))
                 info.addAction(AccessibilityActionCompat(AccessibilityNodeInfoCompat.ACTION_LONG_CLICK, context.getString(changeLabel)))
-                val index = host.tag as? Int ?: return
-                if (!canBeMoved || !canMove(index)) return
+                if (!canBeMoved) return
                 val position = appViews.indexOf(host)
+                if (!canMove(position)) return
                 if (position > 0 && appViews[position - 1].isVisible) {
                     info.addAction(AccessibilityActionCompat(R.id.action_move_up, context.getString(R.string.move_up)))
                 }
