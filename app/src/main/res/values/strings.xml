@@ -8,7 +8,7 @@
     <string name="app_placeholder">App</string>
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
-    <string name="tips">Swipe up for your apps\nLong press anywhere for settings\nLong press and drag an app to move it</string>
+    <string name="tips">Swipe up for apps; hold one to add to Home\nHold empty space for settings\nHold and drag a home app to rearrange</string>
     <string name="set_as_home">Set mot launcher as your Home app</string>
     <string name="set_as_home_underlined"><u>Set mot launcher as your Home app</u></string>
     <string name="long_press_to_choose">Long press to choose an app</string>
@@ -36,6 +36,15 @@
     <string name="work_app">%1$s, work</string>
     <string name="new_app">%1$s, new</string>
     <!-- Home screen long-press menu, above the drawer's items -->
+    <string name="add_to_home">Add to home screen</string>
+    <string name="home_add_first_app">Add an app</string>
+    <string name="manage_home_apps">Manage home apps</string>
+    <string name="restore_previous_home_apps">Previously saved home apps</string>
+    <string name="restore_previous_home_apps_prompt">Restore previously hidden home slots? Apps you had removed from view may become visible on the home screen. Nothing changes in the app drawer.</string>
+    <string name="restore">Restore</string>
+    <string name="home_full">Remove a home app before restoring saved apps</string>
+    <string name="previous_home_apps_restored">Saved home apps restored</string>
+
     <string name="change_app">Change app</string>
     <string name="remove_from_home">Remove from home screen</string>
     <string name="rename">Rename</string>

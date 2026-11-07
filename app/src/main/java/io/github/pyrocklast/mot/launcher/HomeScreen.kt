@@ -204,22 +204,24 @@ class HomeScreen(
             // Do not make this view touch-clickable: that would swallow swipe-up gestures.
             // The home detector handles taps; TalkBack gets an explicit open action.
             describeForTalkBack(
-                view, R.string.home_all_apps_description, R.string.home_all_apps_description,
-            ) { openDrawer(null) }
+                view, R.string.action_open, R.string.action_open,
+            ) { openHomePickerOrDrawer() }
             overflowView = view
             binding.homeApps.addView(view)
         }
-        // App count can grow after the indicator was first created.
+        // The empty home offers one explicit way to choose its first app. Once populated,
+        // the same affordance appears only if assigned rows overflow the fixed screen.
         indicator.bringToFront()
-        indicator.setText(R.string.home_all_apps)
-        // Avoid showing and re-measuring the shortcut on ordinary homes that already fit.
-        indicator.isVisible = rowHeights.sumOf { it.toLong() } > room.toLong()
+        val emptyHome = count == 0
+        indicator.setText(if (emptyHome) R.string.home_add_first_app else R.string.home_all_apps)
+        indicator.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (emptyHome) 20f else 14f)
+        indicator.isVisible = emptyHome || rowHeights.sumOf { it.toLong() } > room.toLong()
         val indicatorHeight = if (indicator.isVisible) heightOf(indicator) else 0
         val layout = HomeFit.visibleRows(rowHeights, room, indicatorHeight)
         appViews.forEachIndexed { index, view -> view.isVisible = index < layout.count }
-        indicator.isVisible = layout.showAllApps
+        indicator.isVisible = if (emptyHome) indicatorHeight <= room else layout.showAllApps
         val groupHeight = rowHeights.take(layout.count).sum() +
-            if (layout.showAllApps) indicatorHeight else 0
+            if (indicator.isVisible) indicatorHeight else 0
         val balancedTop = HomeFit.balancedTop(
             displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
         )
@@ -329,12 +331,17 @@ class HomeScreen(
         return null
     }
 
+    private fun openHomePickerOrDrawer() {
+        if (prefs.homeAppCount == 0) openDrawer(Slot.Home(0))
+        else openDrawer(null)
+    }
+
     private fun tap(view: View?) {
         when (view) {
             null -> Unit
             binding.clock -> openOrDefault(prefs.clockApp, DefaultApp.CLOCK, view)
             binding.date -> openOrDefault(prefs.calendarApp, DefaultApp.CALENDAR, view)
-            overflowView -> openDrawer(null)
+            overflowView -> openHomePickerOrDrawer()
             else -> {
                 // A blank spot is empty, its app is gone, or it's in a locked Private Space: that
                 // one asks to unlock it, like any app whose profile is away

@@ -1,5 +1,6 @@
 package io.github.pyrocklast.mot.settings
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -16,7 +17,6 @@ import io.github.pyrocklast.mot.databinding.ActivitySettingsBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
-import io.github.pyrocklast.mot.util.HomeFit
 
 /**
  * mot launcher's settings, grouped by the part of the home screen each setting changes. Rows
@@ -29,9 +29,8 @@ class SettingsActivity : SettingsScreen() {
 
     private lateinit var setAsHome: Row
     private lateinit var changeHome: Row
-    private lateinit var homeAppCount: SliderRow
-    private lateinit var homeAlignment: Row
-    private lateinit var homeAtBottom: SwitchRow
+    private lateinit var homeAppsRow: Row
+    private lateinit var archivedHomeApps: Row
     private lateinit var time: Row
     private lateinit var date: Row
     private lateinit var drawerAlignment: Row
@@ -79,16 +78,28 @@ class SettingsActivity : SettingsScreen() {
             }
         }
 
+        // The home list is now contextual, without empty slots or a slot-count slider.
+        // Saved assignments from older, inactive slots remain recoverable only by request.
         group(R.string.home_screen) {
-            homeAppCount = slider(R.string.number_of_apps, 0, Prefs.MAX_HOME_APPS, prefs.homeAppCount) {
-                prefs.homeAppCount = it
-                showHomeAppCountWarning()
+            homeAppsRow = item(R.string.manage_home_apps) { showHomeApps() }
+            archivedHomeApps = item(R.string.restore_previous_home_apps) {
+                val count = prefs.archivedHomeAppCount
+                if (count == 0) return@item
+                AlertDialog.Builder(this@SettingsActivity)
+                    .setTitle(R.string.restore_previous_home_apps)
+                    .setMessage(R.string.restore_previous_home_apps_prompt)
+                    .setPositiveButton(R.string.restore) { _, _ ->
+                        val restored = prefs.restoreArchivedHomeApps()
+                        val message = if (restored == 0) R.string.home_full
+                            else R.string.previous_home_apps_restored
+                        android.widget.Toast.makeText(
+                            this@SettingsActivity, getString(message), android.widget.Toast.LENGTH_SHORT,
+                        ).show()
+                        refresh()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
             }
-            homeAppCount.formatValue = { resources.getQuantityString(R.plurals.app_count, it, it) }
-            homeAlignment = item(R.string.alignment) {
-                choose(R.string.home_alignment, alignments, prefs.homeAlignment, ::alignmentLabel) { prefs.homeAlignment = it }
-            }
-            homeAtBottom = switch(R.string.align_bottom, prefs.homeAtBottom) { prefs.homeAtBottom = it }
         }
 
         group(R.string.app_drawer) {
@@ -146,10 +157,14 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
-        homeAppCount.value = prefs.homeAppCount
-        showHomeAppCountWarning()
-        homeAlignment.summary = getString(alignmentLabel(prefs.homeAlignment))
-        homeAtBottom.isChecked = prefs.homeAtBottom
+        homeAppsRow.isVisible = prefs.homeAppCount > 0
+        homeAppsRow.summary = resources.getQuantityString(
+            R.plurals.app_count, prefs.homeAppCount, prefs.homeAppCount,
+        )
+        archivedHomeApps.isVisible = prefs.archivedHomeAppCount > 0
+        archivedHomeApps.summary = resources.getQuantityString(
+            R.plurals.app_count, prefs.archivedHomeAppCount, prefs.archivedHomeAppCount,
+        )
 
         // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
         time.summary = if (!prefs.showTime) getString(R.string.hidden)
@@ -182,10 +197,54 @@ class SettingsActivity : SettingsScreen() {
         swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
     }
 
-    // Big names on a small screen: say so rather than quietly cutting the list off
-    private fun showHomeAppCountWarning() {
-        val fit = HomeFit.namesThatFit(this, prefs)  // from the screen's height, with typical system bars
-        homeAppCount.summary = if (prefs.homeAppCount > fit) getString(R.string.too_many_apps) else null
+    /**
+     * Home itself only renders what fits, and the standard drawer must still respect hidden
+     * apps. Give all assigned apps (including overflowed home-only ones) a deliberate
+     * management route in Settings, without ever revealing them in the normal drawer.
+     */
+    private fun showHomeApps() {
+        val count = prefs.homeAppCount
+        if (count == 0) return
+        val labels = (0 until count).map { index ->
+            val app = prefs.homeApp(index)
+            val name = app?.let { repo.nameFor(it) } ?: getString(R.string.app_not_found)
+            "${index + 1}. $name"
+        }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.manage_home_apps)
+            .setItems(labels) { _, index -> homeAppActions(index) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun homeAppActions(index: Int) {
+        val count = prefs.homeAppCount
+        if (index !in 0 until count) return
+        val options = ArrayList<Pair<Int, () -> Unit>>()
+        options += R.string.change_app to {
+            appChoiceDialog(
+                prefs, R.string.change_app, R.string.none, prefs.homeApp(index), Slot.Home(index),
+            ) { refresh() }
+        }
+        if (index > 0) options += R.string.move_up to {
+            prefs.moveHomeApp(index, index - 1, count)
+            refresh()
+        }
+        if (index + 1 < count) options += R.string.move_down to {
+            prefs.moveHomeApp(index, index + 1, count)
+            refresh()
+        }
+        options += R.string.remove_from_home to {
+            prefs.setHomeApp(index, null)
+            refresh()
+        }
+        AlertDialog.Builder(this)
+            .setTitle(prefs.homeApp(index)?.let { repo.nameFor(it) } ?: getString(R.string.app_not_found))
+            .setItems(options.map { getString(it.first) }.toTypedArray()) { _, selected ->
+                options[selected].second.invoke()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     // Dialogs

@@ -6,7 +6,7 @@
     <string name="app_placeholder">Application</string>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
-    <string name="tips">Balayez vers le haut pour vos applications\nAppui long n\'importe où pour les paramètres\nAppui long puis glisser pour déplacer une application</string>
+    <string name="tips">Balayez vers le haut ; appui long sur une application pour l\'ajouter\nAppui long sur le fond pour les paramètres\nAppui long puis glisser pour réorganiser l\'accueil</string>
     <string name="set_as_home">Définir le lanceur mot comme application d\'accueil</string>
     <string name="set_as_home_underlined"><u>Définir le lanceur mot comme application d\'accueil</u></string>
     <string name="long_press_to_choose">Appui long pour choisir une application</string>
@@ -29,6 +29,15 @@
     <string name="lock_private_space">Verrouiller l\'espace privé</string>
     <string name="work_app">%1$s, travail</string>
     <string name="new_app">%1$s, nouvelle</string>
+    <string name="add_to_home">Ajouter à l\'écran d\'accueil</string>
+    <string name="home_add_first_app">Ajouter une application</string>
+    <string name="manage_home_apps">Gérer les applications d\'accueil</string>
+    <string name="restore_previous_home_apps">Applications d\'accueil enregistrées</string>
+    <string name="restore_previous_home_apps_prompt">Restaurer les anciens emplacements masqués ? Certaines applications précédemment retirées de l\'écran peuvent y réapparaître. Le tiroir d\'applications ne change pas.</string>
+    <string name="restore">Restaurer</string>
+    <string name="home_full">Retirez une application de l\'accueil avant de restaurer les anciennes</string>
+    <string name="previous_home_apps_restored">Applications d\'accueil restaurées</string>
+
     <string name="change_app">Changer d\'application</string>
     <string name="remove_from_home">Retirer de l\'écran d\'accueil</string>
     <string name="rename">Renommer</string>
