@@ -355,7 +355,8 @@ class HomeScreen(
     private fun move(from: Int, to: Int) {
         val fromSlot = appViews.getOrNull(from)?.tag as? Int ?: return
         val toSlot = appViews.getOrNull(to)?.tag as? Int ?: return
-        prefs.moveHomeAppBySlot(fromSlot, toSlot)
+        val concealedSerial = repo.privateSpace.value?.takeIf { !it.entrypointVisible }?.serial
+        prefs.moveHomeAppBySlot(fromSlot, toSlot, concealedSerial)
         render()
     }
 
