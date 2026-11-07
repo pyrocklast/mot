@@ -1,6 +1,5 @@
 package io.github.pyrocklast.mot.util
 
-import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.app.role.RoleManager
 import android.content.ActivityNotFoundException
@@ -127,15 +126,6 @@ object Apps {
             val stillPinned = launcherApps.getShortcuts(query, user).orEmpty().map { it.id }.filter { it != id }
             launcherApps.pinShortcuts(target.packageName, stillPinned, user)
         }.onFailure { toast(context, R.string.cant_open) }
-    }
-
-    /** Pulls down the notification shade. Android has no public way, so this calls its hidden one. */
-    @SuppressLint("WrongConstant", "PrivateApi", "DiscouragedPrivateApi", "SoonBlockedPrivateApi")
-    fun expandNotifications(context: Context) {
-        runCatching {
-            val service = context.getSystemService("statusbar")
-            Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel").invoke(service)
-        }
     }
 
     fun isDefaultLauncher(context: Context): Boolean =
