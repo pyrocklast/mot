@@ -13,6 +13,7 @@ import io.github.pyrocklast.mot.databinding.ActivityStyleBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.Look
+import io.github.pyrocklast.mot.util.HomeFit
 import kotlin.math.roundToInt
 
 /**
@@ -160,9 +161,9 @@ class StyleActivity : SettingsScreen() {
         binding.clockPreview.isVisible = !names
         if (names) {
             binding.namePreview.text = previewNames()
-            binding.namePreview.gravity = prefs.homeAlignment
+            binding.namePreview.gravity = Gravity.START
         }
-        binding.clockPreview.gravity = prefs.homeAlignment or Gravity.CENTER_VERTICAL
+        binding.clockPreview.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         val light = Look.lightText(this, prefs)
         listOf(binding.namePreview, binding.previewClock, binding.previewDate)
             .forEach { Look.applyTextColour(it, light, prefs.tintText) }
@@ -189,16 +190,15 @@ class StyleActivity : SettingsScreen() {
     // The time and date each in their own style, showing exactly what the home screen shows:
     // either of them switched off is gone from the preview too.
     private fun showPreview() {
-        val res = resources
         if (element == Element.NAMES) {
             binding.namePreview.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
-            binding.namePreview.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.app_name_size) * prefs.appNameScale)
+            binding.namePreview.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.appNameSizePx(this, prefs))
             return
         }
         binding.previewClock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
-        binding.previewClock.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.clock_size) * prefs.timeScale)
+        binding.previewClock.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.timeSizePx(this, prefs))
         binding.previewDate.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
-        binding.previewDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.date_size) * prefs.dateScale)
+        binding.previewDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.dateSizePx(this, prefs))
         binding.previewDate.text = DateText.date(this, prefs.dateStyle)
 
         binding.previewClock.isVisible = prefs.showTime
@@ -231,7 +231,7 @@ class StyleActivity : SettingsScreen() {
 
     // Up to three of your home apps, or mot launcher's name when none is set
     private fun previewNames(): String {
-        val names = prefs.homeApps.take(prefs.homeAppCount).filterNotNull().mapNotNull { repo.nameFor(it) }.take(3)
+        val names = prefs.assignedHomeApps.mapNotNull { repo.nameFor(it) }.take(3)
         return names.ifEmpty { listOf(getString(R.string.app_name)) }.joinToString("\n")
     }
 

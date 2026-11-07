@@ -44,6 +44,13 @@ object HomeFit {
     fun appNameSizePx(context: Context, prefs: Prefs): Float =
         context.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale
 
+    /** Shared clock/date sizes for the launcher and their settings previews. */
+    fun timeSizePx(context: Context, prefs: Prefs): Float =
+        context.resources.getDimension(R.dimen.clock_size) * prefs.timeScale
+
+    fun dateSizePx(context: Context, prefs: Prefs): Float =
+        context.resources.getDimension(R.dimen.date_size) * prefs.dateScale
+
     /** One name's height at the current font, weight and size. */
     fun nameHeight(context: Context, prefs: Prefs): Float =
         lineHeight(context, R.dimen.app_name_size, prefs.appNameScale, prefs.nameFont, prefs.nameWeight)
