@@ -57,7 +57,6 @@ class HomeScreen(
     private val minSwipeDistance = SWIPE_DISTANCE_DP * context.resources.displayMetrics.density
     private val clockSize = sp(42f)
     private val dateSize = sp(14f)
-    private val homeNameSize = sp(20f)
 
     private fun sp(value: Float): Float = android.util.TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_SP, value, context.resources.displayMetrics,
@@ -155,12 +154,13 @@ class HomeScreen(
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
         val nameTypeface = Look.typeface(Prefs.FONT_SANS, 400)
+        val nameSizePx = HomeFit.appNameSizePx(context, prefs)
         appViews.forEachIndexed { index, view ->
             view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
             view.gravity = alignment or Gravity.CENTER_VERTICAL
-            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, homeNameSize)
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
             view.typeface = nameTypeface
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         }
