@@ -6,6 +6,7 @@
 
     <!-- Home screen -->
     <string name="app_placeholder">App</string>
+    <string name="home_apps">Home apps</string>
     <string name="add_to_home">Add app to home</string>
     <string name="home_apps_full">Home screen full (10 apps)</string>
     <string name="home_all_apps">All apps ↑</string>
