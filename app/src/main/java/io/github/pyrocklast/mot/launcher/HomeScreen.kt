@@ -167,7 +167,10 @@ class HomeScreen(
             view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
             val (slot, target) = assignments[index]
             view.tag = slot
-            view.text = repo.nameFor(target)
+            view.text = repo.nameFor(target) ?: context.getString(
+                if (repo.isLockedPrivateSpace(target.userSerial)) R.string.private_space_locked
+                else R.string.app_not_found,
+            )
             view.gravity = alignment or Gravity.CENTER_VERTICAL
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
             view.typeface = nameTypeface
@@ -333,7 +336,15 @@ class HomeScreen(
     } ?: false
 
     private fun move(from: Int, to: Int) {
-        prefs.moveAssignedHomeApp(from, to)
+        // Some saved assignments may be unavailable (e.g. locked Private Space). Map
+        // visible positions through their stored slots before rearranging all assignments.
+        val slots = prefs.homeApps.mapIndexedNotNull { slot, target -> slot.takeIf { target != null } }
+        val fromSlot = appViews.getOrNull(from)?.tag as? Int ?: return
+        val toSlot = appViews.getOrNull(to)?.tag as? Int ?: return
+        val savedFrom = slots.indexOf(fromSlot)
+        val savedTo = slots.indexOf(toSlot)
+        if (savedFrom < 0 || savedTo < 0) return
+        prefs.moveAssignedHomeApp(savedFrom, savedTo)
         render()
     }
 
@@ -352,11 +363,8 @@ class HomeScreen(
             binding.date -> openOrDefault(prefs.calendarApp, DefaultApp.CALENDAR, view)
             overflowView -> openDrawer(null)
             else -> {
-                // A blank spot is empty, its app is gone, or it's in a locked Private Space: that
-                // one asks to unlock it, like any app whose profile is away
                 val target = prefs.homeApp(view.tag as Int)
-                val blank = (view as TextView).text.isEmpty()
-                if (target == null || (blank && !repo.isProfileAway(target.userSerial))) Apps.toast(context, R.string.long_press_to_choose)
+                if (target == null) Apps.toast(context, R.string.long_press_to_choose)
                 else Apps.open(context, target, view)
             }
         }
@@ -372,12 +380,28 @@ class HomeScreen(
         }
     }
 
-    // The drawer's menu for the app, with ways to change this spot on top. An empty spot (or one
-    // whose app is gone) goes straight to choosing an app. Returns whether the menu opened.
+    // The app menu offers replace/remove. Unavailable or locked apps get the same management
+    // actions without displaying their identity or requiring an installed AppEntry.
     private fun homeAppMenu(view: View, index: Int): Boolean {
         val entry = prefs.homeApp(index)?.let { repo.find(it) }
         if (entry == null) {
-            openDrawer(Slot.Home(index))
+            homeMenu?.dismiss()
+            val popup = PopupMenu(context, view, Gravity.START)
+            popup.menu.add(0, HOME_CHANGE, 0, R.string.change_app)
+            popup.menu.add(0, HOME_REMOVE, 1, R.string.remove_from_home)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    HOME_CHANGE -> openDrawer(Slot.Home(index))
+                    HOME_REMOVE -> {
+                        prefs.setHomeApp(index, null)
+                        render()
+                    }
+                }
+                true
+            }
+            popup.setOnDismissListener { if (homeMenu === popup) homeMenu = null }
+            homeMenu = popup
+            popup.show()
             return false
         }
         menu.show(
@@ -499,7 +523,7 @@ class HomeScreen(
     // Moves the app one spot, and TalkBack follows it there
     private fun moveForTalkBack(index: Int, step: Int): Boolean {
         val to = index + step
-        if (to !in appViews.indices || !appViews[index].isVisible ||
+        if (index !in appViews.indices || to !in appViews.indices || !appViews[index].isVisible ||
             !appViews[to].isVisible || !canMove(index)) return false
         move(index, to)
         appViews[to].performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null)
@@ -510,6 +534,8 @@ class HomeScreen(
         const val SWIPE_DISTANCE_DP = 40
         const val HOME_ADD = 1
         const val HOME_SETTINGS = 2
+        const val HOME_CHANGE = 3
+        const val HOME_REMOVE = 4
 
         /**
          * When a long press on a home app shows its menu: straight away (true), or once the finger
