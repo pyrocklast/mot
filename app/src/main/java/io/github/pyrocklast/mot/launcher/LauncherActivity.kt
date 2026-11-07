@@ -60,8 +60,13 @@ class LauncherActivity : ComponentActivity() {
             val next = palette(colours)
             if (next != wallpaperPalette) {
                 wallpaperPalette = next
-                // Dynamic theme colours can change while light/dark contrast stays the same.
-                recreate()
+                // Static wallpaper changes need a full theme refresh. Live wallpapers may
+                // publish new colour samples continuously; avoid repeatedly recreating Home
+                // unless the actual light/dark text choice needs to change.
+                val live = runCatching {
+                    WallpaperManager.getInstance(this).wallpaperInfo != null
+                }.getOrDefault(false)
+                if (!live || currentLook() != look) recreate()
             }
         }
     }
