@@ -96,6 +96,24 @@ class HomeVisibilityMigrationTest {
         assertEquals(10, prefs.homeAppCount)
     }
 
+    @Test fun compactHomeBuiltBeforeTheMigrationCanRecoverHigherSlotAssignments() {
+        // Older compact-home builds displayed every assigned slot without recording a marker.
+        // We cannot tell whether a higher slot was formerly hidden. Prefer the private choice
+        // and preserve all data so the user can restore it explicitly.
+        val kept = target("kept")
+        val added = target("added")
+        raw.edit().putInt("home_app_count", 1)
+            .putString("home_app_0", kept.encode())
+            .putString("home_app_3", added.encode()).commit()
+        val prefs = Prefs(context)
+        prefs.migrate()
+        assertEquals(listOf(kept), prefs.assignedHomeApps)
+        assertEquals(1, prefs.archivedHomeAppCount)
+        assertEquals(1, prefs.restoreArchivedHomeApps())
+        assertEquals(listOf(kept, added), prefs.assignedHomeApps)
+        assertEquals(0, prefs.archivedHomeAppCount)
+    }
+
     @Test fun crashRecoveryDoesNotEraseTheFormerHomeVisibilityBoundary() {
         val active = target("active")
         val dormant = target("dormant")
