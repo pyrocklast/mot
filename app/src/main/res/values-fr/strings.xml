@@ -4,6 +4,8 @@
 
     <!-- Écran d'accueil -->
     <string name="app_placeholder">Application</string>
+    <string name="home_all_apps">Applications ↑</string>
+    <string name="home_all_apps_description">Ouvrir toutes les applications</string>
     <string name="tips">Balayez vers le haut pour vos applications\nAppui long n\'importe où pour les paramètres\nAppui long puis glisser pour déplacer une application</string>
     <string name="set_as_home">Définir le lanceur mot comme application d\'accueil</string>
     <string name="set_as_home_underlined"><u>Définir le lanceur mot comme application d\'accueil</u></string>
@@ -114,7 +116,7 @@
     <string name="weight_medium">Moyenne</string>
     <string name="weight_bold">Grasse</string>
     <string name="show_status_bar">Afficher la barre d\'état</string>
-    <string name="status_bar_off_summary">Le niveau de batterie s\'affiche après la date</string>
+    <string name="status_bar_off_summary">Balayez vers le bas pour les notifications</string>
 
     <string name="gestures">Gestes</string>
     <string name="swipe_left">Balayer vers la gauche</string>

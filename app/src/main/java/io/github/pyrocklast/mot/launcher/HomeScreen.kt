@@ -48,15 +48,20 @@ class HomeScreen(
     private val requestHomeRole: () -> Unit,
 ) {
     private val appViews = ArrayList<TextView>()
+    private var overflowView: TextView? = null
 
     // Where the system bars are, until Android says otherwise: the home screen draws under them
     private var topInset = (24 * context.resources.displayMetrics.density).toInt()
     private var bottomInset = (40 * context.resources.displayMetrics.density).toInt()
     private val config = ViewConfiguration.get(context)
     private val minSwipeDistance = SWIPE_DISTANCE_DP * context.resources.displayMetrics.density
-    private val appNameSize = context.resources.getDimension(R.dimen.app_name_size)
-    private val clockSize = context.resources.getDimension(R.dimen.clock_size)
-    private val dateSize = context.resources.getDimension(R.dimen.date_size)
+    private val clockSize = sp(42f)
+    private val dateSize = sp(14f)
+    private val homeNameSize = sp(20f)
+
+    private fun sp(value: Float): Float = android.util.TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_SP, value, context.resources.displayMetrics,
+    )
 
     private val gestures = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent) = true
@@ -96,7 +101,7 @@ class HomeScreen(
     })
 
     private val reorder = HomeReorder(
-        apps = { appViews },
+        apps = { appViews.filter { it.isVisible } },
         others = { listOf(binding.clockBlock) },
         onStart = { menu.dismiss() },
         onRelease = { index -> if (!MENU_WHILE_HOLDING) appViews.getOrNull(index)?.let { homeAppMenu(it, index) } },
@@ -106,6 +111,16 @@ class HomeScreen(
     init {
         // Taps reach TalkBack users through the actions set up in describeForTalkBack
         binding.home.setOnTouchListener(::onTouch)
+        // The first render can precede layout. Recalculate when the actual viewport arrives
+        // or changes size, without triggering another render on padding-only layout passes.
+        binding.homeApps.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) render()
+        }
+        // The date can change height at midnight or after a locale/font adjustment, even
+        // when the viewport stays the same size.
+        binding.clockBlock.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop) render()
+        }
         binding.setDefault.setOnClickListener { requestHomeRole() }
         describeForTalkBack(binding.clock, R.string.action_open_clock, R.string.action_choose_clock) { tap(it) }
         describeForTalkBack(binding.date, R.string.action_open_calendar, R.string.action_choose_calendar) { tap(it) }
@@ -113,60 +128,127 @@ class HomeScreen(
 
     /** Draws the home screen from the current settings and app names. Cheap enough to call often. */
     fun render() {
-        val alignment = prefs.homeAlignment
-        binding.homeApps.gravity = alignment or (if (prefs.homeAtBottom) Gravity.BOTTOM else Gravity.CENTER_VERTICAL)
+        // The home has one deliberate composition; legacy alignment preferences remain stored
+        // until the settings migration, but no longer control the home screen.
+        val alignment = Gravity.START
+        binding.homeApps.gravity = Gravity.TOP or alignment
         binding.clockBlock.gravity = alignment
 
         // The clock and date first: where the names start depends on how tall they come out.
         // With the status bar hidden, they move up into its space.
-        (binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams).topMargin = HomeFit.clockTop(context, topInset)
+        val clockParams = binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams
+        val clockTop = HomeFit.clockTop(context, topInset)
+        if (clockParams.topMargin != clockTop) {
+            clockParams.topMargin = clockTop
+            binding.clockBlock.layoutParams = clockParams
+        }
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         // The time and the date each have their own style
-        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize * prefs.timeScale)
-        binding.clock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
-        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize * prefs.dateScale)
-        binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
+        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clockSize)
+        binding.clock.typeface = Look.typeface(Prefs.FONT_SANS, 300)
+        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, dateSize)
+        binding.date.typeface = Look.typeface(Prefs.FONT_SANS, 400)
         updateDate()
 
         val count = prefs.homeAppCount
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
+        val nameTypeface = Look.typeface(Prefs.FONT_SANS, 400)
         appViews.forEachIndexed { index, view ->
+            view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
             val target = prefs.homeApp(index)
             view.text = target?.let { repo.nameFor(it) }.orEmpty()
-            view.gravity = alignment
-            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, appNameSize * prefs.appNameScale)
+            view.gravity = alignment or Gravity.CENTER_VERTICAL
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, homeNameSize)
             view.typeface = nameTypeface
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         }
 
-        // The names start below the clock and date, and their gaps close up only when that's what
-        // it takes to fit them all in. Both come from measuring: a name laid out a few pixels
-        // taller than expected would have the last one cut off.
-        binding.homeApps.setPadding(
-            binding.homeApps.paddingLeft,
-            HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock)),
-            binding.homeApps.paddingRight,
-            HomeFit.bottomPadding(context, bottomInset),
-        )
-        val nameHeight = appViews.firstOrNull()?.let { heightOf(it) } ?: 0
-        val room = (if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()) -
-            binding.homeApps.paddingTop - binding.homeApps.paddingBottom
-        val namePadding = HomeFit.namePadding(context, count, nameHeight.toFloat(), room.toFloat())
-        appViews.forEach { it.setPadding(it.paddingLeft, namePadding, it.paddingRight, namePadding) }
-
-        // First run: how to reach the drawer and settings, and making mot launcher the Home app.
-        // Afterwards settings has a row for that.
+        // Onboarding is drawn over the home; reserve its bottom area so app rows cannot
+        // overlap first-run instructions or the action to set mot as the default launcher.
         binding.tips.isVisible = !prefs.settingsOpened
         binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
+
+        // Balance the app list between the information block and navigation/onboarding.
+        val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
+        val overlayClearance = listOf(binding.tips, binding.setDefault)
+            .filter { it.isVisible }
+            .maxOfOrNull {
+                (it.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin +
+                    heightOf(it) + (8 * context.resources.displayMetrics.density).toInt()
+            } ?: 0
+        val bottomPadding = maxOf(HomeFit.bottomPadding(context, bottomInset), overlayClearance)
+        val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
+        val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
+        // Each app row is measured independently so every slot preserves its 48dp target,
+        // including when fonts or view metrics differ.
+        val textHeights = appViews.map { heightOf(it) }
+        appViews.forEachIndexed { index, view ->
+            val padding = HomeFit.namePadding(context, count, textHeights[index].toFloat(), room.toFloat())
+            view.setPadding(view.paddingLeft, padding, view.paddingRight, padding)
+        }
+        // Keep the home fixed and gesture-driven. If all rows cannot fit, reserve a
+        // final row that explicitly opens the drawer rather than silently losing apps.
+        val rowHeights = appViews.map { heightOf(it) }
+        val indicator = overflowView ?: (LayoutInflater.from(binding.homeApps.context)
+            .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView).also { view ->
+            // Reuse themed launcher typography (wallpaper contrast + shadow), not default
+            // Android TextView colours, which may be unreadable on the user's wallpaper.
+            view.hint = null
+            view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
+            view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            view.typeface = Look.typeface(Prefs.FONT_SANS, 400)
+            view.minHeight = kotlin.math.ceil(48.0 * context.resources.displayMetrics.density).toInt()
+            // Do not make this view touch-clickable: that would swallow swipe-up gestures.
+            // The home detector handles taps; TalkBack gets an explicit open action.
+            describeForTalkBack(
+                view, R.string.home_all_apps_description, R.string.home_all_apps_description,
+            ) { openDrawer(null) }
+            overflowView = view
+            binding.homeApps.addView(view)
+        }
+        // App count can grow after the indicator was first created.
+        indicator.bringToFront()
+        indicator.setText(R.string.home_all_apps)
+        // Avoid showing and re-measuring the shortcut on ordinary homes that already fit.
+        indicator.isVisible = rowHeights.sumOf { it.toLong() } > room.toLong()
+        val indicatorHeight = if (indicator.isVisible) heightOf(indicator) else 0
+        val layout = HomeFit.visibleRows(rowHeights, room, indicatorHeight)
+        appViews.forEachIndexed { index, view -> view.isVisible = index < layout.count }
+        indicator.isVisible = layout.showAllApps
+        val groupHeight = rowHeights.take(layout.count).sum() +
+            if (layout.showAllApps) indicatorHeight else 0
+        val balancedTop = HomeFit.balancedTop(
+            displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
+        )
+        binding.homeApps.setPadding(
+            binding.homeApps.paddingLeft, balancedTop,
+            binding.homeApps.paddingRight, bottomPadding,
+        )
+
+
     }
 
     // How tall a view comes out at its current text, size and font
     private fun heightOf(view: View): Int {
+        // Measure with the real content width: UNSPECIFIED width may undercount height
+        // when text (for example the date) needs to fit a narrow screen.
+        val screenWidth = binding.homeApps.width.takeIf { it > 0 }
+            ?: binding.home.width.takeIf { it > 0 }
+            ?: context.resources.displayMetrics.widthPixels
+        val horizontal = if (view === binding.clockBlock || view === binding.tips ||
+            view === binding.setDefault) {
+            val margins = view.layoutParams as? ViewGroup.MarginLayoutParams
+            (margins?.leftMargin ?: 0) + (margins?.rightMargin ?: 0)
+        } else {
+            binding.homeApps.paddingLeft + binding.homeApps.paddingRight
+        }
+        val width = (screenWidth - horizontal).coerceAtLeast(1)
+        val atMost = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.AT_MOST)
         val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        view.measure(unspecified, unspecified)
+        view.measure(atMost, unspecified)
         return view.measuredHeight
     }
 
@@ -181,16 +263,15 @@ class HomeScreen(
         return view
     }
 
-    // The date, and the battery level after it while the status bar is hidden
+    // Date remains independent of the status bar; no simulated battery/status indicators.
     private fun updateDate() {
         if (!prefs.showDate) return
-        var text = DateText.date(context, prefs.dateStyle)
-        if (!prefs.showStatusBar) DateText.battery(context)?.let { text = "$text, $it" }
+        val text = DateText.date(context, prefs.dateStyle)
         if (binding.date.text.toString() != text) binding.date.text = text
     }
 
-    // Keeps the date and battery level current while the home screen shows, e.g. past midnight
-    // or while charging. It follows the clock's once-a-minute tick, so it adds no wake-ups.
+    // Keeps the date current while the home screen shows, e.g. past midnight.
+    // It follows Android's once-a-minute tick, so it adds no wake-ups.
     private var ticking = false
     private val ticker = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) = updateDate()
@@ -241,6 +322,7 @@ class HomeScreen(
     }
 
     private fun viewAt(event: MotionEvent): View? {
+        overflowView?.let { if (it.isVisible && it.contains(event.rawX, event.rawY)) return it }
         appViews.forEach { if (it.isVisible && it.contains(event.rawX, event.rawY)) return it }
         if (binding.clock.isVisible && binding.clock.contains(event.rawX, event.rawY)) return binding.clock
         if (binding.date.isVisible && binding.date.contains(event.rawX, event.rawY)) return binding.date
@@ -252,6 +334,7 @@ class HomeScreen(
             null -> Unit
             binding.clock -> openOrDefault(prefs.clockApp, DefaultApp.CLOCK, view)
             binding.date -> openOrDefault(prefs.calendarApp, DefaultApp.CALENDAR, view)
+            overflowView -> openDrawer(null)
             else -> {
                 // A blank spot is empty, its app is gone, or it's in a locked Private Space: that
                 // one asks to unlock it, like any app whose profile is away
@@ -268,6 +351,7 @@ class HomeScreen(
             null -> openSettings()
             binding.clock -> openDrawer(Slot.Clock)
             binding.date -> openDrawer(Slot.Calendar)
+            overflowView -> openDrawer(null)
             else -> homeAppMenu(view, view.tag as Int)
         }
     }
@@ -283,7 +367,7 @@ class HomeScreen(
         menu.show(
             anchor = view,
             entry = entry,
-            alignment = prefs.homeAlignment,
+            alignment = Gravity.START,
             // Hiding is about the drawer: it's done there
             canHide = false,
             extras = listOf(
@@ -342,7 +426,7 @@ class HomeScreen(
                 val index = host.tag as? Int ?: return
                 if (!canBeMoved || !canMove(index)) return
                 if (index > 0) info.addAction(AccessibilityActionCompat(R.id.action_move_up, context.getString(R.string.move_up)))
-                if (index < appViews.lastIndex) {
+                if (appViews.getOrNull(index + 1)?.isVisible == true) {
                     info.addAction(AccessibilityActionCompat(R.id.action_move_down, context.getString(R.string.move_down)))
                 }
             }
@@ -366,7 +450,8 @@ class HomeScreen(
     // Moves the app one spot, and TalkBack follows it there
     private fun moveForTalkBack(index: Int, step: Int): Boolean {
         val to = index + step
-        if (to !in appViews.indices || !canMove(index)) return false
+        if (to !in appViews.indices || !appViews[index].isVisible ||
+            !appViews[to].isVisible || !canMove(index)) return false
         move(index, to)
         appViews[to].performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null)
         return true
