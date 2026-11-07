@@ -97,6 +97,7 @@
 
     <string name="app_drawer">App drawer</string>
     <string name="drawer_alignment">App drawer alignment</string>
+    <string name="auto_open_unique_search_result">Open a single search match automatically</string>
     <string name="show_keyboard">Show keyboard automatically</string>
     <string name="hidden_apps">Hidden apps</string>
     <string name="no_hidden_apps">No hidden apps</string>

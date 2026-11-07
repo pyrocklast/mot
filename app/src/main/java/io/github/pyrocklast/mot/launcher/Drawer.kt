@@ -283,10 +283,13 @@ class Drawer(
         }
     }
 
-    // Typing until one app is left opens it, from two letters on
+    // Only with explicit opt-in: typing a unique match may launch it automatically.
     private fun maybeOpenOnlyMatch() {
         val query = search.text?.toString().orEmpty()
-        if (!Search.opensOnlyMatch(query, adapter.currentList.size, isComposingCjk())) return
+        if (!Search.shouldAutoOpenOnlyMatch(
+                prefs.autoOpenUniqueSearchResult, query, adapter.currentList.size, isComposingCjk(),
+            )
+        ) return
         val only = adapter.currentList.singleOrNull() as? DrawerRow.App ?: return
         onRowClick(only, search)
     }

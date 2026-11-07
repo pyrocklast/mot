@@ -50,6 +50,16 @@ class SearchTest {
     }
 
     @Test
+    fun `unique result auto-open requires explicit opt-in and a completed query`() {
+        assertFalse(Search.shouldAutoOpenOnlyMatch(false, "maps", 1, false))
+        assertTrue(Search.shouldAutoOpenOnlyMatch(true, "maps", 1, false))
+        assertFalse(Search.shouldAutoOpenOnlyMatch(true, "m", 1, false))
+        assertFalse(Search.shouldAutoOpenOnlyMatch(true, " maps", 1, false))
+        assertFalse(Search.shouldAutoOpenOnlyMatch(true, "maps", 2, false))
+        assertFalse(Search.shouldAutoOpenOnlyMatch(true, "maps", 1, true))
+    }
+
+    @Test
     fun `normalises to plain lower case`() {
         assertEquals("cafecreme", Search.normalize("Café Crème"))
     }
