@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The launcher: the home screen, with the app drawer as a panel over it. Home apps are added
-     to homeApps from code, as many as set in settings. -->
+     to homeApps from code, for actual selected targets only. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
