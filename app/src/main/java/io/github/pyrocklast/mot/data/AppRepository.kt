@@ -31,6 +31,11 @@ import java.text.Collator
 internal fun isPrivateSpaceEntryPointVisible(locked: Boolean, entrypointHidden: Boolean): Boolean =
     !locked || !entrypointHidden
 
+/** Conceal only targets belonging to the specific locked, hidden private profile. */
+internal fun isPrivateSpaceTargetConcealed(
+    targetSerial: Long, privateSerial: Long, locked: Boolean, entrypointHidden: Boolean,
+): Boolean = targetSerial == privateSerial && !isPrivateSpaceEntryPointVisible(locked, entrypointHidden)
+
 /**
  * Every app and pinned shortcut, in every profile, sorted by name. The list is loaded once when
  * mot launcher starts and again only when Android reports a change (an app installed, updated or removed,
@@ -47,7 +52,8 @@ class AppRepository private constructor(private val context: Context) {
     ) {
         val entrypointVisible: Boolean
             get() = isPrivateSpaceEntryPointVisible(locked, entrypointHidden)
-        fun concealsTarget(target: AppTarget): Boolean = !entrypointVisible && target.userSerial == serial
+        fun concealsTarget(target: AppTarget): Boolean =
+            isPrivateSpaceTargetConcealed(target.userSerial, serial, locked, entrypointHidden)
     }
 
     private val prefs = Prefs(context)
