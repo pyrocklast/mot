@@ -96,6 +96,9 @@ class SettingsActivity : SettingsScreen() {
                 choose(R.string.drawer_alignment, alignments, prefs.drawerAlignment, ::alignmentLabel) { prefs.drawerAlignment = it }
             }
             switch(R.string.show_keyboard, prefs.autoKeyboard) { prefs.autoKeyboard = it }
+            autoOpenUniqueSearchResult = switch(R.string.auto_open_unique_search_result, prefs.autoOpenUniqueSearchResult) {
+                prefs.autoOpenUniqueSearchResult = it
+            }
             hiddenApps = item(R.string.hidden_apps) { startActivity(AppListActivity.hiddenApps(this@SettingsActivity)) }
             // Private Space is set up in Android's settings; its apps show at the end of the drawer
             privateSpace = item(R.string.private_space) { Apps.openPrivateSpaceSettings(this@SettingsActivity) }

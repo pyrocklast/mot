@@ -47,4 +47,12 @@ object Search {
             !composing &&
             query.firstOrNull()?.isWhitespace() != true &&
             normalize(query).length >= 2
+
+    /** The auto-open behaviour is an explicit opt-in; matching itself always works without it. */
+    fun shouldAutoOpenOnlyMatch(
+        enabled: Boolean,
+        query: CharSequence,
+        matches: Int,
+        composing: Boolean,
+    ): Boolean = enabled && opensOnlyMatch(query, matches, composing)
 }
