@@ -52,6 +52,7 @@ class HomeScreen(
     private val appViews = ArrayList<TextView>()
     private var overflowView: TextView? = null
     private var homeMenu: PopupMenu? = null
+    private var homeMenuAnchor: View? = null
 
     // Where the system bars are, until Android says otherwise: the home screen draws under them
     private var topInset = (24 * context.resources.displayMetrics.density).toInt()
@@ -325,7 +326,14 @@ class HomeScreen(
     /** Leaving the home screen mid-drag puts the apps back where they were. */
     fun cancelDrag() {
         reorder.cancel()
+        dismissHomeMenu()
+    }
+
+    private fun dismissHomeMenu() {
         homeMenu?.dismiss()
+        homeMenu = null
+        homeMenuAnchor?.let { binding.home.removeView(it) }
+        homeMenuAnchor = null
     }
 
     // Only a visible installed app moves, not an away/private profile or clipped row.
@@ -423,7 +431,7 @@ class HomeScreen(
 
     /** Native contextual actions positioned at the long press, without a permanent home control. */
     private fun showHomeMenu(event: MotionEvent?) {
-        homeMenu?.dismiss()
+        dismissHomeMenu()
         val anchor = View(context)
         val params = FrameLayout.LayoutParams(1, 1)
         params.leftMargin = (event?.x?.toInt() ?: binding.home.width / 2)
@@ -445,10 +453,16 @@ class HomeScreen(
         }
         popup.setOnDismissListener {
             binding.home.removeView(anchor)
+            if (homeMenuAnchor === anchor) homeMenuAnchor = null
             if (homeMenu === popup) homeMenu = null
         }
+        homeMenuAnchor = anchor
         homeMenu = popup
-        popup.show()
+        // The one-pixel anchor needs a layout pass before Android can place the popup
+        // correctly at the user's finger. Do not show it after the home was left.
+        anchor.post {
+            if (homeMenu === popup && anchor.parent === binding.home) popup.show()
+        }
     }
 
     private fun swipe(left: Boolean) {
