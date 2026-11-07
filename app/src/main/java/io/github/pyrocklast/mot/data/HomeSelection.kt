@@ -54,6 +54,24 @@ internal object HomeSelection {
         return move(slots, storedSlots.indexOf(fromSlot), storedSlots.indexOf(toSlot))
     }
 
+    /**
+     * Reorder only unprotected assignments, leaving concealed slots (and legacy gaps) at their
+     * exact original indexes. Dragging visible apps must never move a hidden private assignment.
+     */
+    fun <T : Any> moveBySlotKeeping(
+        slots: List<T?>, fromSlot: Int, toSlot: Int, protectedIndices: Set<Int>,
+    ): List<T?>? {
+        val movableSlots = slots.indices.filter { slots[it] != null && it !in protectedIndices }
+        val from = movableSlots.indexOf(fromSlot)
+        val to = movableSlots.indexOf(toSlot)
+        if (from < 0 || to < 0 || from == to) return null
+        val movable = movableSlots.map { slots[it]!! }.toMutableList()
+        movable.add(to, movable.removeAt(from))
+        return slots.toMutableList().also { result ->
+            movableSlots.forEachIndexed { index, slot -> result[slot] = movable[index] }
+        }
+    }
+
     fun <T : Any> move(slots: List<T?>, from: Int, to: Int): List<T>? {
         val items = assigned(slots).toMutableList()
         if (from !in items.indices || to !in items.indices || from == to) return null
