@@ -96,4 +96,5 @@ dependencies {
     implementation(libs.androidx.recyclerview)
 
     testImplementation(libs.junit)
+    testImplementation("org.robolectric:robolectric:4.16.1")
 }
