@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.LauncherApps
+import android.content.pm.LauncherUserInfo
 import android.content.pm.ShortcutInfo
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
@@ -25,6 +27,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.Collator
 
+/** A Private Space entry point is concealed only when Android requests it and it is locked. */
+internal fun isPrivateSpaceEntryPointVisible(locked: Boolean, entrypointHidden: Boolean): Boolean =
+    !locked || !entrypointHidden
+
 /**
  * Every app and pinned shortcut, in every profile, sorted by name. The list is loaded once when
  * mot launcher starts and again only when Android reports a change (an app installed, updated or removed,
@@ -32,8 +38,17 @@ import java.text.Collator
  */
 class AppRepository private constructor(private val context: Context) {
 
-    /** Private Space, when the phone has one: its profile, and whether it's locked. */
-    data class PrivateSpace(val user: UserHandle, val serial: Long, val locked: Boolean)
+    /** Private Space, including Android 16's hide-entry-when-locked choice. */
+    data class PrivateSpace(
+        val user: UserHandle,
+        val serial: Long,
+        val locked: Boolean,
+        val entrypointHidden: Boolean,
+    ) {
+        val entrypointVisible: Boolean
+            get() = isPrivateSpaceEntryPointVisible(locked, entrypointHidden)
+        fun concealsTarget(target: AppTarget): Boolean = !entrypointVisible && target.userSerial == serial
+    }
 
     private val prefs = Prefs(context)
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
@@ -94,6 +109,9 @@ class AppRepository private constructor(private val context: Context) {
 
         override fun onShortcutsChanged(packageName: String, shortcuts: MutableList<ShortcutInfo>, user: UserHandle) =
             reload(CHANGE_DELAY_MS)
+
+        // Android 16 can change the Private Space entry-point setting independently of apps.
+        override fun onUserConfigChanged(launcherUserInfo: LauncherUserInfo) = reload()
     }
 
     /** Asks Android for the apps again, after [delayMs]. A newer request replaces a pending one. */
@@ -142,7 +160,8 @@ class AppRepository private constructor(private val context: Context) {
         for (user in launcherApps.profiles) {
             try {
                 val serial = userManager.getSerialNumberForUser(user)
-                val isPrivate = launcherApps.getLauncherUserInfo(user)?.userType == UserManager.USER_TYPE_PROFILE_PRIVATE
+                val launcherUserInfo = launcherApps.getLauncherUserInfo(user)
+                val isPrivate = launcherUserInfo?.userType == UserManager.USER_TYPE_PROFILE_PRIVATE
                 val profile = when {
                     isPrivate -> Profile.PRIVATE
                     user == Process.myUserHandle() -> Profile.PERSONAL
@@ -150,8 +169,15 @@ class AppRepository private constructor(private val context: Context) {
                 }
                 if (isPrivate) {
                     val locked = userManager.isQuietModeEnabled(user)
-                    space = PrivateSpace(user, serial, locked)
-                    // A locked Private Space shows only its header in the drawer
+                    val entrypointHidden = if (Build.VERSION.SDK_INT >= 36) {
+                        runCatching {
+                            launcherUserInfo?.userConfig?.getBoolean(
+                                LauncherUserInfo.PRIVATE_SPACE_ENTRYPOINT_HIDDEN, false,
+                            ) ?: false
+                        }.getOrDefault(true)
+                    } else false
+                    space = PrivateSpace(user, serial, locked, entrypointHidden)
+                    // A locked Private Space has no app entries, regardless of the entry-point setting
                     if (locked) continue
                 }
 
