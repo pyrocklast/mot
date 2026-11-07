@@ -12,9 +12,10 @@ class HomeSelectionTest {
 
     @Test fun addsAtTheEndAfterLegacyGapsWithoutDeletingSelections() {
         val old = listOf<String?>(null, "Aegis", null, "Balatro", null)
+        val snapshot = old.toList()
         assertEquals(listOf("Aegis", "Balatro", "Camera"), HomeSelection.append(old, "Camera", 10))
         // Reading a list never rewrites the user's saved preferences.
-        assertEquals(old, listOf<String?>(null, "Aegis", null, "Balatro", null))
+        assertEquals(snapshot, old)
     }
 
     @Test fun addingDoesNotAllowDuplicatesOrMoreThanTenApps() {
@@ -27,6 +28,14 @@ class HomeSelectionTest {
         val gaps = listOf<String?>("A", null, "B", null, "C")
         assertEquals(listOf("C", "A", "B"), HomeSelection.move(gaps, 2, 0))
         assertEquals(listOf("B", "C", "A"), HomeSelection.move(gaps, 0, 2))
+    }
+
+    @Test fun movingByStorageSlotPreservesLegacyHolesAndVisibleOrder() {
+        val slots = listOf<String?>("A", null, "B", null, "C")
+        assertEquals(listOf("C", "A", "B"), HomeSelection.moveBySlot(slots, 4, 0))
+        assertEquals(listOf("B", "C", "A"), HomeSelection.moveBySlot(slots, 0, 4))
+        assertNull(HomeSelection.moveBySlot(slots, 1, 2))
+        assertNull(HomeSelection.moveBySlot(slots, 0, 3))
     }
 
     @Test fun invalidMovesHaveNoEffectOnSavedApps() {
