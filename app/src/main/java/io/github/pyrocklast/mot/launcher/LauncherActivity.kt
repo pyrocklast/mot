@@ -146,7 +146,14 @@ class LauncherActivity : ComponentActivity() {
                         drawer.update()
                     }
                 }
-                launch { repo.privateSpace.collect { drawer.update() } }
+                launch {
+                    repo.privateSpace.collect {
+                        // Android 16 may change the hidden entry-point setting while locked,
+                        // without changing the app list. Redraw Home as well as the drawer.
+                        home.render()
+                        drawer.update()
+                    }
+                }
             }
         }
     }
