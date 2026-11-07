@@ -22,6 +22,8 @@
     <string name="action_open">Ouvrir</string>
     <string name="action_more_options">Plus d\'options</string>
     <string name="action_open_clock">Ouvrir l\'horloge</string>
+    <string name="action_open_app_drawer">Ouvrir le tiroir d\'applications</string>
+    <string name="action_open_settings">Ouvrir les paramètres</string>
     <string name="action_choose_clock">Choisir l\'application d\'horloge</string>
     <string name="action_open_calendar">Ouvrir l\'agenda</string>
     <string name="action_choose_calendar">Choisir l\'application d\'agenda</string>
@@ -29,8 +31,16 @@
     <string name="move_down">Déplacer vers le bas</string>
 
     <!-- Tiroir d'applications -->
+    <string name="search_hint">Rechercher</string>
     <string name="search_apps">Rechercher des applications</string>
     <string name="choose_an_app">Choisir une application</string>
+    <string name="choose_clock_app">Choisir une application d\'horloge</string>
+    <string name="choose_calendar_app">Choisir une application d\'agenda</string>
+    <string name="choose_left_swipe_app">Choisir l\'application du balayage à gauche</string>
+    <string name="choose_right_swipe_app">Choisir l\'application du balayage à droite</string>
+    <string name="loading_apps">Chargement des applications…</string>
+    <string name="no_search_results">Aucune application correspondante</string>
+    <string name="no_apps_available">Aucune application disponible</string>
     <string name="private_space">Espace privé</string>
     <string name="private_space_locked">Espace privé, verrouillé</string>
     <string name="private_space_unlocked">Espace privé, déverrouillé</string>
