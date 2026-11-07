@@ -30,6 +30,7 @@ import io.github.pyrocklast.mot.data.Profile
 import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.Look
+import io.github.pyrocklast.mot.util.HomeFit
 import io.github.pyrocklast.mot.util.Search
 
 /**
@@ -71,8 +72,10 @@ class Drawer(
     private val search = binding.search
     private val list = binding.appList
 
+    private val nameSizePx = HomeFit.appNameSizePx(activity, prefs)
+
     private val adapter = DrawerAdapter(
-        nameSizePx = activity.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale,
+        nameSizePx = nameSizePx,
         nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight),
         gravity = prefs.drawerAlignment,
         onClick = ::onRowClick,
@@ -121,8 +124,7 @@ class Drawer(
             }
         })
 
-        val textSize = activity.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale
-        search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, textSize)
+        search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, nameSizePx)
         search.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         search.gravity = prefs.drawerAlignment or Gravity.CENTER_VERTICAL
         search.addTextChangedListener(object : TextWatcher {

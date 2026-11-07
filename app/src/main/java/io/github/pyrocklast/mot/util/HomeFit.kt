@@ -40,6 +40,10 @@ object HomeFit {
      */
     fun clockTop(context: Context, topInset: Int): Int = topInset + dp(context, CLOCK_TOP_DP)
 
+    /** Shared displayed app-name size for home and drawer, including user and system scaling. */
+    fun appNameSizePx(context: Context, prefs: Prefs): Float =
+        context.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale
+
     /** One name's height at the current font, weight and size. */
     fun nameHeight(context: Context, prefs: Prefs): Float =
         lineHeight(context, R.dimen.app_name_size, prefs.appNameScale, prefs.nameFont, prefs.nameWeight)
