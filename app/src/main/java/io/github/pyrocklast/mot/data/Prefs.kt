@@ -41,6 +41,32 @@ class Prefs(context: Context) {
     /** Assigned apps, in legacy slot order. Empty slots are never displayed. */
     val assignedHomeApps: List<AppTarget> get() = HomeSelection.assigned(homeApps)
 
+    /** Archived assignments were outside the former visible-slot count. Never reveal implicitly. */
+    private fun archivedHomeEntries(): List<Pair<Int, AppTarget>> =
+        (0 until MAX_HOME_APPS).mapNotNull { index ->
+            AppTarget.decode(prefs.getString("archived_home_app_$index", null))
+                ?.let { index to it }
+        }
+
+    val archivedHomeAppCount: Int get() = archivedHomeEntries().size
+
+    /**
+     * A deliberate user action. Restore only what fits, atomically, and leave all remaining
+     * assignments archived. Drawer hiding preferences and user-profile state are untouched.
+     */
+    fun restoreArchivedHomeApps(): Int {
+        val recovery = HomeSelection.recover(assignedHomeApps, archivedHomeEntries(), MAX_HOME_APPS)
+        if (recovery.restoredIndices.isEmpty()) return 0
+        prefs.edit(commit = true) {
+            (0 until MAX_HOME_APPS).forEach { index ->
+                putTarget("home_app_$index", recovery.visible.getOrNull(index))
+            }
+            recovery.restoredIndices.forEach { index -> remove("archived_home_app_$index") }
+            putInt("home_app_count", recovery.visible.size)
+        }
+        return recovery.restoredIndices.size
+    }
+
     /** Append only after the user actually chooses an app; cancelling changes nothing. */
     fun appendHomeApp(target: AppTarget): Boolean {
         val next = HomeSelection.append(homeApps, target, MAX_HOME_APPS) ?: return false
@@ -56,6 +82,8 @@ class Prefs(context: Context) {
 
     private fun saveHomeAssignments(apps: List<AppTarget>) = prefs.edit {
         (0 until MAX_HOME_APPS).forEach { index -> putTarget("home_app_$index", apps.getOrNull(index)) }
+        // Legacy counter is no longer a display constraint, but keep it coherent for backups.
+        putInt("home_app_count", apps.size)
     }
 
 
@@ -259,6 +287,35 @@ class Prefs(context: Context) {
     fun migrate() {
         migrateAppKeys()
         splitDateStyle()
+        migrateHomeVisibility()
+    }
+
+    /**
+     * The old slider counted visible home slots. Later stored assignments must NOT suddenly
+     * appear merely because the new UI removed that slider. Archive them on first upgrade.
+     *
+     * The already-tested compact-home experiment had its own migration marker; honour it
+     * rather than reclassifying assignments added after that migration.
+     */
+    private fun migrateHomeVisibility() {
+        if (prefs.getBoolean("home_visibility_migrated_v3", false)) return
+        if (prefs.getBoolean("home_compacted_v2", false)) {
+            prefs.edit(commit = true) { putBoolean("home_visibility_migrated_v3", true) }
+            return
+        }
+        val visibleCount = prefs.getInt("home_app_count", 5).coerceIn(0, MAX_HOME_APPS)
+        val split = HomeSelection.splitLegacy(homeApps, visibleCount)
+        // One committed snapshot: never allow a crash to leave apps half-archived and visible.
+        prefs.edit(commit = true) {
+            (0 until MAX_HOME_APPS).forEach { index ->
+                putTarget("home_app_$index", split.visible.getOrNull(index))
+            }
+            split.archived.forEach { (index, target) ->
+                putTarget("archived_home_app_$index", target)
+            }
+            putInt("home_app_count", split.visible.size)
+            putBoolean("home_visibility_migrated_v3", true)
+        }
     }
 
     /** The date had the time's style until it got its own: it starts from the time's, so nothing changes. */
@@ -313,7 +370,7 @@ class Prefs(context: Context) {
         // Everything that decides how the home screen is drawn, and so what a crash while drawing
         // is likely to have come from
         private val LOOK_KEYS = listOf(
-            "home_app_count", "home_alignment", "home_at_bottom",
+            "home_alignment", "home_at_bottom",
             "show_time", "show_date", "date_style", "clock_mode",
             "clock_font", "clock_weight", "clock_scale",
             "date_font", "date_weight", "date_scale",
