@@ -177,9 +177,10 @@ class AppRepository private constructor(private val context: Context) {
                     val locked = userManager.isQuietModeEnabled(user)
                     val entrypointHidden = if (Build.VERSION.SDK_INT >= 36) {
                         runCatching {
-                            launcherUserInfo?.userConfig?.getBoolean(
-                                LauncherUserInfo.PRIVATE_SPACE_ENTRYPOINT_HIDDEN, false,
-                            ) ?: false
+                            // Missing configuration is not proof that a hidden entry is safe to
+                            // display. Fail closed until Android supplies a readable value.
+                            val config = launcherUserInfo?.userConfig ?: error("Missing Private Space config")
+                            config.getBoolean(LauncherUserInfo.PRIVATE_SPACE_ENTRYPOINT_HIDDEN, false)
                         }.getOrDefault(true)
                     } else false
                     space = PrivateSpace(user, serial, locked, entrypointHidden)
