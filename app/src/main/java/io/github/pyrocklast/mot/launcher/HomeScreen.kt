@@ -481,6 +481,9 @@ class HomeScreen(
     // The app you chose, or Android's own: an app that's been uninstalled falls back to the
     // default rather than saying it's missing. One whose profile is away still asks to turn it on.
     private fun openOrDefault(target: AppTarget?, default: DefaultApp, from: View? = null) {
+        // Do not let saved clock/date/swipe shortcuts bypass Android's decision to conceal
+        // a locked Private Space. The configured target remains saved for after unlock.
+        if (target != null && repo.privateSpace.value?.concealsTarget(target) == true) return
         val here = target != null && (repo.find(target) != null || repo.isProfileAway(target.userSerial))
         if (here) Apps.open(context, target!!, from) else Apps.openDefault(context, default)
     }
