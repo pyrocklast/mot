@@ -5,7 +5,9 @@
     <!-- Écran d'accueil -->
     <string name="home_apps">Favoris</string>
     <string name="add_to_home">Ajouter aux favoris</string>
-    <string name="home_apps_full">Écran d\'accueil complet (10 applications)</string>
+    <string name="home_apps_full">Pas assez de place pour un autre favori. Masquez l’heure ou la date, ou réduisez la taille des noms.</string>
+    <string name="home_capacity_refresh">Revenez à l’écran d’accueil pour recalculer le nombre de favoris disponibles.</string>
+    <string name="home_favorites_not_fitting">Seulement %1$d favoris sur %2$d tiennent à l’écran. Gérez les autres ici.</string>
     <string name="restore_previous_home_apps">Restaurer d’anciens favoris</string>
     <string name="restore_previous_home_apps_prompt">Une ancienne version avait enregistré des favoris hors des emplacements visibles. Leur restauration les affichera sur l’écran d’accueil, même si ces applications sont masquées dans le tiroir. Continuer ?</string>
     <string name="restore_home_apps_action">Restaurer</string>
