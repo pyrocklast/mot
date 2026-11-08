@@ -5,46 +5,42 @@ import org.junit.Test
 
 class HomeFitBalanceTest {
     @Test fun oddTextHeightStillMeetsTouchTarget() {
-        val padding = HomeFit.namePadding(
-            count = 5, nameHeight = 23f, room = 500f,
-            usual = 8, touchTarget = 48, safety = 2,
-        )
-        assertEquals(13, padding)
+        assertEquals(13, HomeFit.rowPadding(23f, usual = 8, touchTarget = 48))
     }
 
-
-    @Test fun allRowsFitAtExactBoundaryWithoutOverflow() {
-        assertEquals(HomeFit.VisibleRows(10, false), HomeFit.visibleRows(List(10) { 48 }, 480, 48))
+    @Test fun allRowsFitAtExactBoundary() {
+        assertEquals(12, HomeFit.capacity(720, 60))
+        assertEquals(12, HomeFit.fittingCount(List(12) { 60 }, 720))
     }
 
-    @Test fun overflowingRowsReserveAFullDrawerShortcut() {
-        assertEquals(HomeFit.VisibleRows(8, true), HomeFit.visibleRows(List(10) { 48 }, 450, 48))
+    @Test fun onePixelShortRefusesTheNextRow() {
+        assertEquals(11, HomeFit.capacity(719, 60))
+        assertEquals(11, HomeFit.fittingCount(List(12) { 60 }, 719))
     }
 
-    @Test fun aVeryShortViewportShowsOnlyTheDrawerShortcut() {
-        assertEquals(HomeFit.VisibleRows(0, true), HomeFit.visibleRows(List(10) { 48 }, 48, 48))
+    @Test fun extraSpaceFromHiddenClockIncreasesCapacity() {
+        assertEquals(8, HomeFit.capacity(400, 50))
+        assertEquals(10, HomeFit.capacity(500, 50))
     }
 
-    @Test fun noRoomNeverRendersAClippedDrawerShortcut() {
-        assertEquals(HomeFit.VisibleRows(0, false), HomeFit.visibleRows(List(10) { 48 }, 30, 48))
+    @Test fun largeTextReducesCapacityWithoutCompressingRows() {
+        assertEquals(11, HomeFit.capacity(620, 55))
+        assertEquals(7, HomeFit.capacity(620, 85))
     }
 
-    @Test fun tallerLabelsDoNotAllowLaterSlotsToJumpAhead() {
-        assertEquals(HomeFit.VisibleRows(1, true), HomeFit.visibleRows(listOf(48, 200, 48), 150, 48))
+    @Test fun negativeRoomAndInvalidRowsFitNothing() {
+        assertEquals(0, HomeFit.capacity(-1, 50))
+        assertEquals(0, HomeFit.capacity(720, 0))
+        assertEquals(0, HomeFit.fittingCount(listOf(48, 48), -1))
+        assertEquals(0, HomeFit.fittingCount(listOf(0, 48), 200))
     }
 
-    @Test fun noAssignedAppsNeedNoDrawerShortcut() {
-        assertEquals(HomeFit.VisibleRows(0, false), HomeFit.visibleRows(emptyList(), 300, 48))
+    @Test fun preservesPrefixOfVariableHeightRows() {
+        assertEquals(1, HomeFit.fittingCount(listOf(48, 200, 48), 150))
     }
 
-    @Test fun exactSpaceForRowAndShortcutKeepsFirstRow() {
-        assertEquals(HomeFit.VisibleRows(1, true), HomeFit.visibleRows(listOf(64, 64, 64), 112, 48))
-    }
-
-    @Test fun sizeArithmeticCannotOverflowIntoFalseFit() {
-        assertEquals(HomeFit.VisibleRows(0, false), HomeFit.visibleRows(
-            listOf(Int.MAX_VALUE, Int.MAX_VALUE), 30, 48,
-        ))
+    @Test fun preventsOverflowInArithmetic() {
+        assertEquals(0, HomeFit.fittingCount(listOf(Int.MAX_VALUE, Int.MAX_VALUE), 30))
     }
 
     @Test fun centersGroupInsideUsableInsets() {
