@@ -154,10 +154,10 @@ class HomeScreen(
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
         // The time and the date each have their own style
-        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.timeSizePx(context, prefs))
-        binding.clock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
-        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.dateSizePx(context, prefs))
-        binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
+        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.timeSizePx(context))
+        binding.clock.typeface = Look.typeface(Prefs.FONT_SANS, 300)
+        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.dateSizePx(context))
+        binding.date.typeface = Look.typeface(Prefs.FONT_SANS, 400)
         updateDate()
 
         // Keep every existing assignment, including ones stored beyond the old slot count.
@@ -168,7 +168,7 @@ class HomeScreen(
         val count = assignments.size
         while (appViews.size < count) appViews += newAppView(appViews.size)
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
+        val nameTypeface = Look.typeface(Prefs.FONT_SANS, 300)
         val nameSizePx = HomeFit.appNameSizePx(context, prefs)
         appViews.forEachIndexed { index, view ->
             view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
@@ -285,7 +285,7 @@ class HomeScreen(
     // Date remains independent of the status bar; no simulated battery/status indicators.
     private fun updateDate() {
         if (!prefs.showDate) return
-        val text = DateText.date(context, prefs.dateStyle)
+        val text = DateText.date(context)
         if (binding.date.text.toString() != text) binding.date.text = text
     }
 
