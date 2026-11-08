@@ -63,6 +63,7 @@ class HomeVisibilityMigrationTest {
             .putString("home_app_8", hidden.encode())
             .putStringSet("hidden_apps", setOf(hidden.appKey)).commit()
         val prefs = Prefs(context)
+        prefs.homeCapacity = 2
         prefs.migrate()
         assertEquals(listOf(kept), prefs.assignedHomeApps)
         assertEquals(1, prefs.restoreArchivedHomeApps())
@@ -76,6 +77,7 @@ class HomeVisibilityMigrationTest {
         raw.edit().putInt("home_app_count", 0)
             .putString("home_app_7", target("dormant").encode()).commit()
         val prefs = Prefs(context)
+        prefs.homeCapacity = 10
         prefs.migrate()
         (0 until 10).forEach { assertTrue(prefs.appendHomeApp(target("app$it"))) }
         assertEquals(0, prefs.restoreArchivedHomeApps())
@@ -88,6 +90,7 @@ class HomeVisibilityMigrationTest {
 
     @Test fun newlyAssignedAppsRemainVisibleAfterMigration() {
         val prefs = Prefs(context)
+        prefs.homeCapacity = 10
         prefs.migrate()
         (0 until 10).forEach { assertTrue(prefs.appendHomeApp(target("app$it"))) }
         prefs.migrate()
@@ -106,12 +109,73 @@ class HomeVisibilityMigrationTest {
             .putString("home_app_0", kept.encode())
             .putString("home_app_3", added.encode()).commit()
         val prefs = Prefs(context)
+        prefs.homeCapacity = 2
         prefs.migrate()
         assertEquals(listOf(kept), prefs.assignedHomeApps)
         assertEquals(1, prefs.archivedHomeAppCount)
         assertEquals(1, prefs.restoreArchivedHomeApps())
         assertEquals(listOf(kept, added), prefs.assignedHomeApps)
         assertEquals(0, prefs.archivedHomeAppCount)
+    }
+
+    @Test fun screenMeasuredCapacityCanExceedTenWithoutLosingFavorites() {
+        val prefs = Prefs(context)
+        prefs.migrate()
+        prefs.homeCapacity = 13
+        (0 until 13).forEach { assertTrue(prefs.appendHomeApp(target("app$it"))) }
+        assertFalse(prefs.appendHomeApp(target("extra")))
+        assertEquals(13, prefs.assignedHomeApps.size)
+        assertEquals(13, prefs.homeAppCount)
+        assertEquals(target("app12"), prefs.homeApp(12))
+        // Android may subsequently increase font size or restore the clock.
+        // Existing assignments survive, but no new app can be added while they don't fit.
+        prefs.homeCapacity = 8
+        assertFalse(prefs.appendHomeApp(target("extra")))
+        assertEquals(13, Prefs(context).assignedHomeApps.size)
+        assertEquals(13, Prefs(context).homeAppCount)
+    }
+
+    @Test fun recoveredLegacyFavoritesCanUseNewlyFreedSpaceBeyondTen() {
+        val prefs = Prefs(context)
+        prefs.migrate()
+        prefs.homeCapacity = 12
+        (0 until 11).forEach { assertTrue(prefs.appendHomeApp(target("app$it"))) }
+        raw.edit().putString("archived_home_app_9", target("archived").encode()).commit()
+        assertEquals(1, prefs.restoreArchivedHomeApps())
+        assertEquals(12, prefs.assignedHomeApps.size)
+        assertEquals(0, prefs.archivedHomeAppCount)
+    }
+
+    @Test fun addingFavoritesRequiresARealMeasuredViewportAndStopsAtCapacity() {
+        val prefs = Prefs(context)
+        prefs.migrate()
+        assertEquals(-1, prefs.homeCapacity)
+        assertFalse(prefs.appendHomeApp(target("beforeMeasure")))
+        prefs.homeCapacity = 2
+        assertTrue(prefs.appendHomeApp(target("one")))
+        assertTrue(prefs.appendHomeApp(target("two")))
+        assertFalse(prefs.appendHomeApp(target("three")))
+        assertEquals(listOf(target("one"), target("two")), prefs.assignedHomeApps)
+    }
+
+    @Test fun displayChangesInvalidateCapacityWithoutDeletingAnySavedAssignments() {
+        val prefs = Prefs(context)
+        prefs.migrate()
+        prefs.homeCapacity = 11
+        (0 until 11).forEach { assertTrue(prefs.appendHomeApp(target("app$it"))) }
+        prefs.showTime = false
+        assertEquals(-1, prefs.homeCapacity)
+        assertEquals(11, prefs.assignedHomeApps.size)
+        prefs.homeCapacity = 13
+        prefs.showDate = false
+        assertEquals(-1, prefs.homeCapacity)
+        prefs.homeCapacity = 13
+        prefs.appNameScale = 1.5f
+        assertEquals(-1, prefs.homeCapacity)
+        prefs.homeCapacity = 13
+        prefs.showStatusBar = false
+        assertEquals(-1, prefs.homeCapacity)
+        assertEquals(11, prefs.assignedHomeApps.size)
     }
 
     @Test fun crashRecoveryDoesNotEraseTheFormerHomeVisibilityBoundary() {
