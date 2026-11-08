@@ -39,12 +39,12 @@ object HomeFit {
     fun appNameSizePx(context: Context, prefs: Prefs): Float =
         context.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale
 
-    /** Shared clock/date sizes for the launcher and their settings previews. */
-    fun timeSizePx(context: Context, prefs: Prefs): Float =
-        context.resources.getDimension(R.dimen.clock_size) * prefs.timeScale
+    /** Fixed, locale-independent typography that still follows Android system font scaling. */
+    fun timeSizePx(context: Context): Float =
+        context.resources.getDimension(R.dimen.clock_size)
 
-    fun dateSizePx(context: Context, prefs: Prefs): Float =
-        context.resources.getDimension(R.dimen.date_size) * prefs.dateScale
+    fun dateSizePx(context: Context): Float =
+        context.resources.getDimension(R.dimen.date_size)
 
     /** Where the names stop: clear of the navigation bar, wherever Android puts it. */
     fun bottomPadding(context: Context, bottomInset: Int): Int = bottomInset + dp(context, ABOVE_NAVIGATION_DP)
