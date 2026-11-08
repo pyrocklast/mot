@@ -8,12 +8,12 @@
     <string name="home_apps">Favorites</string>
     <string name="add_to_home">Add to favorites</string>
     <string name="home_apps_full">Home screen full (10 apps)</string>
-    <string name="restore_previous_home_apps">Restore previously saved home apps</string>
-    <string name="restore_previous_home_apps_prompt">Older versions may have saved apps outside the visible home slots. Restoring them will make them visible on the home screen, even if they are hidden from the app drawer. Continue?</string>
+    <string name="restore_previous_home_apps">Restore earlier favorites</string>
+    <string name="restore_previous_home_apps_prompt">An earlier version saved favorites outside the visible home slots. Restoring them will put them on your home screen, even if they are hidden from the app drawer. Continue?</string>
     <string name="restore_home_apps_action">Restore</string>
     <plurals name="home_apps_restored">
-        <item quantity="one">Restored %d app to Home</item>
-        <item quantity="other">Restored %d apps to Home</item>
+        <item quantity="one">Restored %d favorite</item>
+        <item quantity="other">Restored %d favorites</item>
     </plurals>
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
