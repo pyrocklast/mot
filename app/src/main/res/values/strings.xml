@@ -5,8 +5,8 @@
     <string name="app_name">mot launcher</string>
 
     <!-- Home screen -->
-    <string name="home_apps">Home apps</string>
-    <string name="add_to_home">Add app to home</string>
+    <string name="home_apps">Favorites</string>
+    <string name="add_to_home">Add to favorites</string>
     <string name="home_apps_full">Home screen full (10 apps)</string>
     <string name="restore_previous_home_apps">Restore previously saved home apps</string>
     <string name="restore_previous_home_apps_prompt">Older versions may have saved apps outside the visible home slots. Restoring them will make them visible on the home screen, even if they are hidden from the app drawer. Continue?</string>
@@ -17,9 +17,9 @@
     </plurals>
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
-    <string name="tips">Swipe up for your apps\nLong press to add apps or open settings\nLong press and drag an app to move it</string>
-    <string name="set_as_home">Set mot launcher as your Home app</string>
-    <string name="set_as_home_underlined"><u>Set mot launcher as your Home app</u></string>
+    <string name="tips">Swipe up for all apps\nLong press to manage favorites or open settings\nLong press and drag a favorite to move it</string>
+    <string name="set_as_home">Set mot as default launcher</string>
+    <string name="set_as_home_underlined"><u>Set mot as default launcher</u></string>
     <string name="long_press_to_choose">Long press to choose an app</string>
     <!-- TalkBack actions on the home screen -->
     <string name="action_open">Open</string>
@@ -55,7 +55,7 @@
     <string name="new_app">%1$s, new</string>
     <!-- Home screen long-press menu, above the drawer's items -->
     <string name="change_app">Change app</string>
-    <string name="remove_from_home">Remove from home screen</string>
+    <string name="remove_from_home">Remove from favorites</string>
     <string name="rename">Rename</string>
     <string name="original_name">Original name</string>
     <string name="hide">Hide</string>
@@ -75,7 +75,7 @@
     <string name="settings">Settings</string>
     <string name="settings_title">%1$s settings</string>
     <string name="back">Back</string>
-    <string name="change_home">Change Home app</string>
+    <string name="change_home">Change default launcher</string>
     <string name="none">None</string>
     <plurals name="app_count">
         <item quantity="one">%d app</item>
@@ -137,6 +137,7 @@
     <string name="tint_text_on">The text takes a tint from it</string>
     <string name="tint_text_off">Plain white or black</string>
     <string name="app_names">App names</string>
+    <string name="app_names_size">App-name size</string>
     <string name="font">Font</string>
     <string name="font_sans">Sans serif</string>
     <string name="font_serif">Serif</string>
