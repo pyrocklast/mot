@@ -6,12 +6,12 @@
     <string name="home_apps">Favoris</string>
     <string name="add_to_home">Ajouter aux favoris</string>
     <string name="home_apps_full">Écran d\'accueil complet (10 applications)</string>
-    <string name="restore_previous_home_apps">Restaurer les applications précédemment enregistrées</string>
-    <string name="restore_previous_home_apps_prompt">Des applications enregistrées par une ancienne version pouvaient se trouver hors des emplacements visibles. Les restaurer les affichera sur l’écran d’accueil, même si elles sont masquées dans le tiroir. Continuer ?</string>
+    <string name="restore_previous_home_apps">Restaurer d’anciens favoris</string>
+    <string name="restore_previous_home_apps_prompt">Une ancienne version avait enregistré des favoris hors des emplacements visibles. Leur restauration les affichera sur l’écran d’accueil, même si ces applications sont masquées dans le tiroir. Continuer ?</string>
     <string name="restore_home_apps_action">Restaurer</string>
     <plurals name="home_apps_restored">
-        <item quantity="one">%d application restaurée sur l’écran d’accueil</item>
-        <item quantity="other">%d applications restaurées sur l’écran d’accueil</item>
+        <item quantity="one">%d favori restauré</item>
+        <item quantity="other">%d favoris restaurés</item>
     </plurals>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
