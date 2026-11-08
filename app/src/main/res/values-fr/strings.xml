@@ -3,8 +3,8 @@
     <string name="app_name">lanceur mot</string>
 
     <!-- Écran d'accueil -->
-    <string name="home_apps">Applications d\'accueil</string>
-    <string name="add_to_home">Ajouter une application à l\'accueil</string>
+    <string name="home_apps">Favoris</string>
+    <string name="add_to_home">Ajouter aux favoris</string>
     <string name="home_apps_full">Écran d\'accueil complet (10 applications)</string>
     <string name="restore_previous_home_apps">Restaurer les applications précédemment enregistrées</string>
     <string name="restore_previous_home_apps_prompt">Des applications enregistrées par une ancienne version pouvaient se trouver hors des emplacements visibles. Les restaurer les affichera sur l’écran d’accueil, même si elles sont masquées dans le tiroir. Continuer ?</string>
@@ -15,9 +15,9 @@
     </plurals>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
-    <string name="tips">Balayez vers le haut pour vos applications\nAppui long pour ajouter des applications ou ouvrir les paramètres\nAppui long puis glisser pour déplacer une application</string>
-    <string name="set_as_home">Définir le lanceur mot comme application d\'accueil</string>
-    <string name="set_as_home_underlined"><u>Définir le lanceur mot comme application d\'accueil</u></string>
+    <string name="tips">Balayez vers le haut pour toutes les applications\nAppui long pour gérer les favoris ou ouvrir les paramètres\nAppui long puis glisser pour déplacer un favori</string>
+    <string name="set_as_home">Définir mot comme lanceur par défaut</string>
+    <string name="set_as_home_underlined"><u>Définir mot comme lanceur par défaut</u></string>
     <string name="long_press_to_choose">Appui long pour choisir une application</string>
     <string name="action_open">Ouvrir</string>
     <string name="action_more_options">Plus d\'options</string>
@@ -49,7 +49,7 @@
     <string name="work_app">%1$s, travail</string>
     <string name="new_app">%1$s, nouvelle</string>
     <string name="change_app">Changer d\'application</string>
-    <string name="remove_from_home">Retirer de l\'écran d\'accueil</string>
+    <string name="remove_from_home">Retirer des favoris</string>
     <string name="rename">Renommer</string>
     <string name="original_name">Nom d\'origine</string>
     <string name="hide">Masquer</string>
@@ -67,7 +67,7 @@
     <string name="settings">Paramètres</string>
     <string name="settings_title">Paramètres du %1$s</string>
     <string name="back">Retour</string>
-    <string name="change_home">Changer d\'application d\'accueil</string>
+    <string name="change_home">Changer de lanceur</string>
     <string name="none">Aucune</string>
     <plurals name="app_count">
         <item quantity="one">%d application</item>
@@ -124,6 +124,7 @@
     <string name="tint_text_on">Le texte en prend une teinte</string>
     <string name="tint_text_off">Blanc ou noir</string>
     <string name="app_names">Noms d\'applications</string>
+    <string name="app_names_size">Taille des noms</string>
     <string name="font">Police</string>
     <string name="font_sans">Sans empattement</string>
     <string name="font_serif">Avec empattement</string>
