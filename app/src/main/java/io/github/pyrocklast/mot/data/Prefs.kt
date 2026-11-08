@@ -166,9 +166,12 @@ class Prefs(context: Context) {
         get() = prefs.getInt("name_weight", if (prefs.getBoolean("bolder_names", false)) 400 else 300)
         set(value) = prefs.edit { putInt("name_weight", value) }
 
+    /** Displayed size stays in the 80–180% range, including older saved preferences. */
     var appNameScale: Float
-        get() = prefs.getFloat("app_name_scale", 1f)
-        set(value) = prefs.edit { putFloat("app_name_scale", value) }
+        get() = prefs.getFloat("app_name_scale", 1f).coerceIn(MIN_APP_NAME_SCALE, MAX_APP_NAME_SCALE)
+        set(value) = prefs.edit {
+            putFloat("app_name_scale", value.coerceIn(MIN_APP_NAME_SCALE, MAX_APP_NAME_SCALE))
+        }
 
     // The time's style is saved as the "clock" style, which the date shared until it got its own
     var timeFont: Int
@@ -381,6 +384,9 @@ class Prefs(context: Context) {
         private const val LEGACY_FOLLOW_DARK_MODE = 2
         /** Dark or light text, whichever Android says suits the wallpaper. */
         const val TEXT_MATCH_WALLPAPER = 3
+
+        const val MIN_APP_NAME_SCALE = 0.8f
+        const val MAX_APP_NAME_SCALE = 1.8f
 
         const val FONT_SANS = 0
         const val FONT_SERIF = 1
