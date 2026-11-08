@@ -118,9 +118,9 @@ class SettingsActivity : SettingsScreen() {
             }
             nameSize = slider(
                 R.string.app_names_size, 0, 10,
-                ((prefs.appNameScale - 0.5f) * 10).roundToInt().coerceIn(0, 10),
-            ) { prefs.appNameScale = 0.5f + it / 10f }
-            nameSize.formatValue = { "${50 + it * 10} %" }
+                ((prefs.appNameScale - Prefs.MIN_APP_NAME_SCALE) * 10).roundToInt().coerceIn(0, 10),
+            ) { prefs.appNameScale = Prefs.MIN_APP_NAME_SCALE + it / 10f }
+            nameSize.formatValue = { "${80 + it * 10} %" }
             statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
                 prefs.showStatusBar = it
                 refresh()
@@ -188,7 +188,7 @@ class SettingsActivity : SettingsScreen() {
         textColour.summary = getString(textColourLabel(prefs.textColour))
         tintText.isChecked = prefs.tintText
         tintText.summary = getString(if (prefs.tintText) R.string.tint_text_on else R.string.tint_text_off)
-        nameSize.value = ((prefs.appNameScale - 0.5f) * 10).roundToInt().coerceIn(0, 10)
+        nameSize.value = ((prefs.appNameScale - Prefs.MIN_APP_NAME_SCALE) * 10).roundToInt().coerceIn(0, 10)
         // The status bar can be hidden without changing the date or drawing fake indicators.
         statusBar.isChecked = prefs.showStatusBar
         statusBar.summaryOff = getString(R.string.status_bar_off_summary)
