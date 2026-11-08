@@ -15,7 +15,7 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.ActivitySettingsBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
-import io.github.pyrocklast.mot.util.DateText
+import kotlin.math.roundToInt
 
 /**
  * mot launcher's settings, grouped by the part of the home screen each setting changes. Rows
@@ -30,14 +30,16 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var changeHome: Row
     private lateinit var homeApps: Row
     private lateinit var archivedHomeApps: Row
-    private lateinit var time: Row
-    private lateinit var date: Row
+    private lateinit var showTime: SwitchRow
+    private lateinit var showDate: SwitchRow
+    private lateinit var timeAction: Row
+    private lateinit var dateAction: Row
     private lateinit var drawerAlignment: Row
     private lateinit var hiddenApps: Row
     private lateinit var privateSpace: Row
     private lateinit var textColour: Row
     private lateinit var tintText: SwitchRow
-    private lateinit var nameStyle: Row
+    private lateinit var nameSize: SliderRow
     private lateinit var statusBar: SwitchRow
     private lateinit var swipeLeft: SplitSwitchRow
     private lateinit var swipeRight: SplitSwitchRow
@@ -82,6 +84,14 @@ class SettingsActivity : SettingsScreen() {
             archivedHomeApps = item(R.string.restore_previous_home_apps) {
                 confirmRestoreHomeApps()
             }
+            showTime = switch(R.string.show_time, prefs.showTime) {
+                prefs.showTime = it
+                refresh()
+            }
+            showDate = switch(R.string.show_date, prefs.showDate) {
+                prefs.showDate = it
+                refresh()
+            }
         }
 
         group(R.string.app_drawer) {
@@ -97,9 +107,7 @@ class SettingsActivity : SettingsScreen() {
             privateSpace = item(R.string.private_space) { Apps.openPrivateSpaceSettings(this@SettingsActivity) }
         }
 
-        // How the home screen and drawer look (this screen keeps the phone's look). App names, the
-        // time and the date each have their own screen, with a preview, for font, weight and size;
-        // the time's and date's screens also set what tapping them opens.
+        // One deliberate typography system. Only the shared app-name size is adjustable.
         group(R.string.appearance, summary = R.string.appearance_summary) {
             textColour = item(R.string.text_colour) {
                 choose(R.string.text_colour, textColours, prefs.textColour, ::textColourLabel) { prefs.textColour = it }
@@ -108,9 +116,11 @@ class SettingsActivity : SettingsScreen() {
                 prefs.tintText = it
                 refresh()
             }
-            nameStyle = item(R.string.app_names) { startActivity(StyleActivity.appNames(this@SettingsActivity)) }
-            time = item(R.string.time) { startActivity(StyleActivity.time(this@SettingsActivity)) }
-            date = item(R.string.date) { startActivity(StyleActivity.date(this@SettingsActivity)) }
+            nameSize = slider(
+                R.string.app_names_size, 0, 10,
+                ((prefs.appNameScale - 0.5f) * 10).roundToInt().coerceIn(0, 10),
+            ) { prefs.appNameScale = 0.5f + it / 10f }
+            nameSize.formatValue = { "${50 + it * 10} %" }
             statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
                 prefs.showStatusBar = it
                 refresh()
@@ -119,6 +129,12 @@ class SettingsActivity : SettingsScreen() {
 
         // One row per swipe: the text chooses the app, the switch turns the swipe on or off
         group(R.string.gestures) {
+            timeAction = item(R.string.tap_time) {
+                chooseApp(R.string.tap_time, R.string.default_clock_app, prefs.clockApp, Slot.Clock)
+            }
+            dateAction = item(R.string.tap_date) {
+                chooseApp(R.string.tap_date, R.string.default_calendar_app, prefs.calendarApp, Slot.Calendar)
+            }
             swipeLeft = splitSwitch(R.string.swipe_left, prefs.swipeLeftOn, onChange = { prefs.swipeLeftOn = it }) {
                 chooseApp(R.string.swipe_left_opens, R.string.default_camera_app, prefs.swipeLeftApp, Slot.SwipeLeft)
             }
@@ -151,11 +167,12 @@ class SettingsActivity : SettingsScreen() {
             resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
         }
 
-        // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
-        time.summary = if (!prefs.showTime) getString(R.string.hidden)
-        else styleSummary(prefs.timeFont, prefs.timeWeight, prefs.timeScale)
-        date.summary = if (!prefs.showDate) getString(R.string.hidden)
-        else DateText.date(this, prefs.dateStyle) + SEPARATOR + styleSummary(prefs.dateFont, prefs.dateWeight, prefs.dateScale)
+        showTime.isChecked = prefs.showTime
+        showDate.isChecked = prefs.showDate
+        timeAction.isVisible = prefs.showTime
+        dateAction.isVisible = prefs.showDate
+        timeAction.summary = appName(repo, prefs.clockApp, R.string.default_clock_app)
+        dateAction.summary = appName(repo, prefs.calendarApp, R.string.default_calendar_app)
 
         drawerAlignment.summary = getString(alignmentLabel(prefs.drawerAlignment))
         // Only apps still installed (the list keeps apps you uninstalled while hidden)
@@ -171,7 +188,7 @@ class SettingsActivity : SettingsScreen() {
         textColour.summary = getString(textColourLabel(prefs.textColour))
         tintText.isChecked = prefs.tintText
         tintText.summary = getString(if (prefs.tintText) R.string.tint_text_on else R.string.tint_text_off)
-        nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
+        nameSize.value = ((prefs.appNameScale - 0.5f) * 10).roundToInt().coerceIn(0, 10)
         // The status bar can be hidden without changing the date or drawing fake indicators.
         statusBar.isChecked = prefs.showStatusBar
         statusBar.summaryOff = getString(R.string.status_bar_off_summary)
