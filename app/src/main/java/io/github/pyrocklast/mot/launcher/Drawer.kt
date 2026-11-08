@@ -319,7 +319,11 @@ class Drawer(
             is DrawerRow.App -> {
                 val slot = choosingFor
                 if (slot != null) {
-                    slot.save(prefs, row.entry.target)
+                    if (!slot.save(prefs, row.entry.target)) {
+                        Apps.toast(activity, if (prefs.homeCapacity < 0)
+                            R.string.home_capacity_refresh else R.string.home_apps_full)
+                        return
+                    }
                     close()
                     onChosen()
                 } else {
