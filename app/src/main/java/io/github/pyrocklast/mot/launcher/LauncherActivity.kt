@@ -206,7 +206,7 @@ class LauncherActivity : ComponentActivity() {
 
     // The drawer's rows are made with these, so a change redraws the screen
     private fun currentLook(light: Boolean = lightText()): String =
-        listOf(light, prefs.tintText, prefs.nameFont, prefs.nameWeight, prefs.appNameScale, prefs.drawerAlignment)
+        listOf(light, prefs.tintText, prefs.appNameScale, prefs.drawerAlignment)
             .joinToString()
 
     // Status bar shown or hidden as set, and status and navigation bar icons that match the text
