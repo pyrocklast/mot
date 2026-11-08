@@ -9,7 +9,7 @@ It's for Android 15 and up, in English and French.
 
 ## What it does
 
-- Up to 10 apps on the home screen. Long press and drag one to move it.
+- Favorites adapt to the space on your home screen, including when the clock or date is hidden. No scrolling, compressed rows or overflow shortcut; manage any saved favorites that no longer fit in Settings. Long press and drag to reorder.
 - Swipe up for all your apps, down for notifications, left and right for two apps you pick. Settings: long press the home screen, or the gear in the app drawer.
 - Tap the time or the date to open your clock or calendar, or any app you choose.
 - Search ignores accents and case, puts the best matches first, and can optionally open the only match after two letters (off by default).
