@@ -12,13 +12,14 @@ sealed interface Slot {
     data object SwipeLeft : Slot
     data object SwipeRight : Slot
 
-    fun save(prefs: Prefs, target: AppTarget?) = when (this) {
-        is Home -> prefs.setHomeApp(index, target)
-        AddHome -> { if (target != null) prefs.appendHomeApp(target); Unit }
-        Clock -> prefs.clockApp = target
-        Calendar -> prefs.calendarApp = target
-        SwipeLeft -> prefs.swipeLeftApp = target
-        SwipeRight -> prefs.swipeRightApp = target
+    /** False only when adding a favorite is impossible; other actions always succeed. */
+    fun save(prefs: Prefs, target: AppTarget?): Boolean = when (this) {
+        is Home -> { prefs.setHomeApp(index, target); true }
+        AddHome -> target != null && prefs.appendHomeApp(target)
+        Clock -> { prefs.clockApp = target; true }
+        Calendar -> { prefs.calendarApp = target; true }
+        SwipeLeft -> { prefs.swipeLeftApp = target; true }
+        SwipeRight -> { prefs.swipeRightApp = target; true }
     }
 
     /** For passing a slot to the settings screen's app picker. */
