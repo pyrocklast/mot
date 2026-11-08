@@ -51,7 +51,7 @@ class HomeScreen(
     private val requestHomeRole: () -> Unit,
 ) {
     private val appViews = ArrayList<TextView>()
-    private var overflowView: TextView? = null
+    private var capacityProbe: TextView? = null
     private var homeMenu: PopupMenu? = null
     private var homeMenuAnchor: View? = null
 
@@ -135,7 +135,7 @@ class HomeScreen(
         describeForTalkBack(binding.date, R.string.action_open_calendar, R.string.action_choose_calendar) { tap(it) }
     }
 
-    /** Draws the home screen from the current settings and app names. Cheap enough to call often. */
+    /** Draws a bounded, fixed Home; saves its measured capacity for app pickers. */
     fun render() {
         // The home has one deliberate composition; legacy alignment preferences remain stored
         // until the settings migration, but no longer control the home screen.
@@ -160,18 +160,48 @@ class HomeScreen(
         binding.date.typeface = Look.typeface(Prefs.FONT_SANS, 400)
         updateDate()
 
-        // Keep every existing assignment, including ones stored beyond the old slot count.
-        // A null slot is not an app and never occupies home-screen space.
-        val assignments = prefs.homeApps.mapIndexedNotNull { slot, target ->
-            target?.let { slot to it }
-        }
-        val count = assignments.size
-        while (appViews.size < count) appViews += newAppView(appViews.size)
-        while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
         val nameTypeface = Look.typeface(Prefs.FONT_SANS, 300)
         val nameSizePx = HomeFit.appNameSizePx(context, prefs)
+
+        // The first-run guidance occupies actual screen space, just like system bars.
+        binding.tips.isVisible = !prefs.settingsOpened
+        binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
+        val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
+        val overlayClearance = listOf(binding.tips, binding.setDefault)
+            .filter { it.isVisible }
+            .maxOfOrNull {
+                (it.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin +
+                    heightOf(it) + (8 * context.resources.displayMetrics.density).toInt()
+            } ?: 0
+        val bottomPadding = maxOf(HomeFit.bottomPadding(context, bottomInset), overlayClearance)
+        val displayHeight = binding.homeApps.height.takeIf { it > 0 } ?: screenHeight()
+        val usableRoom = (displayHeight - minimumTop - bottomPadding -
+            (2 * context.resources.displayMetrics.density).toInt()).coerceAtLeast(0)
+
+        // Measure one styled, single-line row instead of creating views for every saved app.
+        // Normal spacing never shrinks merely to squeeze another row onto Home.
+        val probe = capacityProbe ?: (LayoutInflater.from(binding.homeApps.context)
+            .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView).also {
+            capacityProbe = it
+        }
+        probe.text = "Ag字"
+        probe.typeface = nameTypeface
+        probe.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
+        probe.setPadding(probe.paddingLeft, 0, probe.paddingRight, 0)
+        val padding = HomeFit.rowPadding(context, heightOf(probe).toFloat())
+        probe.setPadding(probe.paddingLeft, padding, probe.paddingRight, padding)
+        val capacity = HomeFit.capacity(usableRoom, heightOf(probe))
+
+        // Keep all assignments in preferences, but create actual Views only for those that
+        // fit. Any extras remain manageable in Settings; Home never overflows or scrolls.
+        val assignments = prefs.homeApps.mapIndexedNotNull { slot, target ->
+            target?.let { slot to it }
+        }.take(capacity)
+        while (appViews.size < assignments.size) appViews += newAppView(appViews.size)
+        while (appViews.size > assignments.size) {
+            binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
+        }
         appViews.forEachIndexed { index, view ->
-            view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
             val (slot, target) = assignments[index]
             view.tag = slot
             view.text = repo.nameFor(target) ?: context.getString(
@@ -181,64 +211,20 @@ class HomeScreen(
             view.gravity = alignment or Gravity.CENTER_VERTICAL
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
             view.typeface = nameTypeface
-            view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
-        }
-
-        // Onboarding is drawn over the home; reserve its bottom area so app rows cannot
-        // overlap first-run instructions or the action to set mot as the default launcher.
-        binding.tips.isVisible = !prefs.settingsOpened
-        binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
-
-        // Balance the app list between the information block and navigation/onboarding.
-        val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
-        val overlayClearance = listOf(binding.tips, binding.setDefault)
-            .filter { it.isVisible }
-            .maxOfOrNull {
-                (it.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin +
-                    heightOf(it) + (8 * context.resources.displayMetrics.density).toInt()
-            } ?: 0
-        val bottomPadding = maxOf(HomeFit.bottomPadding(context, bottomInset), overlayClearance)
-        val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
-        val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
-        // Each app row is measured independently so every slot preserves its 48dp target,
-        // including when fonts or view metrics differ.
-        val textHeights = appViews.map { heightOf(it) }
-        appViews.forEachIndexed { index, view ->
-            val padding = HomeFit.namePadding(context, count, textHeights[index].toFloat(), room.toFloat())
             view.setPadding(view.paddingLeft, padding, view.paddingRight, padding)
         }
-        // Keep the home fixed and gesture-driven. If all rows cannot fit, reserve a
-        // final row that explicitly opens the drawer rather than silently losing apps.
-        val rowHeights = appViews.map { heightOf(it) }
-        val indicator = overflowView ?: (LayoutInflater.from(binding.homeApps.context)
-            .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView).also { view ->
-            // Reuse themed launcher typography (wallpaper contrast + shadow), not default
-            // Android TextView colours, which may be unreadable on the user's wallpaper.
-            view.hint = null
-            view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
-            view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            view.typeface = Look.typeface(Prefs.FONT_SANS, 400)
-            view.minHeight = kotlin.math.ceil(48.0 * context.resources.displayMetrics.density).toInt()
-            // Do not make this view touch-clickable: that would swallow swipe-up gestures.
-            // The home detector handles taps; TalkBack gets an explicit open action.
-            describeForTalkBack(
-                view, R.string.home_all_apps_description, R.string.home_all_apps_description,
-            ) { openDrawer(null) }
-            overflowView = view
-            binding.homeApps.addView(view)
+        val heights = appViews.map { heightOf(it) }
+        val actualCapacity = HomeFit.capacity(
+            usableRoom, maxOf(heightOf(probe), heights.maxOrNull() ?: 0),
+        )
+        if (binding.homeApps.width > 0 && binding.homeApps.height > 0) {
+            prefs.homeCapacity = actualCapacity
         }
-        // App count can grow after the indicator was first created.
-        indicator.bringToFront()
-        indicator.setText(R.string.home_all_apps)
-        // Avoid showing and re-measuring the shortcut on ordinary homes that already fit.
-        indicator.isVisible = rowHeights.sumOf { it.toLong() } > room.toLong()
-        val indicatorHeight = if (indicator.isVisible) heightOf(indicator) else 0
-        val layout = HomeFit.visibleRows(rowHeights, room, indicatorHeight)
-        appViews.forEachIndexed { index, view -> view.isVisible = index < layout.count }
-        indicator.isVisible = layout.showAllApps
-        val groupHeight = rowHeights.take(layout.count).sum() +
-            if (layout.showAllApps) indicatorHeight else 0
+        val visibleCount = HomeFit.fittingCount(heights, usableRoom)
+        while (appViews.size > visibleCount) {
+            binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
+        }
+        val groupHeight = heights.take(visibleCount).sum()
         val balancedTop = HomeFit.balancedTop(
             displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
         )
@@ -357,7 +343,6 @@ class HomeScreen(
     }
 
     private fun viewAt(event: MotionEvent): View? {
-        overflowView?.let { if (it.isVisible && it.contains(event.rawX, event.rawY)) return it }
         appViews.forEach { if (it.isVisible && it.contains(event.rawX, event.rawY)) return it }
         if (binding.clock.isVisible && binding.clock.contains(event.rawX, event.rawY)) return binding.clock
         if (binding.date.isVisible && binding.date.contains(event.rawX, event.rawY)) return binding.date
@@ -369,7 +354,6 @@ class HomeScreen(
             null -> Unit
             binding.clock -> openOrDefault(prefs.clockApp, DefaultApp.CLOCK, view)
             binding.date -> openOrDefault(prefs.calendarApp, DefaultApp.CALENDAR, view)
-            overflowView -> openDrawer(null)
             else -> {
                 val target = prefs.homeApp(view.tag as Int)
                 if (target == null) Apps.toast(context, R.string.long_press_to_choose)
@@ -383,7 +367,6 @@ class HomeScreen(
             null -> showHomeMenu(event)
             binding.clock -> openDrawer(Slot.Clock)
             binding.date -> openDrawer(Slot.Calendar)
-            overflowView -> openDrawer(null)
             else -> homeAppMenu(view, view.tag as Int)
         }
     }
@@ -440,7 +423,7 @@ class HomeScreen(
             .coerceIn(0, (binding.home.height - 1).coerceAtLeast(0))
         binding.home.addView(anchor, params)
         val popup = PopupMenu(context, anchor, Gravity.START)
-        if (prefs.assignedHomeApps.size < Prefs.MAX_HOME_APPS) {
+        if (prefs.assignedHomeApps.size < prefs.homeCapacity) {
             popup.menu.add(0, HOME_ADD, 0, R.string.add_to_home)
         }
         popup.menu.add(0, HOME_SETTINGS, 1, R.string.settings)
