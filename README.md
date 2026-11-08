@@ -14,9 +14,8 @@ It's for Android 15 and up, in English and French.
 - Tap the time or the date to open your clock or calendar, or any app you choose.
 - Search ignores accents and case, puts the best matches first, and can optionally open the only match after two letters (off by default).
 - Long press an app to rename it, hide it or uninstall it. Work apps get a small dot, and Private Space has its own list.
-- Choose the font, weight and size of app names, the time and the date. You see the result on your wallpaper as you go.
+- The clock and date have one coherent style and follow your system language, 12/24-hour setting and font scaling. Show or hide each; adjust only the shared app-name size.
 - The text colour matches your wallpaper. Settings follow your phone's theme.
-- With the status bar hidden, the battery level shows after the date.
 
 ## Install
 
