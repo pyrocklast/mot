@@ -108,7 +108,11 @@ class AppListActivity : SettingsScreen() {
     private fun onRowClick(entry: AppEntry, view: View) {
         val slot = slot
         if (slot != null) {
-            slot.save(prefs, entry.target)
+            if (!slot.save(prefs, entry.target)) {
+                Apps.toast(this, if (prefs.homeCapacity < 0)
+                    R.string.home_capacity_refresh else R.string.home_apps_full)
+                return
+            }
             finish()
         } else {
             Apps.open(this, entry.target, view)
