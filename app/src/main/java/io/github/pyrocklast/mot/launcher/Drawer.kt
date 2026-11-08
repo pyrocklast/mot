@@ -76,7 +76,7 @@ class Drawer(
 
     private val adapter = DrawerAdapter(
         nameSizePx = nameSizePx,
-        nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight),
+        nameTypeface = Look.typeface(Prefs.FONT_SANS, 300),
         gravity = prefs.drawerAlignment,
         onClick = ::onRowClick,
         onLongClick = ::onRowLongClick,
@@ -125,7 +125,7 @@ class Drawer(
         })
 
         search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, nameSizePx)
-        search.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
+        search.typeface = Look.typeface(Prefs.FONT_SANS, 300)
         search.gravity = prefs.drawerAlignment or Gravity.CENTER_VERTICAL
         search.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
