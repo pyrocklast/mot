@@ -119,7 +119,10 @@ class SettingsActivity : SettingsScreen() {
             nameSize = slider(
                 R.string.app_names_size, 0, 10,
                 ((prefs.appNameScale - 0.5f) * 10).roundToInt().coerceIn(0, 10),
-            ) { prefs.appNameScale = 0.5f + it / 10f }
+            ) {
+                prefs.appNameScale = 0.5f + it / 10f
+                refresh()
+            }
             nameSize.formatValue = { "${50 + it * 10} %" }
             statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
                 prefs.showStatusBar = it
@@ -161,10 +164,11 @@ class SettingsActivity : SettingsScreen() {
         val assignedCount = prefs.assignedHomeApps.size
         // Never show legacy dormant assignments on Home without explicit consent.
         archivedHomeApps.isVisible = prefs.archivedHomeAppCount > 0
-        homeApps.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
-            getString(R.string.home_apps_full)
-        } else {
-            resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
+        homeApps.summary = when {
+            prefs.homeCapacity < 0 -> getString(R.string.home_capacity_refresh)
+            assignedCount > prefs.homeCapacity ->
+                getString(R.string.home_favorites_not_fitting, prefs.homeCapacity, assignedCount)
+            else -> resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
         }
 
         showTime.isChecked = prefs.showTime
@@ -237,7 +241,7 @@ class SettingsActivity : SettingsScreen() {
                 else R.string.app_not_found,
             )
         }.toMutableList()
-        if (assigned.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
+        if (assigned.size < prefs.homeCapacity) options += getString(R.string.add_to_home)
         val dialog = android.app.AlertDialog.Builder(this)
             .setTitle(R.string.home_apps)
             .setItems(options.toTypedArray()) { _, selected ->
