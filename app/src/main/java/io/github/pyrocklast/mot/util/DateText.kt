@@ -20,6 +20,11 @@ object DateText {
     private var lastLocale: Locale? = null
     private var lastFormat: DateFormat? = null
 
+    /** System-localized, compact date with weekday; no user-specific format setting. */
+    fun date(context: Context, date: Date = Date()): String =
+        format(Prefs.DATE_SHORT, locale(context)).format(date)
+
+    /** Kept for old tests/imports; the launcher always uses the compact locale-aware style. */
     fun date(context: Context, style: Int, date: Date = Date()): String =
         format(style, locale(context)).format(date)
 
