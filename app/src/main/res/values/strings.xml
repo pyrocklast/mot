@@ -7,7 +7,9 @@
     <!-- Home screen -->
     <string name="home_apps">Favorites</string>
     <string name="add_to_home">Add to favorites</string>
-    <string name="home_apps_full">Home screen full (10 apps)</string>
+    <string name="home_apps_full">No room for another favorite. Try hiding the clock or date, or reducing app-name size.</string>
+    <string name="home_capacity_refresh">Return to the Home screen to recalculate how many favorites fit.</string>
+    <string name="home_favorites_not_fitting">Only %1$d of %2$d favorites fit. Manage the others here.</string>
     <string name="restore_previous_home_apps">Restore earlier favorites</string>
     <string name="restore_previous_home_apps_prompt">An earlier version saved favorites outside the visible home slots. Restoring them will put them on your home screen, even if they are hidden from the app drawer. Continue?</string>
     <string name="restore_home_apps_action">Restore</string>
