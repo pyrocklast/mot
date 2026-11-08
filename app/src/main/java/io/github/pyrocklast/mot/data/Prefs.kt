@@ -30,13 +30,32 @@ class Prefs(context: Context) {
     /** Legacy visible-slot count retained for upgrades; the home now shows assigned apps only. */
     var homeAppCount: Int
         get() = prefs.getInt("home_app_count", 5)
-        set(value) = prefs.edit { putInt("home_app_count", value.coerceIn(0, MAX_HOME_APPS)) }
+        set(value) = prefs.edit { putInt("home_app_count", value.coerceIn(0, MAX_STORED_SLOTS)) }
 
     fun homeApp(slot: Int): AppTarget? = AppTarget.decode(prefs.getString("home_app_$slot", null))
 
     fun setHomeApp(slot: Int, target: AppTarget?) = prefs.edit { putTarget("home_app_$slot", target) }
 
-    val homeApps: List<AppTarget?> get() = (0 until MAX_HOME_APPS).map { homeApp(it) }
+    /**
+     * Numeric home slots are unbounded by the old ten-slot product limit. A defensive storage
+     * bound prevents corrupted local preferences from allocating enormous lists.
+     */
+    val homeApps: List<AppTarget?>
+        get() {
+            val last = prefs.all.keys.mapNotNull { key ->
+                key.removePrefix("home_app_").takeIf { key.startsWith("home_app_") }
+                    ?.toIntOrNull()?.takeIf { it in 0 until MAX_STORED_SLOTS }
+            }.maxOrNull() ?: -1
+            return (0 until maxOf(LEGACY_HOME_SLOTS, last + 1)).map(::homeApp)
+        }
+
+    /** -1 means unknown until Home measures a real viewport; 0 means measured but no room. */
+    var homeCapacity: Int
+        get() = prefs.getInt("home_capacity_v1", -1).coerceIn(-1, MAX_STORED_SLOTS)
+        set(value) {
+            val safe = value.coerceIn(0, MAX_STORED_SLOTS)
+            if (safe != homeCapacity) prefs.edit { putInt("home_capacity_v1", safe) }
+        }
 
     /** Assigned apps, in legacy slot order. Empty slots are never displayed. */
     val assignedHomeApps: List<AppTarget> get() = HomeSelection.assigned(homeApps)
@@ -55,10 +74,10 @@ class Prefs(context: Context) {
      * assignments archived. Drawer hiding preferences and user-profile state are untouched.
      */
     fun restoreArchivedHomeApps(): Int {
-        val recovery = HomeSelection.recover(assignedHomeApps, archivedHomeEntries(), MAX_HOME_APPS)
+        val recovery = HomeSelection.recover(assignedHomeApps, archivedHomeEntries(), homeCapacity)
         if (recovery.restoredIndices.isEmpty()) return 0
         prefs.edit(commit = true) {
-            (0 until MAX_HOME_APPS).forEach { index ->
+            (0 until maxOf(homeApps.size, recovery.visible.size)).forEach { index ->
                 putTarget("home_app_$index", recovery.visible.getOrNull(index))
             }
             recovery.restoredIndices.forEach { index -> remove("archived_home_app_$index") }
@@ -69,7 +88,7 @@ class Prefs(context: Context) {
 
     /** Append only after the user actually chooses an app; cancelling changes nothing. */
     fun appendHomeApp(target: AppTarget): Boolean {
-        val next = HomeSelection.append(homeApps, target, MAX_HOME_APPS) ?: return false
+        val next = HomeSelection.append(homeApps, target, homeCapacity) ?: return false
         saveHomeAssignments(next)
         return true
     }
@@ -80,10 +99,13 @@ class Prefs(context: Context) {
         saveHomeAssignments(next)
     }
 
-    private fun saveHomeAssignments(apps: List<AppTarget>) = prefs.edit {
-        (0 until MAX_HOME_APPS).forEach { index -> putTarget("home_app_$index", apps.getOrNull(index)) }
-        // Legacy counter is no longer a display constraint, but keep it coherent for backups.
-        putInt("home_app_count", apps.size)
+    private fun saveHomeAssignments(apps: List<AppTarget>) {
+        val count = maxOf(homeApps.size, apps.size)
+        prefs.edit {
+            (0 until count).forEach { index -> putTarget("home_app_$index", apps.getOrNull(index)) }
+            // The old counter is retained for migration compatibility, not as a UI limit.
+            putInt("home_app_count", apps.size)
+        }
     }
 
 
@@ -95,11 +117,17 @@ class Prefs(context: Context) {
     // Version 0.1 had one choice (time and date, date only, off); its value sets the defaults
     var showTime: Boolean
         get() = prefs.getBoolean("show_time", prefs.getInt("clock_mode", 0) == 0)
-        set(value) = prefs.edit { putBoolean("show_time", value) }
+        set(value) = prefs.edit {
+            putBoolean("show_time", value)
+            remove("home_capacity_v1") // Re-measure after the clock changes available space.
+        }
 
     var showDate: Boolean
         get() = prefs.getBoolean("show_date", prefs.getInt("clock_mode", 0) != 2)
-        set(value) = prefs.edit { putBoolean("show_date", value) }
+        set(value) = prefs.edit {
+            putBoolean("show_date", value)
+            remove("home_capacity_v1")
+        }
 
     var dateStyle: Int
         get() = prefs.getInt("date_style", DATE_SHORT)
@@ -168,7 +196,10 @@ class Prefs(context: Context) {
 
     var appNameScale: Float
         get() = prefs.getFloat("app_name_scale", 1f)
-        set(value) = prefs.edit { putFloat("app_name_scale", value) }
+        set(value) = prefs.edit {
+            putFloat("app_name_scale", value)
+            remove("home_capacity_v1")
+        }
 
     // The time's style is saved as the "clock" style, which the date shared until it got its own
     var timeFont: Int
@@ -198,7 +229,10 @@ class Prefs(context: Context) {
     /** Visible by default on new installs; explicit or historic choices are preserved. */
     var showStatusBar: Boolean
         get() = prefs.getBoolean("show_status_bar", prefs.getBoolean("status_bar_initial_default", false))
-        set(value) = prefs.edit { putBoolean("show_status_bar", value) }
+        set(value) = prefs.edit {
+            putBoolean("show_status_bar", value)
+            remove("home_capacity_v1")
+        }
 
     // Gestures
 
@@ -295,7 +329,7 @@ class Prefs(context: Context) {
             prefs.edit(commit = true) { putBoolean("home_visibility_migrated_v3", true) }
             return
         }
-        val visibleCount = prefs.getInt("home_app_count", 5).coerceIn(0, MAX_HOME_APPS)
+        val visibleCount = prefs.getInt("home_app_count", 5).coerceIn(0, LEGACY_HOME_SLOTS)
         val split = HomeSelection.splitLegacy(homeApps, visibleCount)
         // One committed snapshot: never allow a crash to leave apps half-archived and visible.
         prefs.edit(commit = true) {
@@ -354,7 +388,12 @@ class Prefs(context: Context) {
         /** Separate pure policy so the first-install vs upgrade behavior has regression tests. */
         internal fun defaultStatusBarForInstall(hadExistingData: Boolean): Boolean = !hadExistingData
 
-        const val MAX_HOME_APPS = 10
+        // Historical ten-slot layout. Not a limit on the redesigned Home.
+        const val LEGACY_HOME_SLOTS = 10
+        private const val MAX_STORED_SLOTS = 128
+
+        @Deprecated("Use measured homeCapacity; this value is only for legacy migrations")
+        const val MAX_HOME_APPS = LEGACY_HOME_SLOTS
 
         private const val CRASHES_BEFORE_RESET = 3
         private const val CRASHES_WITHIN_MS = 60 * 1000L
