@@ -50,6 +50,8 @@ class HomeScreen(
     private val openSettings: () -> Unit,
     private val requestHomeRole: () -> Unit,
 ) {
+    /** The home apps as last drawn: the names on screen are these, in this order. */
+    private var shown: List<AppTarget> = emptyList()
     private val appViews = ArrayList<TextView>()
     private var overflowView: TextView? = null
     private var homeMenu: PopupMenu? = null
@@ -73,12 +75,9 @@ class HomeScreen(
             val view = viewAt(e)
             val index = appViews.indexOf(view)
             if (view == null || index < 0) return longPress(view, e)
-            // A home app: its menu, and dragging from here moves it to another spot
-            if (MENU_WHILE_HOLDING) {
-                if (homeAppMenu(view, view.tag as Int)) reorder.arm(index, e.rawY, lift = false)
-            } else {
-                if (canMove(index)) reorder.arm(index, e.rawY, lift = true) else homeAppMenu(view, view.tag as Int)
-            }
+            // A home app picks up, and moves if you drag it. Its menu waits until you let go
+            // without dragging, so it never covers the spots the app could be dragged to.
+            if (canMove(index)) reorder.arm(index, e.rawY, lift = true) else homeAppMenu(view, index)
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
@@ -101,15 +100,15 @@ class HomeScreen(
         apps = { appViews.filter { it.isVisible } },
         others = { listOf(binding.clockBlock) },
         onStart = { menu.dismiss() },
-        onRelease = { index -> if (!MENU_WHILE_HOLDING) appViews.getOrNull(index)?.let { homeAppMenu(it, it.tag as Int) } },
+        onRelease = { index -> appViews.getOrNull(index)?.let { homeAppMenu(it, index) } },
         onMove = ::move,
     )
 
     init {
         // Taps reach TalkBack users through the actions set up in describeForTalkBack
         binding.home.setOnTouchListener(::onTouch)
-        // TalkBack and switch-access users cannot rely on full-screen swipe/long-press
-        // gestures. Expose the two essential destinations without a visible home control.
+        // TalkBack and Switch Access can't swipe or long press the whole screen, so the drawer
+        // and settings are actions on it instead
         binding.home.isFocusable = true
         binding.home.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_app_drawer)) { _, _ ->
@@ -120,13 +119,13 @@ class HomeScreen(
             openSettings()
             true
         }
-        // The first render can precede layout. Recalculate when the actual viewport arrives
-        // or changes size, without triggering another render on padding-only layout passes.
+        // The first render can come before layout: draw again once the screen's real size is
+        // known, or when it changes, but not when only the padding does
         binding.homeApps.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) render()
         }
-        // The date can change height at midnight or after a locale/font adjustment, even
-        // when the viewport stays the same size.
+        // The date can change height at midnight, or with the language or font size, while the
+        // screen stays the same size
         binding.clockBlock.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) render()
         }
@@ -137,12 +136,6 @@ class HomeScreen(
 
     /** Draws the home screen from the current settings and app names. Cheap enough to call often. */
     fun render() {
-        // The home has one deliberate composition; legacy alignment preferences remain stored
-        // until the settings migration, but no longer control the home screen.
-        val alignment = Gravity.START
-        binding.homeApps.gravity = Gravity.TOP or alignment
-        binding.clockBlock.gravity = alignment
-
         // The clock and date first: where the names start depends on how tall they come out.
         // With the status bar hidden, they move up into its space.
         val clockParams = binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams
@@ -160,36 +153,32 @@ class HomeScreen(
         binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
         updateDate()
 
-        // Keep every existing assignment, including ones stored beyond the old slot count.
-        // A null slot is not an app and never occupies home-screen space.
-        val assignments = prefs.homeApps.mapIndexedNotNull { slot, target ->
-            target?.let { slot to it }
-        }
-        val count = assignments.size
-        while (appViews.size < count) appViews += newAppView(appViews.size)
+        // One row per home app
+        shown = prefs.homeApps
+        val count = shown.size
+        while (appViews.size < count) appViews += newAppView()
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
         val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         val nameSizePx = HomeFit.appNameSizePx(context, prefs)
         appViews.forEachIndexed { index, view ->
-            view.isVisible = true // Reconsider previously hidden rows after a size/configuration change.
-            val (slot, target) = assignments[index]
-            view.tag = slot
+            // Shown again for now: whether it still fits is worked out below
+            view.isVisible = true
+            val target = shown[index]
             view.text = repo.nameFor(target) ?: context.getString(
                 if (repo.isLockedPrivateSpace(target.userSerial)) R.string.private_space_locked
                 else R.string.app_not_found,
             )
-            view.gravity = alignment or Gravity.CENTER_VERTICAL
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
             view.typeface = nameTypeface
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         }
 
-        // Onboarding is drawn over the home; reserve its bottom area so app rows cannot
-        // overlap first-run instructions or the action to set mot as the default launcher.
+        // The first-run tips and the "Set as Home app" link sit over the bottom of the home
+        // screen: the names stop above them
         binding.tips.isVisible = !prefs.settingsOpened
         binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
 
-        // Balance the app list between the information block and navigation/onboarding.
+        // The room the names have: under the clock and date, above the navigation bar and tips
         val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
         val overlayClearance = listOf(binding.tips, binding.setDefault)
             .filter { it.isVisible }
@@ -200,38 +189,40 @@ class HomeScreen(
         val bottomPadding = maxOf(HomeFit.bottomPadding(context, bottomInset), overlayClearance)
         val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
         val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
-        // Each app row is measured independently so every slot preserves its 48dp target,
-        // including when fonts or view metrics differ.
+        // Each name is measured on its own, so every row keeps its 48 dp touch target whatever
+        // its font
         val textHeights = appViews.map { heightOf(it) }
         appViews.forEachIndexed { index, view ->
             val padding = HomeFit.namePadding(context, count, textHeights[index].toFloat(), room.toFloat())
             view.setPadding(view.paddingLeft, padding, view.paddingRight, padding)
         }
-        // Keep the home fixed and gesture-driven. If all rows cannot fit, reserve a
-        // final row that explicitly opens the drawer rather than silently losing apps.
+        // The home screen never scrolls (swiping is for gestures). If the names don't all fit,
+        // the last row becomes "All apps", rather than names quietly going missing.
         val rowHeights = appViews.map { heightOf(it) }
         val indicator = overflowView ?: (LayoutInflater.from(binding.homeApps.context)
             .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView).also { view ->
-            // Reuse themed launcher typography (wallpaper contrast + shadow), not default
-            // Android TextView colours, which may be unreadable on the user's wallpaper.
-            view.hint = null
+            // Made like a name, so it has the launcher's text colour and shadow
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
             view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            view.typeface = Look.typeface(Prefs.FONT_SANS, 400)
             view.minHeight = kotlin.math.ceil(48.0 * context.resources.displayMetrics.density).toInt()
-            // Do not make this view touch-clickable: that would swallow swipe-up gestures.
-            // The home detector handles taps; TalkBack gets an explicit open action.
+            view.setText(R.string.home_all_apps)
+            // Not clickable itself, or it would swallow swipes: the gesture detector handles
+            // taps, and TalkBack gets an action
             describeForTalkBack(
                 view, R.string.home_all_apps_description, R.string.home_all_apps_description,
             ) { openDrawer(null) }
             overflowView = view
             binding.homeApps.addView(view)
         }
-        // App count can grow after the indicator was first created.
+        // In the app names' font, smaller, so it doesn't read as an app
+        indicator.typeface = nameTypeface
+        indicator.setTextSize(
+            TypedValue.COMPLEX_UNIT_PX,
+            context.resources.getDimension(R.dimen.small_size) * prefs.appNameScale,
+        )
+        // Always the last row, after any names added since it was made
         indicator.bringToFront()
-        indicator.setText(R.string.home_all_apps)
-        // Avoid showing and re-measuring the shortcut on ordinary homes that already fit.
+        // Only measured when the names don't all fit
         indicator.isVisible = rowHeights.sumOf { it.toLong() } > room.toLong()
         val indicatorHeight = if (indicator.isVisible) heightOf(indicator) else 0
         val layout = HomeFit.visibleRows(rowHeights, room, indicatorHeight)
@@ -246,14 +237,12 @@ class HomeScreen(
             binding.homeApps.paddingLeft, balancedTop,
             binding.homeApps.paddingRight, bottomPadding,
         )
-
-
     }
 
     // How tall a view comes out at its current text, size and font
     private fun heightOf(view: View): Int {
-        // Measure with the real content width: UNSPECIFIED width may undercount height
-        // when text (for example the date) needs to fit a narrow screen.
+        // At the width it really has: measured without one, a date that wraps on a narrow
+        // screen would come out a line short
         val screenWidth = binding.homeApps.width.takeIf { it > 0 }
             ?: binding.home.width.takeIf { it > 0 }
             ?: context.resources.displayMetrics.widthPixels
@@ -273,16 +262,16 @@ class HomeScreen(
 
     private fun screenHeight(): Int = context.resources.displayMetrics.heightPixels
 
-    private fun newAppView(index: Int): TextView {
+    private fun newAppView(): TextView {
         val view = LayoutInflater.from(binding.homeApps.context)
             .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView
+        view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         binding.homeApps.addView(view)
         describeForTalkBack(view, R.string.action_open, R.string.action_more_options, canBeMoved = true) { tap(it) }
-        view.tag = index
         return view
     }
 
-    // Date remains independent of the status bar; no simulated battery/status indicators.
+    // The date, left as it is when it hasn't changed
     private fun updateDate() {
         if (!prefs.showDate) return
         val text = DateText.date(context, prefs.dateStyle)
@@ -342,17 +331,12 @@ class HomeScreen(
         homeMenuAnchor = null
     }
 
-    // Only a visible installed app moves, not an away/private profile or clipped row.
-    private fun canMove(index: Int): Boolean = appViews.getOrNull(index)?.let { view ->
-        view.isVisible && (view.tag as? Int)?.let { slot ->
-            prefs.homeApp(slot)?.let { repo.find(it) }
-        } != null
-    } ?: false
+    // Only an app that's there and showing moves: not one that's gone, paused or locked away
+    private fun canMove(index: Int): Boolean =
+        appViews.getOrNull(index)?.isVisible == true && shown.getOrNull(index)?.let { repo.find(it) } != null
 
     private fun move(from: Int, to: Int) {
-        val fromSlot = appViews.getOrNull(from)?.tag as? Int ?: return
-        val toSlot = appViews.getOrNull(to)?.tag as? Int ?: return
-        prefs.moveHomeAppBySlot(fromSlot, toSlot)
+        prefs.moveHomeApp(from, to)
         render()
     }
 
@@ -370,11 +354,7 @@ class HomeScreen(
             binding.clock -> openOrDefault(prefs.clockApp, DefaultApp.CLOCK, view)
             binding.date -> openOrDefault(prefs.calendarApp, DefaultApp.CALENDAR, view)
             overflowView -> openDrawer(null)
-            else -> {
-                val target = prefs.homeApp(view.tag as Int)
-                if (target == null) Apps.toast(context, R.string.long_press_to_choose)
-                else Apps.open(context, target, view)
-            }
+            else -> shown.getOrNull(appViews.indexOf(view))?.let { Apps.open(context, it, view) }
         }
     }
 
@@ -384,14 +364,19 @@ class HomeScreen(
             binding.clock -> openDrawer(Slot.Clock)
             binding.date -> openDrawer(Slot.Calendar)
             overflowView -> openDrawer(null)
-            else -> homeAppMenu(view, view.tag as Int)
+            else -> homeAppMenu(view, appViews.indexOf(view))
         }
     }
 
-    // The app menu offers replace/remove. Unavailable or locked apps get the same management
-    // actions without displaying their identity or requiring an installed AppEntry.
-    private fun homeAppMenu(view: View, index: Int): Boolean {
-        val entry = prefs.homeApp(index)?.let { repo.find(it) }
+    // A home app's menu: Change app and Remove, above the usual items. An app that's gone, or
+    // locked away in Private Space, gets just those two, without showing its name.
+    private fun homeAppMenu(view: View, index: Int) {
+        val target = shown.getOrNull(index) ?: return
+        val remove = {
+            prefs.removeHomeApp(target)
+            render()
+        }
+        val entry = repo.find(target)
         if (entry == null) {
             homeMenu?.dismiss()
             val popup = PopupMenu(context, view, Gravity.START)
@@ -400,36 +385,28 @@ class HomeScreen(
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     HOME_CHANGE -> openDrawer(Slot.Home(index))
-                    HOME_REMOVE -> {
-                        prefs.setHomeApp(index, null)
-                        render()
-                    }
+                    HOME_REMOVE -> remove()
                 }
                 true
             }
             popup.setOnDismissListener { if (homeMenu === popup) homeMenu = null }
             homeMenu = popup
             popup.show()
-            return false
+            return
         }
         menu.show(
             anchor = view,
             entry = entry,
-            alignment = Gravity.START,
             // Hiding is about the drawer: it's done there
             canHide = false,
             extras = listOf(
                 AppMenu.Extra(R.string.change_app) { openDrawer(Slot.Home(index)) },
-                AppMenu.Extra(R.string.remove_from_home) {
-                    prefs.setHomeApp(index, null)
-                    render()
-                },
+                AppMenu.Extra(R.string.remove_from_home, remove),
             ),
         )
-        return true
     }
 
-    /** Native contextual actions positioned at the long press, without a permanent home control. */
+    /** A long press on the home screen's empty space: add an app, or settings, where you pressed. */
     private fun showHomeMenu(event: MotionEvent?) {
         dismissHomeMenu()
         val anchor = View(context)
@@ -440,7 +417,7 @@ class HomeScreen(
             .coerceIn(0, (binding.home.height - 1).coerceAtLeast(0))
         binding.home.addView(anchor, params)
         val popup = PopupMenu(context, anchor, Gravity.START)
-        if (prefs.assignedHomeApps.size < Prefs.MAX_HOME_APPS) {
+        if (shown.size < Prefs.MAX_HOME_APPS) {
             popup.menu.add(0, HOME_ADD, 0, R.string.add_to_home)
         }
         popup.menu.add(0, HOME_SETTINGS, 1, R.string.settings)
@@ -458,8 +435,8 @@ class HomeScreen(
         }
         homeMenuAnchor = anchor
         homeMenu = popup
-        // The one-pixel anchor must actually be laid out before Android positions its
-        // popup. A posted runnable alone does not guarantee that its coordinates exist.
+        // The menu hangs from a one-pixel view where you pressed, which has to be laid out
+        // before the menu can find it
         anchor.doOnLayout {
             if (homeMenu === popup && anchor.parent === binding.home) popup.show()
         }
@@ -550,11 +527,5 @@ class HomeScreen(
         const val HOME_SETTINGS = 2
         const val HOME_CHANGE = 3
         const val HOME_REMOVE = 4
-
-        /**
-         * When a long press on a home app shows its menu: straight away (true), or once the finger
-         * lifts without dragging (false), so the menu never covers the spots an app is dragged to.
-         */
-        const val MENU_WHILE_HOLDING = false
     }
 }

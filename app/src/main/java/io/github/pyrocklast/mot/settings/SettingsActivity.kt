@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.view.Gravity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import io.github.pyrocklast.mot.BuildConfig
@@ -29,10 +28,8 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var setAsHome: Row
     private lateinit var changeHome: Row
     private lateinit var homeApps: Row
-    private lateinit var archivedHomeApps: Row
     private lateinit var time: Row
     private lateinit var date: Row
-    private lateinit var drawerAlignment: Row
     private lateinit var hiddenApps: Row
     private lateinit var privateSpace: Row
     private lateinit var textColour: Row
@@ -42,7 +39,6 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var swipeLeft: SplitSwitchRow
     private lateinit var swipeRight: SplitSwitchRow
 
-    private val alignments = intArrayOf(Gravity.START, Gravity.CENTER, Gravity.END)
     private val textColours = intArrayOf(Prefs.TEXT_MATCH_WALLPAPER, Prefs.TEXT_LIGHT, Prefs.TEXT_DARK)
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -79,15 +75,9 @@ class SettingsActivity : SettingsScreen() {
 
         group(R.string.home_screen) {
             homeApps = item(R.string.home_apps) { manageHomeApps() }
-            archivedHomeApps = item(R.string.restore_previous_home_apps) {
-                confirmRestoreHomeApps()
-            }
         }
 
         group(R.string.app_drawer) {
-            drawerAlignment = item(R.string.alignment) {
-                choose(R.string.drawer_alignment, alignments, prefs.drawerAlignment, ::alignmentLabel) { prefs.drawerAlignment = it }
-            }
             switch(R.string.show_keyboard, prefs.autoKeyboard) { prefs.autoKeyboard = it }
             switch(R.string.auto_open_unique_search_result, prefs.autoOpenUniqueSearchResult) {
                 prefs.autoOpenUniqueSearchResult = it
@@ -142,13 +132,11 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
-        val assignedCount = prefs.assignedHomeApps.size
-        // Never show legacy dormant assignments on Home without explicit consent.
-        archivedHomeApps.isVisible = prefs.archivedHomeAppCount > 0
-        homeApps.summary = if (assignedCount == Prefs.MAX_HOME_APPS) {
+        val homeCount = prefs.homeApps.size
+        homeApps.summary = if (homeCount == Prefs.MAX_HOME_APPS) {
             getString(R.string.home_apps_full)
         } else {
-            resources.getQuantityString(R.plurals.app_count, assignedCount, assignedCount)
+            resources.getQuantityString(R.plurals.app_count, homeCount, homeCount)
         }
 
         // e.g. "Sans serif · Bold · 100 %", and "Tue 3 Nov · Condensed · Light · 100 %"
@@ -157,7 +145,6 @@ class SettingsActivity : SettingsScreen() {
         date.summary = if (!prefs.showDate) getString(R.string.hidden)
         else DateText.date(this, prefs.dateStyle) + SEPARATOR + styleSummary(prefs.dateFont, prefs.dateWeight, prefs.dateScale)
 
-        drawerAlignment.summary = getString(alignmentLabel(prefs.drawerAlignment))
         // Only apps still installed (the list keeps apps you uninstalled while hidden)
         val hiddenKeys = prefs.hiddenApps
         val hidden = repo.apps.value?.mapNotNullTo(HashSet()) { it.appKey.takeIf { key -> key in hiddenKeys } }?.size
@@ -172,7 +159,6 @@ class SettingsActivity : SettingsScreen() {
         tintText.isChecked = prefs.tintText
         tintText.summary = getString(if (prefs.tintText) R.string.tint_text_on else R.string.tint_text_off)
         nameStyle.summary = styleSummary(prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
-        // The status bar can be hidden without changing the date or drawing fake indicators.
         statusBar.isChecked = prefs.showStatusBar
         statusBar.summaryOff = getString(R.string.status_bar_off_summary)
 
@@ -182,52 +168,26 @@ class SettingsActivity : SettingsScreen() {
         swipeRight.summary = appName(repo, prefs.swipeRightApp, R.string.default_phone_app)
     }
 
-    /** Recovery is opt-in because old hidden home slots can contain sensitive app choices. */
-    private fun confirmRestoreHomeApps() {
-        if (prefs.archivedHomeAppCount == 0) return
-        val dialog = android.app.AlertDialog.Builder(this)
-            .setTitle(R.string.restore_previous_home_apps)
-            .setMessage(R.string.restore_previous_home_apps_prompt)
-            .setPositiveButton(R.string.restore_home_apps_action) { _, _ ->
-                val restored = prefs.restoreArchivedHomeApps()
-                if (restored == 0) {
-                    android.widget.Toast.makeText(this, R.string.home_apps_full,
-                        android.widget.Toast.LENGTH_SHORT).show()
-                } else {
-                    android.widget.Toast.makeText(this,
-                        resources.getQuantityString(R.plurals.home_apps_restored, restored, restored),
-                        android.widget.Toast.LENGTH_SHORT).show()
-                }
-                refresh()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
-        showDialog(dialog)
-        dialog.show()
-    }
-
     /**
-     * Also manages saved apps that do not currently fit on the fixed home screen. Slot indexes
-     * are retained: changing or removing a legacy assignment cannot affect its neighbours.
+     * Your home apps, including any that don't fit on your screen at their size, and any that are
+     * gone or locked away, so each can be changed or removed.
      */
     private fun manageHomeApps() {
-        val assigned = prefs.homeApps.mapIndexedNotNull { index, target ->
-            target?.let { index to it }
-        }
-        val options = assigned.map { (_, target) ->
+        val apps = prefs.homeApps
+        val options = apps.map { target ->
             repo.nameFor(target) ?: getString(
                 if (repo.isLockedPrivateSpace(target.userSerial)) R.string.private_space_locked
                 else R.string.app_not_found,
             )
         }.toMutableList()
-        if (assigned.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
+        if (apps.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
         val dialog = android.app.AlertDialog.Builder(this)
             .setTitle(R.string.home_apps)
             .setItems(options.toTypedArray()) { _, selected ->
-                if (selected == assigned.size) {
+                if (selected == apps.size) {
                     startActivity(AppListActivity.chooseApp(this, Slot.AddHome))
                 } else {
-                    showHomeAppActions(assigned[selected].first)
+                    showHomeAppActions(selected, apps[selected])
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
@@ -236,7 +196,7 @@ class SettingsActivity : SettingsScreen() {
         dialog.show()
     }
 
-    private fun showHomeAppActions(slot: Int) {
+    private fun showHomeAppActions(index: Int, target: AppTarget) {
         val dialog = android.app.AlertDialog.Builder(this)
             .setItems(arrayOf(
                 getString(R.string.action_open),
@@ -244,12 +204,12 @@ class SettingsActivity : SettingsScreen() {
                 getString(R.string.remove_from_home),
             )) { _, selected ->
                 when (selected) {
-                    // An assigned app hidden from the drawer can still be opened from this
-                    // explicit management screen, without making it visible in the drawer.
-                    0 -> prefs.homeApp(slot)?.let { Apps.open(this, it) }
-                    1 -> startActivity(AppListActivity.chooseApp(this, Slot.Home(slot)))
+                    // A home app that doesn't fit on screen, and is hidden from the drawer,
+                    // can still be opened from here
+                    0 -> Apps.open(this, target)
+                    1 -> startActivity(AppListActivity.chooseApp(this, Slot.Home(index)))
                     else -> {
-                        prefs.setHomeApp(slot, null)
+                        prefs.removeHomeApp(target)
                         refresh()
                         manageHomeApps()
                     }
@@ -276,13 +236,6 @@ class SettingsActivity : SettingsScreen() {
     }
 
     // Labels
-
-    @StringRes
-    private fun alignmentLabel(gravity: Int) = when (gravity) {
-        Gravity.CENTER -> R.string.centre
-        Gravity.END -> R.string.right
-        else -> R.string.left
-    }
 
     @StringRes
     private fun textColourLabel(colour: Int) = when (colour) {

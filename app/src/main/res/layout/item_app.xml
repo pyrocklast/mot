@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A drawer row: the app's name, with a small dot after it for work apps. The whole row is
-     tappable; the name sits on the left, centre or right as the drawer is aligned. -->
+     tappable, not just the name. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/row"
     android:layout_width="match_parent"

@@ -8,8 +8,9 @@ import kotlin.math.floor
 
 /**
  * How much room the home screen's names take, and how much it has for them. Text sizes follow
- * Android's font size and saved settings. The launcher measures actual rows and available space,
- * centers the visible group, and uses whole touch targets with a non-scrolling overflow fallback.
+ * Android's font size and your settings. The launcher measures the names and the room it really
+ * has, sits them in the middle of it, keeps every row easy to tap, and, as the home screen never
+ * scrolls, ends with "All apps" when they don't all fit.
  */
 object HomeFit {
 
@@ -85,9 +86,8 @@ object HomeFit {
     }
 
     /**
-     * Position the whole app group around the usable screen's midpoint, while keeping it
-     * below the information group. All values are pixels, measured after text scaling.
-     * The bottom limit is preferred whenever the two constraints can both be satisfied.
+     * Where the names start so that they sit in the middle of the room under the clock and date,
+     * in pixels. When they can't, they stay clear of the navigation bar first.
      */
     internal fun balancedTop(
         screenHeight: Int,
@@ -96,8 +96,8 @@ object HomeFit {
         minimumTop: Int,
         groupHeight: Int,
     ): Int {
-        // Balance *below* the information block, not around the whole display midpoint.
-        // Otherwise the clock can push a large app group high up against itself.
+        // The middle of the room under the clock and date, not of the whole screen, or a long
+        // list of names would end up pressed against the date
         val usableTop = maxOf(topInset, minimumTop)
         val usableBottom = (screenHeight - bottomInset).coerceAtLeast(usableTop)
         val centered = usableTop + (usableBottom - usableTop - groupHeight) / 2
@@ -105,13 +105,12 @@ object HomeFit {
         return centered.coerceIn(usableTop, latest)
     }
 
-    /** How many assigned rows are actually visible on the fixed (never scrolling) home surface. */
+    /** How many names show on the home screen, and whether "All apps" ends the list. */
     internal data class VisibleRows(val count: Int, val showAllApps: Boolean)
 
     /**
-     * Preserve the prefix of assigned apps and their full touch targets. If the apps overflow,
-     * reserve one complete row for the drawer shortcut. If even that won't fit, the existing
-     * swipe-up gesture remains the only way into the drawer; don't render a clipped shortcut.
+     * As many names as fit, from the top, each at its full height. When they don't all fit, the
+     * last row is "All apps" instead; if not even that fits, swiping up is still there.
      */
     internal fun visibleRows(rowHeights: List<Int>, availableHeight: Int, overflowHeight: Int): VisibleRows {
         val room = availableHeight.coerceAtLeast(0)

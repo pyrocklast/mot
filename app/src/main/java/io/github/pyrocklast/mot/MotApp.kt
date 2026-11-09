@@ -20,9 +20,7 @@ class MotApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        val prefs = Prefs(this)
-        prefs.migrate()
-        countCrashes(prefs)
+        countCrashes(Prefs(this))
         // Start loading apps right away, so the drawer is ready by the time it's opened
         AppRepository.get(this)
     }

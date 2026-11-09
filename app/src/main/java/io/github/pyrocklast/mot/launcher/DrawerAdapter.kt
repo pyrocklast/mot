@@ -5,7 +5,6 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
@@ -36,7 +35,6 @@ sealed interface DrawerRow {
 class DrawerAdapter(
     private val nameSizePx: Float,
     private val nameTypeface: Typeface,
-    private val gravity: Int,
     private val onClick: (DrawerRow, View) -> Unit,
     private val onLongClick: (DrawerRow, View) -> Unit,
 ) : ListAdapter<DrawerRow, RecyclerView.ViewHolder>(Diff) {
@@ -57,16 +55,12 @@ class DrawerAdapter(
             val binding = ItemAppBinding.inflate(inflater, parent, false)
             binding.name.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
             binding.name.typeface = nameTypeface
-            binding.name.gravity = gravity
-            // The whole row is tappable; the name, and the work dot after it, sit as aligned
-            (binding.name.layoutParams as FrameLayout.LayoutParams).gravity = gravity
+            // The whole row is tappable, not just the name
             holder = AppHolder(binding)
             clickable = binding.root
             anchor = binding.name
         } else {
             val binding = ItemDrawerActionBinding.inflate(inflater, parent, false)
-            // The padlock sits next to the words, wherever the drawer is aligned
-            (binding.action.layoutParams as FrameLayout.LayoutParams).gravity = gravity
             holder = ActionHolder(binding)
             clickable = binding.action
             anchor = binding.action

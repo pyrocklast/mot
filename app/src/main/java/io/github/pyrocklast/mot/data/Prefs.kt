@@ -1,7 +1,6 @@
 package io.github.pyrocklast.mot.data
 
 import android.content.Context
-import android.view.Gravity
 import androidx.core.content.edit
 
 /**
@@ -12,93 +11,61 @@ class Prefs(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("mot", Context.MODE_PRIVATE)
     private val names = context.applicationContext.getSharedPreferences("mot_names", Context.MODE_PRIVATE)
 
-    init {
-        // Existing installations without an explicit status-bar preference must retain their
-        // historical hidden default. Only a genuinely new installation starts with it shown.
-        // This runs before migrate(), which writes its own preferences on first launch.
-        if (!prefs.contains("status_bar_default_v2")) {
-            val hadExistingData = prefs.all.isNotEmpty() || names.all.isNotEmpty()
-            prefs.edit {
-                putBoolean("status_bar_initial_default", defaultStatusBarForInstall(hadExistingData))
-                putBoolean("status_bar_default_v2", true)
-            }
-        }
-    }
-
     // Home screen
 
-    /** Legacy visible-slot count retained for upgrades; the home now shows assigned apps only. */
-    var homeAppCount: Int
-        get() = prefs.getInt("home_app_count", 5)
-        set(value) = prefs.edit { putInt("home_app_count", value.coerceIn(0, MAX_HOME_APPS)) }
-
-    fun homeApp(slot: Int): AppTarget? = AppTarget.decode(prefs.getString("home_app_$slot", null))
-
-    fun setHomeApp(slot: Int, target: AppTarget?) = prefs.edit { putTarget("home_app_$slot", target) }
-
-    val homeApps: List<AppTarget?> get() = (0 until MAX_HOME_APPS).map { homeApp(it) }
-
-    /** Assigned apps, in legacy slot order. Empty slots are never displayed. */
-    val assignedHomeApps: List<AppTarget> get() = HomeSelection.assigned(homeApps)
-
-    /** Archived assignments were outside the former visible-slot count. Never reveal implicitly. */
-    private fun archivedHomeEntries(): List<Pair<Int, AppTarget>> =
-        (0 until MAX_HOME_APPS).mapNotNull { index ->
-            AppTarget.decode(prefs.getString("archived_home_app_$index", null))
-                ?.let { index to it }
+    /** The apps on the home screen, top to bottom: never more than [MAX_HOME_APPS], never twice the same. */
+    var homeApps: List<AppTarget>
+        get() = prefs.getString("home_apps", null)
+            ?.split(LIST_SEPARATOR)
+            ?.mapNotNull { AppTarget.decode(it) }
+            ?.distinct()
+            ?.take(MAX_HOME_APPS)
+            .orEmpty()
+        set(value) = prefs.edit {
+            val apps = value.distinct().take(MAX_HOME_APPS)
+            if (apps.isEmpty()) remove("home_apps")
+            else putString("home_apps", apps.joinToString(LIST_SEPARATOR) { it.encode() })
         }
 
-    val archivedHomeAppCount: Int get() = archivedHomeEntries().size
-
-    /**
-     * A deliberate user action. Restore only what fits, atomically, and leave all remaining
-     * assignments archived. Drawer hiding preferences and user-profile state are untouched.
-     */
-    fun restoreArchivedHomeApps(): Int {
-        val recovery = HomeSelection.recover(assignedHomeApps, archivedHomeEntries(), MAX_HOME_APPS)
-        if (recovery.restoredIndices.isEmpty()) return 0
-        prefs.edit(commit = true) {
-            (0 until MAX_HOME_APPS).forEach { index ->
-                putTarget("home_app_$index", recovery.visible.getOrNull(index))
-            }
-            recovery.restoredIndices.forEach { index -> remove("archived_home_app_$index") }
-            putInt("home_app_count", recovery.visible.size)
-        }
-        return recovery.restoredIndices.size
-    }
-
-    /** Append only after the user actually chooses an app; cancelling changes nothing. */
-    fun appendHomeApp(target: AppTarget): Boolean {
-        val next = HomeSelection.append(homeApps, target, MAX_HOME_APPS) ?: return false
-        saveHomeAssignments(next)
+    /** Puts an app at the end of the home screen. False when it's already there or there's no more room. */
+    fun addHomeApp(target: AppTarget): Boolean {
+        val apps = homeApps
+        if (apps.size >= MAX_HOME_APPS || target in apps) return false
+        homeApps = apps + target
         return true
     }
 
-    /** Move an assigned app between stored slots, preserving all targets and legacy gaps. */
-    fun moveHomeAppBySlot(fromSlot: Int, toSlot: Int) {
-        val next = HomeSelection.moveBySlot(homeApps, fromSlot, toSlot) ?: return
-        saveHomeAssignments(next)
+    /** The home app at [index] becomes [target], or is taken off the home screen when it's null. */
+    fun setHomeApp(index: Int, target: AppTarget?) {
+        val apps = homeApps.toMutableList()
+        if (index !in apps.indices) {
+            if (target != null) addHomeApp(target)
+            return
+        }
+        if (target == null) apps.removeAt(index) else apps[index] = target
+        homeApps = apps
     }
 
-    private fun saveHomeAssignments(apps: List<AppTarget>) = prefs.edit {
-        (0 until MAX_HOME_APPS).forEach { index -> putTarget("home_app_$index", apps.getOrNull(index)) }
-        // Legacy counter is no longer a display constraint, but keep it coherent for backups.
-        putInt("home_app_count", apps.size)
+    fun removeHomeApp(target: AppTarget) {
+        homeApps = homeApps - target
     }
 
-
-    // Historical home alignment/bottom keys remain on disk for migration compatibility,
-    // but the fixed start-aligned layout no longer exposes or reads them.
+    /** Moves the home app at [from] to [to], the others making room. */
+    fun moveHomeApp(from: Int, to: Int) {
+        val apps = homeApps.toMutableList()
+        if (from !in apps.indices || to !in apps.indices || from == to) return
+        apps.add(to, apps.removeAt(from))
+        homeApps = apps
+    }
 
     // Clock and date
 
-    // Version 0.1 had one choice (time and date, date only, off); its value sets the defaults
     var showTime: Boolean
-        get() = prefs.getBoolean("show_time", prefs.getInt("clock_mode", 0) == 0)
+        get() = prefs.getBoolean("show_time", true)
         set(value) = prefs.edit { putBoolean("show_time", value) }
 
     var showDate: Boolean
-        get() = prefs.getBoolean("show_date", prefs.getInt("clock_mode", 0) != 2)
+        get() = prefs.getBoolean("show_date", true)
         set(value) = prefs.edit { putBoolean("show_date", value) }
 
     var dateStyle: Int
@@ -117,15 +84,11 @@ class Prefs(context: Context) {
 
     // App drawer
 
-    var drawerAlignment: Int
-        get() = prefs.getInt("drawer_alignment", Gravity.START)
-        set(value) = prefs.edit { putInt("drawer_alignment", value) }
-
     var autoKeyboard: Boolean
         get() = prefs.getBoolean("auto_keyboard", true)
         set(value) = prefs.edit { putBoolean("auto_keyboard", value) }
 
-    /** Explicit opt-in; searching must not launch apps unexpectedly by default. */
+    /** Off unless you turn it on: typing shouldn't open an app you didn't tap. */
     var autoOpenUniqueSearchResult: Boolean
         get() = prefs.getBoolean("auto_open_unique_search_result", false)
         set(value) = prefs.edit { putBoolean("auto_open_unique_search_result", value) }
@@ -144,9 +107,7 @@ class Prefs(context: Context) {
     /** Light text, dark text, or whichever the wallpaper suits. */
     var textColour: Int
         get() = prefs.getInt("text_colour", TEXT_MATCH_WALLPAPER)
-            // Version 0.1 could follow the phone's dark mode; that's what matching does with a
-            // wallpaper that says nothing about itself
-            .let { if (it == LEGACY_FOLLOW_DARK_MODE) TEXT_MATCH_WALLPAPER else it }
+            .let { if (it == TEXT_DARK || it == TEXT_LIGHT) it else TEXT_MATCH_WALLPAPER }
         set(value) = prefs.edit { putInt("text_colour", value) }
 
     /** Whether the text takes its colour from the wallpaper, rather than being plain white or black. */
@@ -161,16 +122,14 @@ class Prefs(context: Context) {
         get() = prefs.getInt("name_font", FONT_SANS)
         set(value) = prefs.edit { putInt("name_font", value) }
 
-    // Version 0.1's "Bolder app names" switch meant regular instead of light
     var nameWeight: Int
-        get() = prefs.getInt("name_weight", if (prefs.getBoolean("bolder_names", false)) 400 else 300)
+        get() = prefs.getInt("name_weight", 300)
         set(value) = prefs.edit { putInt("name_weight", value) }
 
     var appNameScale: Float
         get() = prefs.getFloat("app_name_scale", 1f)
         set(value) = prefs.edit { putFloat("app_name_scale", value) }
 
-    // The time's style is saved as the "clock" style, which the date shared until it got its own
     var timeFont: Int
         get() = prefs.getInt("clock_font", FONT_SANS)
         set(value) = prefs.edit { putInt("clock_font", value) }
@@ -195,9 +154,8 @@ class Prefs(context: Context) {
         get() = prefs.getFloat("date_scale", 1f)
         set(value) = prefs.edit { putFloat("date_scale", value) }
 
-    /** Visible by default on new installs; explicit or historic choices are preserved. */
     var showStatusBar: Boolean
-        get() = prefs.getBoolean("show_status_bar", prefs.getBoolean("status_bar_initial_default", false))
+        get() = prefs.getBoolean("show_status_bar", true)
         set(value) = prefs.edit { putBoolean("show_status_bar", value) }
 
     // Gestures
@@ -226,17 +184,19 @@ class Prefs(context: Context) {
      * A Home app that crashes as it draws takes the phone with it: it comes back, crashes again,
      * and there's no way out but installing another launcher. So each crash is counted, and
      * [resetLookAfterCrashes] gives the look back its defaults once they repeat.
+     *
+     * Saved straight away rather than in the background: the process ends right after this.
      */
     fun recordCrash() {
         val now = System.currentTimeMillis()
         val recent = now - prefs.getLong("last_crash", 0) < CRASHES_WITHIN_MS
-        prefs.edit {
+        prefs.edit(commit = true) {
             putInt("crashes", if (recent) prefs.getInt("crashes", 0) + 1 else 1)
             putLong("last_crash", now)
         }
     }
 
-    /** The launcher got going again: the crashes before it don't count towards a reset. */
+    /** The launcher got a frame on screen: the crashes before it don't count towards a reset. */
     fun crashesSurvived() {
         if (prefs.getInt("crashes", 0) == 0) return
         prefs.edit { remove("crashes") }
@@ -249,7 +209,7 @@ class Prefs(context: Context) {
      */
     fun resetLookAfterCrashes(): Boolean {
         if (prefs.getInt("crashes", 0) < CRASHES_BEFORE_RESET) return false
-        prefs.edit {
+        prefs.edit(commit = true) {
             remove("crashes")
             LOOK_KEYS.forEach { remove(it) }
         }
@@ -275,86 +235,16 @@ class Prefs(context: Context) {
     val customNames: Map<String, String>
         get() = names.all.mapNotNull { (key, value) -> (value as? String)?.let { key to it } }.toMap()
 
-    /** Brings settings saved by an older version up to date. Runs when the app starts. */
-    fun migrate() {
-        migrateAppKeys()
-        splitDateStyle()
-        migrateHomeVisibility()
-    }
-
-    /**
-     * The old slider counted visible home slots. Later stored assignments must NOT suddenly
-     * appear merely because the new UI removed that slider. Archive them on first upgrade.
-     *
-     * The already-tested compact-home experiment had its own migration marker; honour it
-     * rather than reclassifying assignments added after that migration.
-     */
-    private fun migrateHomeVisibility() {
-        if (prefs.getBoolean("home_visibility_migrated_v3", false)) return
-        if (prefs.getBoolean("home_compacted_v2", false)) {
-            prefs.edit(commit = true) { putBoolean("home_visibility_migrated_v3", true) }
-            return
-        }
-        val visibleCount = prefs.getInt("home_app_count", 5).coerceIn(0, MAX_HOME_APPS)
-        val split = HomeSelection.splitLegacy(homeApps, visibleCount)
-        // One committed snapshot: never allow a crash to leave apps half-archived and visible.
-        prefs.edit(commit = true) {
-            (0 until MAX_HOME_APPS).forEach { index ->
-                putTarget("home_app_$index", split.visible.getOrNull(index))
-            }
-            split.archived.forEach { (index, target) ->
-                putTarget("archived_home_app_$index", target)
-            }
-            putInt("home_app_count", split.visible.size)
-            putBoolean("home_visibility_migrated_v3", true)
-        }
-    }
-
-    /** The date had the time's style until it got its own: it starts from the time's, so nothing changes. */
-    private fun splitDateStyle() {
-        if (prefs.contains("date_font")) return
-        prefs.edit {
-            putInt("date_font", timeFont)
-            putInt("date_weight", timeWeight)
-            putFloat("date_scale", timeScale)
-        }
-    }
-
-    /**
-     * Version 0.1 kept names and hidden apps by activity ("a:package/Class:user"). They're kept by
-     * app now ("p:package:user"), so an app that changes its activity in an update keeps them.
-     */
-    private fun migrateAppKeys() {
-        if (prefs.getBoolean("app_keys_v2", false)) return
-        fun appKey(key: String): String {
-            if (!key.startsWith("a:")) return key
-            val packageName = key.removePrefix("a:").substringBefore('/')
-            val serial = key.substringAfterLast(':')
-            return "p:$packageName:$serial"
-        }
-        val oldNames = customNames
-        names.edit {
-            oldNames.forEach { (key, name) ->
-                remove(key)
-                putString(appKey(key), name)
-            }
-        }
-        val hidden = hiddenApps.map(::appKey).toSet()
-        prefs.edit {
-            putStringSet("hidden_apps", hidden)
-            putBoolean("app_keys_v2", true)
-        }
-    }
-
     private fun android.content.SharedPreferences.Editor.putTarget(key: String, target: AppTarget?) {
         if (target == null) remove(key) else putString(key, target.encode())
     }
 
     companion object {
-        /** Separate pure policy so the first-install vs upgrade behavior has regression tests. */
-        internal fun defaultStatusBarForInstall(hadExistingData: Boolean): Boolean = !hadExistingData
-
         const val MAX_HOME_APPS = 10
+
+        // Between the home apps in their one saved line. AppTarget uses the unit separator inside
+        // each one, so this is the next control character along, which can't appear in either.
+        private const val LIST_SEPARATOR = "\u001E"
 
         private const val CRASHES_BEFORE_RESET = 3
         private const val CRASHES_WITHIN_MS = 60 * 1000L
@@ -362,12 +252,11 @@ class Prefs(context: Context) {
         // Everything that decides how the home screen is drawn, and so what a crash while drawing
         // is likely to have come from
         private val LOOK_KEYS = listOf(
-            "home_alignment", "home_at_bottom",
-            "show_time", "show_date", "date_style", "clock_mode",
+            "show_time", "show_date", "date_style",
             "clock_font", "clock_weight", "clock_scale",
             "date_font", "date_weight", "date_scale",
-            "name_font", "name_weight", "app_name_scale", "bolder_names",
-            "text_colour", "tint_text", "show_status_bar", "drawer_alignment",
+            "name_font", "name_weight", "app_name_scale",
+            "text_colour", "tint_text", "show_status_bar",
         )
 
         const val DATE_SHORT = 0
@@ -378,8 +267,7 @@ class Prefs(context: Context) {
         const val TEXT_DARK = 0
         /** Light text, for dark wallpapers. */
         const val TEXT_LIGHT = 1
-        private const val LEGACY_FOLLOW_DARK_MODE = 2
-        /** Dark or light text, whichever Android says suits the wallpaper. */
+        /** Dark or light text, whichever suits the wallpaper. */
         const val TEXT_MATCH_WALLPAPER = 3
 
         const val FONT_SANS = 0

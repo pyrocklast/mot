@@ -3,9 +3,11 @@ package io.github.pyrocklast.mot.launcher
 import io.github.pyrocklast.mot.data.AppTarget
 import io.github.pyrocklast.mot.data.Prefs
 
-/** A place you choose an app for: a home spot, a swipe, or what tapping the time or date opens. */
+/** A place you choose an app for: a home app, a new one, a swipe, or what tapping the time or date opens. */
 sealed interface Slot {
+    /** The home app at [index], top to bottom. */
     data class Home(val index: Int) : Slot
+    /** A new home app, added at the end. */
     data object AddHome : Slot
     data object Clock : Slot
     data object Calendar : Slot
@@ -14,7 +16,7 @@ sealed interface Slot {
 
     fun save(prefs: Prefs, target: AppTarget?) = when (this) {
         is Home -> prefs.setHomeApp(index, target)
-        AddHome -> { if (target != null) prefs.appendHomeApp(target); Unit }
+        AddHome -> { if (target != null) prefs.addHomeApp(target); Unit }
         Clock -> prefs.clockApp = target
         Calendar -> prefs.calendarApp = target
         SwipeLeft -> prefs.swipeLeftApp = target
