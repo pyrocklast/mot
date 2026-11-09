@@ -19,15 +19,16 @@ import io.github.pyrocklast.mot.util.Apps
 
 /**
  * The long-press menu for an app or shortcut: Rename, Hide, App info, Uninstall (Remove, for a
- * shortcut). The drawer and the home screen share it; the home screen adds its own items on top,
- * and leaves out Hide, which is about the drawer.
+ * shortcut). The drawer and the home screen share it, each adding its own items on top (putting
+ * the app on the home screen or taking it off); the home screen leaves out Hide, which is about
+ * the drawer.
  */
 class AppMenu(
     private val activity: Activity,
     private val prefs: Prefs,
     private val repo: AppRepository,
 ) {
-    /** An item shown above the usual ones, like the home screen's "Change app". */
+    /** An item shown above the usual ones, like the home screen's "Change app" or the drawer's "Add to home screen". */
     class Extra(@StringRes val title: Int, val onClick: () -> Unit)
 
     private var popup: PopupMenu? = null
@@ -40,14 +41,13 @@ class AppMenu(
     fun show(
         anchor: View,
         entry: AppEntry,
-        alignment: Int,
         extras: List<Extra> = emptyList(),
         canHide: Boolean = true,
         onHidden: () -> Unit = {},
     ) {
         dismiss()
         val shortcut = entry.target.isShortcut
-        val menu = PopupMenu(activity, anchor, if (alignment == Gravity.END) Gravity.END else Gravity.START)
+        val menu = PopupMenu(activity, anchor, Gravity.START)
         // The extras (e.g. the home screen's) and the app's own items, with a line between them
         extras.forEachIndexed { index, extra -> menu.menu.add(GROUP_EXTRAS, EXTRA + index, index, extra.title) }
         val order = extras.size

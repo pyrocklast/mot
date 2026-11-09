@@ -28,7 +28,8 @@ import java.text.Collator
 /**
  * Every app and pinned shortcut, in every profile, sorted by name. The list is loaded once when
  * mot launcher starts and again only when Android reports a change (an app installed, updated or removed,
- * shortcuts pinned or removed, a profile switched on or off), or when you rename an app.
+ * shortcuts pinned or removed, a profile switched on or off, the phone's language changed), or
+ * when you rename an app.
  */
 class AppRepository private constructor(private val context: Context) {
 
@@ -64,7 +65,9 @@ class AppRepository private constructor(private val context: Context) {
 
     private fun start() {
         launcherApps.registerCallback(callback, Handler(Looper.getMainLooper()))
-        val profileChanges = IntentFilter().apply {
+        val changes = IntentFilter().apply {
+            // Apps' names are in the phone's language, and sorted in its order
+            addAction(Intent.ACTION_LOCALE_CHANGED)
             addAction(Intent.ACTION_MANAGED_PROFILE_ADDED)
             addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED)
             addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
@@ -77,7 +80,7 @@ class AppRepository private constructor(private val context: Context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) = reload(CHANGE_DELAY_MS)
         }
-        ContextCompat.registerReceiver(context, receiver, profileChanges, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(context, receiver, changes, ContextCompat.RECEIVER_NOT_EXPORTED)
         reload()
     }
 
@@ -224,7 +227,7 @@ class AppRepository private constructor(private val context: Context) {
     // Keeps the names of the apps in use, so the home screen can show them before the list loads
     // and while a work profile is paused. Private Space's names are never kept.
     private fun rememberHomeNames() {
-        val targets = prefs.homeApps.filterNotNull() + listOfNotNull(prefs.swipeLeftApp, prefs.swipeRightApp)
+        val targets = prefs.homeApps + listOfNotNull(prefs.swipeLeftApp, prefs.swipeRightApp)
         val names = HashMap<String, String>()
         for (target in targets) {
             val entry = find(target)

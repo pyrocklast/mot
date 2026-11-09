@@ -231,7 +231,7 @@ class StyleActivity : SettingsScreen() {
 
     // Up to three of your home apps, or mot launcher's name when none is set
     private fun previewNames(): String {
-        val names = prefs.assignedHomeApps.mapNotNull { repo.nameFor(it) }.take(3)
+        val names = prefs.homeApps.mapNotNull { repo.nameFor(it) }.take(3)
         return names.ifEmpty { listOf(getString(R.string.app_name)) }.joinToString("\n")
     }
 

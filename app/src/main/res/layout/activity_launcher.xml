@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The launcher: the home screen, with the app drawer as a panel over it. Home apps are added
-     to homeApps from code, for actual selected targets only. -->
+<!-- The launcher: the home screen, with the app drawer as a panel over it. The home apps' names
+     are added to homeApps from code. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -35,7 +35,7 @@
                 tools:text="lun. 2 nov." />
         </LinearLayout>
 
-        <!-- Fixed home surface: never scroll; vertical swipes remain launcher gestures. -->
+        <!-- Never scrolls: swiping up and down are gestures -->
         <LinearLayout
             android:id="@+id/homeApps"
             android:layout_width="match_parent"
@@ -132,7 +132,7 @@
                 android:overScrollMode="ifContentScrolls"
                 android:requiresFadingEdge="vertical" />
 
-            <!-- Only shown when there are no rows: avoids a blank, unexplained drawer. -->
+            <!-- Says why the list is empty, when it is -->
             <TextView
                 android:id="@+id/drawerEmpty"
                 style="@style/Mot.Text.Small"

@@ -6,19 +6,11 @@
     <string name="home_apps">Applications d\'accueil</string>
     <string name="add_to_home">Ajouter une application à l\'accueil</string>
     <string name="home_apps_full">Écran d\'accueil complet (10 applications)</string>
-    <string name="restore_previous_home_apps">Restaurer les applications précédemment enregistrées</string>
-    <string name="restore_previous_home_apps_prompt">Des applications enregistrées par une ancienne version pouvaient se trouver hors des emplacements visibles. Les restaurer les affichera sur l’écran d’accueil, même si elles sont masquées dans le tiroir. Continuer ?</string>
-    <string name="restore_home_apps_action">Restaurer</string>
-    <plurals name="home_apps_restored">
-        <item quantity="one">%d application restaurée sur l’écran d’accueil</item>
-        <item quantity="other">%d applications restaurées sur l’écran d’accueil</item>
-    </plurals>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
     <string name="tips">Balayez vers le haut pour vos applications\nAppui long pour ajouter des applications ou ouvrir les paramètres\nAppui long puis glisser pour déplacer une application</string>
     <string name="set_as_home">Définir le lanceur mot comme application d\'accueil</string>
     <string name="set_as_home_underlined"><u>Définir le lanceur mot comme application d\'accueil</u></string>
-    <string name="long_press_to_choose">Appui long pour choisir une application</string>
     <string name="action_open">Ouvrir</string>
     <string name="action_more_options">Plus d\'options</string>
     <string name="action_open_clock">Ouvrir l\'horloge</string>
@@ -50,6 +42,9 @@
     <string name="new_app">%1$s, nouvelle</string>
     <string name="change_app">Changer d\'application</string>
     <string name="remove_from_home">Retirer de l\'écran d\'accueil</string>
+    <string name="add_to_home_screen">Ajouter à l\'écran d\'accueil</string>
+    <string name="added_to_home">Ajouté à l\'écran d\'accueil</string>
+    <string name="removed_from_home">Retiré de l\'écran d\'accueil</string>
     <string name="rename">Renommer</string>
     <string name="original_name">Nom d\'origine</string>
     <string name="hide">Masquer</string>
@@ -76,14 +71,6 @@
     </plurals>
 
     <string name="home_screen">Écran d\'accueil</string>
-    <string name="number_of_apps">Nombre d\'applications</string>
-    <string name="too_many_apps">À cette taille de nom, elles ne tiennent pas toutes à l\'écran</string>
-    <string name="alignment">Alignement</string>
-    <string name="home_alignment">Alignement de l\'écran d\'accueil</string>
-    <string name="align_bottom">Aligner les applications en bas</string>
-    <string name="left">Gauche</string>
-    <string name="centre">Centre</string>
-    <string name="right">Droite</string>
 
     <string name="time">Heure</string>
     <string name="date">Date</string>
@@ -102,7 +89,6 @@
     <string name="choose_app_ellipsis">Choisir une application…</string>
 
     <string name="app_drawer">Tiroir d\'applications</string>
-    <string name="drawer_alignment">Alignement du tiroir d\'applications</string>
     <string name="auto_open_unique_search_result">Ouvrir automatiquement le seul résultat de recherche</string>
     <string name="show_keyboard">Afficher le clavier automatiquement</string>
     <string name="hidden_apps">Applications masquées</string>

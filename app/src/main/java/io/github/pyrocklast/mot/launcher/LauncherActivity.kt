@@ -14,6 +14,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -42,7 +43,14 @@ class LauncherActivity : ComponentActivity() {
     /** The look this screen was drawn with; when settings change it, the screen is redrawn. */
     private var look = ""
 
-    // Recreate when a relevant palette actually changes, not for duplicate OEM callbacks.
+    /**
+     * The wallpaper's colours, asked for once and then kept up to date by Android telling us when
+     * they change, so coming back to the home screen doesn't have to ask again.
+     */
+    private var wallpaperColours: WallpaperColors? = null
+
+    // A live wallpaper can report new colours all the time, and some phones report the same
+    // ones twice: redraw only when they're really different
     private var wallpaperPalette: List<Int>? = null
     private var wallpaperId: Int = -1
     private fun systemWallpaperId(): Int = runCatching {
@@ -58,22 +66,19 @@ class LauncherActivity : ComponentActivity() {
         )
     }
 
-    private val wallpaperColours = WallpaperManager.OnColorsChangedListener { colours, which ->
-        if (which and WallpaperManager.FLAG_SYSTEM != 0 &&
-            (prefs.textColour == Prefs.TEXT_MATCH_WALLPAPER || prefs.tintText)
-        ) {
-            val next = palette(colours)
-            if (next != wallpaperPalette) {
-                wallpaperPalette = next
-                // A wallpaper's ID changes when the wallpaper is replaced; live wallpaper
-                // colour samples can change without a new ID. Refresh the full theme when
-                // the wallpaper changes, but don't recreate Home for every live colour sample.
-                val nextId = systemWallpaperId()
-                val wallpaperReplaced = nextId >= 0 && nextId != wallpaperId
-                wallpaperId = nextId
-                if (wallpaperReplaced || currentLook() != look) recreate()
-            }
-        }
+    private val wallpaperListener = WallpaperManager.OnColorsChangedListener { colours, which ->
+        if (which and WallpaperManager.FLAG_SYSTEM == 0) return@OnColorsChangedListener
+        wallpaperColours = colours
+        if (prefs.textColour != Prefs.TEXT_MATCH_WALLPAPER && !prefs.tintText) return@OnColorsChangedListener
+        val next = palette(colours)
+        if (next == wallpaperPalette) return@OnColorsChangedListener
+        wallpaperPalette = next
+        // A new wallpaper gets a new ID, and the text colours that go with it. A live wallpaper's
+        // colours can drift without one: only redraw for those if the text has to change.
+        val nextId = systemWallpaperId()
+        val wallpaperReplaced = nextId >= 0 && nextId != wallpaperId
+        wallpaperId = nextId
+        if (wallpaperReplaced || currentLook() != look) recreate()
     }
 
     private val homeRoleRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -86,6 +91,9 @@ class LauncherActivity : ComponentActivity() {
         // Crashing over and over while drawing leaves a phone with no home screen, so after a few
         // the look goes back to its defaults, which is where such a crash comes from
         val lookWasReset = prefs.resetLookAfterCrashes()
+        wallpaperColours = Look.wallpaperColours(this)
+        wallpaperPalette = palette(wallpaperColours)
+        wallpaperId = systemWallpaperId()
         look = currentLook()
         // Your text colour and weight, over the launcher theme
         val light = lightText()
@@ -100,7 +108,7 @@ class LauncherActivity : ComponentActivity() {
         repo = AppRepository.get(this)
 
         menu = AppMenu(this, prefs, repo)
-        drawer = Drawer(this, binding, prefs, repo, menu, onChosen = { home.render() }, openSettings = ::openSettings)
+        drawer = Drawer(this, binding, prefs, repo, menu, redrawHome = { home.render() }, openSettings = ::openSettings)
         home = HomeScreen(
             context = this,
             binding = binding,
@@ -120,13 +128,8 @@ class LauncherActivity : ComponentActivity() {
             insets
         }
 
-        // With "Match the wallpaper", a new wallpaper can call for the other text colour
-        val wallpaperManager = WallpaperManager.getInstance(this)
-        wallpaperId = systemWallpaperId()
-        wallpaperPalette = runCatching {
-            palette(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM))
-        }.getOrNull()
-        wallpaperManager.addOnColorsChangedListener(wallpaperColours, Handler(Looper.getMainLooper()))
+        // A new wallpaper can call for the other text colour
+        WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperListener, Handler(Looper.getMainLooper()))
 
         // Back leaves Private Space, or closes the drawer, which follows the back gesture as you
         // swipe (Android 15's predictive back). On the home screen it does nothing.
@@ -153,7 +156,7 @@ class LauncherActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Checking the wallpaper's colours takes a moment: once per return to the home screen
+        // Settings may have changed the look while you were away
         val light = lightText()
         if (currentLook(light) != look) {
             recreate()
@@ -163,8 +166,11 @@ class LauncherActivity : ComponentActivity() {
         applySystemBars(light)
         home.render()
         home.startTicking()
-        // Drawn without crashing: whatever went before doesn't count towards a reset
-        prefs.crashesSurvived()
+        // A crash while laying out or drawing comes after this, so the crashes so far only stop
+        // counting once a whole frame has made it to the screen
+        binding.root.doOnPreDraw { view ->
+            view.viewTreeObserver.registerFrameCommitCallback { prefs.crashesSurvived() }
+        }
     }
 
     override fun onPause() {
@@ -173,7 +179,7 @@ class LauncherActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        WallpaperManager.getInstance(this).removeOnColorsChangedListener(wallpaperColours)
+        WallpaperManager.getInstance(this).removeOnColorsChangedListener(wallpaperListener)
         super.onDestroy()
     }
 
@@ -202,11 +208,11 @@ class LauncherActivity : ComponentActivity() {
         if (request != null) homeRoleRequest.launch(request) else Apps.openHomeSettings(this)
     }
 
-    private fun lightText(): Boolean = Look.lightText(this, prefs)
+    private fun lightText(): Boolean = Look.lightText(this, prefs, wallpaperColours)
 
     // The drawer's rows are made with these, so a change redraws the screen
     private fun currentLook(light: Boolean = lightText()): String =
-        listOf(light, prefs.tintText, prefs.nameFont, prefs.nameWeight, prefs.appNameScale, prefs.drawerAlignment)
+        listOf(light, prefs.tintText, prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
             .joinToString()
 
     // Status bar shown or hidden as set, and status and navigation bar icons that match the text

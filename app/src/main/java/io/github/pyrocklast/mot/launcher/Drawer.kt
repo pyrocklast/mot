@@ -7,23 +7,21 @@ import android.text.Editable
 import android.text.Spannable
 import android.text.TextWatcher
 import android.view.GestureDetector
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.github.pyrocklast.mot.R
+import io.github.pyrocklast.mot.data.AppEntry
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.data.Profile
@@ -43,7 +41,8 @@ class Drawer(
     private val prefs: Prefs,
     private val repo: AppRepository,
     private val menu: AppMenu,
-    private val onChosen: () -> Unit,
+    /** An app was chosen for a spot, or put on the home screen or taken off it. */
+    private val redrawHome: () -> Unit,
     private val openSettings: () -> Unit,
 ) {
     var isOpen = false
@@ -77,7 +76,6 @@ class Drawer(
     private val adapter = DrawerAdapter(
         nameSizePx = nameSizePx,
         nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight),
-        gravity = prefs.drawerAlignment,
         onClick = ::onRowClick,
         onLongClick = ::onRowLongClick,
     )
@@ -126,7 +124,6 @@ class Drawer(
 
         search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, nameSizePx)
         search.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
-        search.gravity = prefs.drawerAlignment or Gravity.CENTER_VERTICAL
         search.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
@@ -140,7 +137,6 @@ class Drawer(
             adapter.currentList.firstOrNull { it is DrawerRow.App }?.let { onRowClick(it, search) }
             true
         }
-        describeSearchForTalkBack()
 
         // Room for the navigation bar, or the keyboard when it's open
         ViewCompat.setOnApplyWindowInsetsListener(binding.drawer) { view, insets ->
@@ -259,7 +255,8 @@ class Drawer(
         val query = Search.normalize(search.text ?: "")
         val choosing = choosingFor != null
         val hidden = if (choosing) emptySet() else prefs.hiddenApps
-        val alreadyAssigned = if (choosingFor == Slot.AddHome) prefs.assignedHomeApps.toSet() else emptySet()
+        // Choosing a home app, the ones already there aren't offered again
+        val onHome = if (choosingFor == Slot.AddHome || choosingFor is Slot.Home) prefs.homeApps.toSet() else emptySet()
         val now = System.currentTimeMillis()
 
         // Your apps, then a small "Private space" row; or Private Space's apps, then "Lock".
@@ -267,7 +264,7 @@ class Drawer(
         val rows = ArrayList<DrawerRow>()
         var matches = apps.filter {
             (it.profile == Profile.PRIVATE) == inPrivateSpace && it.appKey !in hidden &&
-                it.target !in alreadyAssigned && Search.matches(it.searchText, query)
+                it.target !in onHome && Search.matches(it.searchText, query)
         }
         // Searching, the names that start with what you typed come first, then those with a word
         // that does, then the rest; alphabetical within each (the sort keeps the list's order)
@@ -291,7 +288,7 @@ class Drawer(
         }
     }
 
-    // Only with explicit opt-in: typing a unique match may launch it automatically.
+    // Typing that leaves only one app opens it, if you've turned that on
     private fun maybeOpenOnlyMatch() {
         val query = search.text?.toString().orEmpty()
         if (!Search.shouldAutoOpenOnlyMatch(
@@ -321,7 +318,7 @@ class Drawer(
                 if (slot != null) {
                     slot.save(prefs, row.entry.target)
                     close()
-                    onChosen()
+                    redrawHome()
                 } else {
                     // The drawer closes when the app covers the launcher (LauncherActivity.onStop)
                     Apps.open(activity, row.entry.target, view)
@@ -336,10 +333,31 @@ class Drawer(
             is DrawerRow.App -> menu.show(
                 anchor = view,
                 entry = row.entry,
-                alignment = prefs.drawerAlignment,
+                extras = if (choosingFor == null) homeItems(row.entry) else emptyList(),
                 canHide = choosingFor == null,
                 onHidden = { update() },
             )
+        }
+    }
+
+    // Puts the app on the home screen, or takes it off, from where all your apps are. The drawer
+    // stays open, so you can add a few in a row.
+    private fun homeItems(entry: AppEntry): List<AppMenu.Extra> {
+        val target = entry.target
+        val onHome = prefs.homeApps
+        return when {
+            target in onHome -> listOf(AppMenu.Extra(R.string.remove_from_home) {
+                prefs.removeHomeApp(target)
+                redrawHome()
+                Apps.toast(activity, R.string.removed_from_home)
+            })
+            onHome.size < Prefs.MAX_HOME_APPS -> listOf(AppMenu.Extra(R.string.add_to_home_screen) {
+                if (prefs.addHomeApp(target)) {
+                    redrawHome()
+                    Apps.toast(activity, R.string.added_to_home)
+                }
+            })
+            else -> emptyList()
         }
     }
 
@@ -353,7 +371,7 @@ class Drawer(
         if (show) showKeyboardIfWanted()
     }
 
-    // Restrained, localized search hint; contextual in chooser and Private Space modes.
+    // The search's hint says what the list is for
     private fun setSearchHint() {
         search.hint = activity.getString(
             when {
@@ -386,16 +404,6 @@ class Drawer(
         if (start < 0 || end <= start) return false
         val language = activity.getSystemService(InputMethodManager::class.java).currentInputMethodSubtype?.languageTag.orEmpty()
         return language.startsWith("zh") || language.startsWith("ja") || language.startsWith("ko")
-    }
-
-    // The visible hint is a few underscores; TalkBack says "Search apps" instead
-    private fun describeSearchForTalkBack() {
-        ViewCompat.setAccessibilityDelegate(search, object : AccessibilityDelegateCompat() {
-            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
-                super.onInitializeAccessibilityNodeInfo(host, info)
-                info.hintText = search.hint
-            }
-        })
     }
 
     private companion object {
