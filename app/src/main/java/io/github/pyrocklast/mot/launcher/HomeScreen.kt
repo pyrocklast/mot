@@ -147,8 +147,9 @@ class HomeScreen(
         binding.date.isVisible = prefs.showDate
         updateDate()
 
-        // One row per home app
-        shown = prefs.homeApps
+        // One row per home app, but none from a Private Space that's locked and hidden: they
+        // come back when it's unlocked
+        shown = prefs.homeApps.filterNot { repo.isConcealed(it) }
         val count = shown.size
         while (appViews.size < count) appViews += newAppView()
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
@@ -326,8 +327,12 @@ class HomeScreen(
     private fun canMove(index: Int): Boolean =
         appViews.getOrNull(index)?.isVisible == true && shown.getOrNull(index)?.let { repo.find(it) } != null
 
+    // [from] and [to] are rows on screen; the saved list can also have apps that aren't shown
     private fun move(from: Int, to: Int) {
-        prefs.moveHomeApp(from, to)
+        val apps = prefs.homeApps
+        val moving = shown.getOrNull(from) ?: return
+        val there = shown.getOrNull(to) ?: return
+        prefs.moveHomeApp(apps.indexOf(moving), apps.indexOf(there))
         render()
     }
 
@@ -408,7 +413,7 @@ class HomeScreen(
             .coerceIn(0, (binding.home.height - 1).coerceAtLeast(0))
         binding.home.addView(anchor, params)
         val popup = PopupMenu(context, anchor, Gravity.START)
-        if (shown.size < Prefs.MAX_HOME_APPS) {
+        if (prefs.homeApps.size < Prefs.MAX_HOME_APPS) {
             popup.menu.add(0, HOME_ADD, 0, R.string.add_to_home)
         }
         popup.menu.add(0, HOME_SETTINGS, 1, R.string.settings)
@@ -444,9 +449,11 @@ class HomeScreen(
     }
 
     // The app you chose, or Android's own: an app that's been uninstalled falls back to the
-    // default rather than saying it's missing. One whose profile is away still asks to turn it on.
+    // default rather than saying it's missing. One whose profile is away still asks to turn it on,
+    // unless it's in a Private Space that's locked and hidden, which mustn't show it's there.
     private fun openOrDefault(target: AppTarget?, default: DefaultApp, from: View? = null) {
-        val here = target != null && (repo.find(target) != null || repo.isProfileAway(target.userSerial))
+        val here = target != null && !repo.isConcealed(target) &&
+            (repo.find(target) != null || repo.isProfileAway(target.userSerial))
         if (here) Apps.open(context, target!!, from) else Apps.openDefault(context, default)
     }
 

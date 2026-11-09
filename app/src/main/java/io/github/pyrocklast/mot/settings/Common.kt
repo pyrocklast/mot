@@ -54,9 +54,12 @@ internal fun SettingsScreen.appChoiceDialog(
 
 // Labels
 
-/** The name of the app a setting opens, or [default]. An app in a locked Private Space is only named once it's unlocked. */
+/**
+ * The name of the app a setting opens, or [default]. An app in a locked Private Space is only
+ * named once it's unlocked, and while it's hidden too, the default shows, as that's what opens.
+ */
 internal fun Context.appName(repo: AppRepository, target: AppTarget?, @StringRes default: Int): String = when {
-    target == null -> getString(default)
+    target == null || repo.isConcealed(target) -> getString(default)
     repo.isLockedPrivateSpace(target.userSerial) -> getString(R.string.private_space)
     else -> repo.nameFor(target) ?: getString(default)
 }

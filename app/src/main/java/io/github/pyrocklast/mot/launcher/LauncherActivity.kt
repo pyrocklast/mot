@@ -149,7 +149,13 @@ class LauncherActivity : ComponentActivity() {
                         drawer.update()
                     }
                 }
-                launch { repo.privateSpace.collect { drawer.update() } }
+                // Locking Private Space, or hiding it, can change the home screen as well
+                launch {
+                    repo.privateSpace.collect {
+                        home.render()
+                        drawer.update()
+                    }
+                }
             }
         }
     }

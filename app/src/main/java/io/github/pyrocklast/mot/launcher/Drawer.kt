@@ -267,9 +267,17 @@ class Drawer(
         // that does, then the rest; alphabetical within each (the sort keeps the list's order)
         if (query.isNotEmpty()) matches = matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
         matches.mapTo(rows) { DrawerRow.App(it, isNew = it.isNew(now)) }
-        if (query.isEmpty() && space != null) {
-            rows += if (inPrivateSpace) DrawerRow.LockPrivateSpace else DrawerRow.OpenPrivateSpace(space.locked)
+        // Last, Private Space's row, or Lock inside it. If you've asked Android to hide it while
+        // it's locked, it only shows when you type its whole name, as on Pixel phones; it shows
+        // then even on a phone without one, so no one can tell from that whether there is one.
+        val spaceRow: DrawerRow? = when {
+            inPrivateSpace -> DrawerRow.LockPrivateSpace.takeIf { query.isEmpty() }
+            query.isNotEmpty() && query == Search.normalize(activity.getString(R.string.private_space)) ->
+                DrawerRow.OpenPrivateSpace(locked = space?.locked ?: true)
+            query.isEmpty() && space != null && !space.concealed -> DrawerRow.OpenPrivateSpace(space.locked)
+            else -> null
         }
+        spaceRow?.let { rows += it }
 
         binding.drawerEmpty.isVisible = rows.isEmpty()
         if (rows.isEmpty()) {
@@ -299,7 +307,9 @@ class Drawer(
     private fun onRowClick(row: DrawerRow, view: View) {
         when (row) {
             is DrawerRow.OpenPrivateSpace -> {
-                if (row.locked) {
+                // No Private Space yet: Android's settings, to set one up
+                if (repo.privateSpace.value == null) Apps.openPrivateSpaceSettings(activity)
+                else if (row.locked) {
                     // Unlocking shows Android's lock screen; the drawer waits behind it, then goes in
                     unlockRequestedAt = SystemClock.elapsedRealtime()
                     keepOpenWhileAway = true

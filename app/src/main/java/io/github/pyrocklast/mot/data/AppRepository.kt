@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.LauncherApps
+import android.content.pm.LauncherUserInfo
 import android.content.pm.ShortcutInfo
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
@@ -33,8 +35,14 @@ import java.text.Collator
  */
 class AppRepository private constructor(private val context: Context) {
 
-    /** Private Space, when the phone has one: its profile, and whether it's locked. */
-    data class PrivateSpace(val user: UserHandle, val serial: Long, val locked: Boolean)
+    /**
+     * Private Space, when the phone has one: its profile, whether it's locked, and whether you've
+     * asked Android (16 and up) to hide it while it's locked.
+     */
+    data class PrivateSpace(val user: UserHandle, val serial: Long, val locked: Boolean, val hiddenWhenLocked: Boolean) {
+        /** Locked and hidden: nothing of it shows, not even that it's there. */
+        val concealed: Boolean get() = locked && hiddenWhenLocked
+    }
 
     private val prefs = Prefs(context)
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
@@ -97,6 +105,9 @@ class AppRepository private constructor(private val context: Context) {
 
         override fun onShortcutsChanged(packageName: String, shortcuts: MutableList<ShortcutInfo>, user: UserHandle) =
             reload(CHANGE_DELAY_MS)
+
+        // Android 16: Private Space's "hide when locked" was turned on or off
+        override fun onUserConfigChanged(launcherUserInfo: LauncherUserInfo) = reload()
     }
 
     /** Asks Android for the apps again, after [delayMs]. A newer request replaces a pending one. */
@@ -145,7 +156,8 @@ class AppRepository private constructor(private val context: Context) {
         for (user in launcherApps.profiles) {
             try {
                 val serial = userManager.getSerialNumberForUser(user)
-                val isPrivate = launcherApps.getLauncherUserInfo(user)?.userType == UserManager.USER_TYPE_PROFILE_PRIVATE
+                val info = launcherApps.getLauncherUserInfo(user)
+                val isPrivate = info?.userType == UserManager.USER_TYPE_PROFILE_PRIVATE
                 val profile = when {
                     isPrivate -> Profile.PRIVATE
                     user == Process.myUserHandle() -> Profile.PERSONAL
@@ -153,7 +165,7 @@ class AppRepository private constructor(private val context: Context) {
                 }
                 if (isPrivate) {
                     val locked = userManager.isQuietModeEnabled(user)
-                    space = PrivateSpace(user, serial, locked)
+                    space = PrivateSpace(user, serial, locked, hiddenWhenLocked(info))
                     // A locked Private Space shows only its header in the drawer
                     if (locked) continue
                 }
@@ -192,6 +204,18 @@ class AppRepository private constructor(private val context: Context) {
         return result to space
     }
 
+    /**
+     * Whether you've asked Android to hide Private Space while it's locked (Android 16 and up).
+     * If Android can't say, it's taken as hidden: better a space that has to be found than one
+     * that shows when you didn't want it to.
+     */
+    private fun hiddenWhenLocked(info: LauncherUserInfo?): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return false
+        return runCatching {
+            info!!.userConfig.getBoolean(LauncherUserInfo.PRIVATE_SPACE_ENTRYPOINT_HIDDEN, false)
+        }.getOrDefault(true)
+    }
+
     /** The app or shortcut a target points to, if it's installed and its profile is on. */
     fun find(target: AppTarget): AppEntry? {
         byKey[target.key]?.let { return it }
@@ -223,6 +247,10 @@ class AppRepository private constructor(private val context: Context) {
 
     /** Whether the target is in Private Space while it's locked. */
     fun isLockedPrivateSpace(serial: Long): Boolean = _privateSpace.value?.let { it.locked && it.serial == serial } == true
+
+    /** Whether the target is in Private Space while it's locked and hidden, so nothing of it may show. */
+    fun isConcealed(target: AppTarget): Boolean =
+        _privateSpace.value?.let { it.concealed && it.serial == target.userSerial } == true
 
     // Keeps the names of the apps in use, so the home screen can show them before the list loads
     // and while a work profile is paused. Private Space's names are never kept.

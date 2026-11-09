@@ -150,7 +150,8 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
-        val homeCount = prefs.homeApps.size
+        // Not counting a locked, hidden Private Space's: nothing here may show it's there
+        val homeCount = prefs.homeApps.count { !repo.isConcealed(it) }
         homeApps.summary = if (homeCount == Prefs.MAX_HOME_APPS) {
             getString(R.string.home_apps_full)
         } else {
@@ -171,6 +172,7 @@ class SettingsActivity : SettingsScreen() {
             ?: hiddenKeys.size
         hiddenApps.summary = if (hidden == 0) getString(R.string.none) else resources.getQuantityString(R.plurals.app_count, hidden, hidden)
         // Android only shows Private Space to the Home app, so it's unknown until mot launcher is the Home app
+        privateSpace.isVisible = repo.privateSpace.value?.concealed != true
         privateSpace.summary = repo.privateSpace.value?.let {
             getString(if (it.locked) R.string.private_space_locked_summary else R.string.private_space_unlocked_summary)
         } ?: if (isHome) getString(R.string.not_set_up) else null
@@ -193,18 +195,19 @@ class SettingsActivity : SettingsScreen() {
      * gone or locked away, so each can be changed or removed.
      */
     private fun manageHomeApps() {
-        val apps = prefs.homeApps
+        val all = prefs.homeApps
+        val apps = all.filterNot { repo.isConcealed(it) }
         val options = apps.map { target ->
             repo.nameFor(target) ?: getString(
                 if (repo.isLockedPrivateSpace(target.userSerial)) R.string.private_space_locked
                 else R.string.app_not_found,
             )
         }.toMutableList()
-        if (apps.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
+        if (all.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
         val dialog = android.app.AlertDialog.Builder(this)
             .setTitle(R.string.home_apps)
             .setItems(options.toTypedArray()) { _, selected ->
-                if (selected == apps.size) {
+                if (selected >= apps.size) {
                     startActivity(AppListActivity.chooseApp(this, Slot.AddHome))
                 } else {
                     showHomeAppActions(apps[selected])
