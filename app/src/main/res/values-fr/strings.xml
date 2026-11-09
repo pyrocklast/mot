@@ -9,8 +9,8 @@
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
     <string name="tips">Balayez vers le haut pour vos applications\nAppui long pour ajouter des applications ou ouvrir les paramètres\nAppui long puis glisser pour déplacer une application</string>
-    <string name="set_as_home">Définir le lanceur mot comme application d\'accueil</string>
-    <string name="set_as_home_underlined"><u>Définir le lanceur mot comme application d\'accueil</u></string>
+    <string name="set_as_home">Définir mot comme lanceur par défaut</string>
+    <string name="set_as_home_underlined"><u>Définir mot comme lanceur par défaut</u></string>
     <string name="action_open">Ouvrir</string>
     <string name="action_more_options">Plus d\'options</string>
     <string name="action_open_clock">Ouvrir l\'horloge</string>
@@ -62,7 +62,7 @@
     <string name="settings">Paramètres</string>
     <string name="settings_title">Paramètres du %1$s</string>
     <string name="back">Retour</string>
-    <string name="change_home">Changer d\'application d\'accueil</string>
+    <string name="change_home">Changer de lanceur par défaut</string>
     <string name="none">Aucune</string>
     <plurals name="app_count">
         <item quantity="one">%d application</item>
@@ -72,14 +72,8 @@
 
     <string name="home_screen">Écran d\'accueil</string>
 
-    <string name="time">Heure</string>
-    <string name="date">Date</string>
     <string name="show_time">Afficher l\'heure</string>
     <string name="show_date">Afficher la date</string>
-    <string name="format">Format</string>
-    <string name="date_format">Format de la date</string>
-    <string name="hidden">Masquée</string>
-    <string name="size">Taille</string>
     <string name="tap_time">Appuyer sur l\'heure ouvre</string>
     <string name="tap_date">Appuyer sur la date ouvre</string>
     <string name="default_clock_app">Application d\'horloge par défaut</string>
@@ -109,18 +103,7 @@
     <string name="tint_text">Harmoniser avec le fond d\'écran</string>
     <string name="tint_text_on">Le texte en prend une teinte</string>
     <string name="tint_text_off">Blanc ou noir</string>
-    <string name="app_names">Noms d\'applications</string>
-    <string name="font">Police</string>
-    <string name="font_sans">Sans empattement</string>
-    <string name="font_serif">Avec empattement</string>
-    <string name="font_mono">Chasse fixe</string>
-    <string name="font_condensed">Condensée</string>
-    <string name="weight">Graisse</string>
-    <string name="weight_thin">Fine</string>
-    <string name="weight_light">Légère</string>
-    <string name="weight_regular">Normale</string>
-    <string name="weight_medium">Moyenne</string>
-    <string name="weight_bold">Grasse</string>
+    <string name="app_name_size">Taille des noms d\'applications</string>
     <string name="show_status_bar">Afficher la barre d\'état</string>
     <string name="status_bar_off_summary">Balayez vers le bas pour les notifications</string>
 

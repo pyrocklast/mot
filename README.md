@@ -14,12 +14,12 @@ It's for Android 15 and up, in English and French.
 - Tap the time or the date to open your clock or calendar, or any app you choose.
 - Search ignores accents and case, puts the best matches first, and can optionally open the only match after two letters (off by default).
 - Long press an app to rename it, hide it or uninstall it. Work apps get a small dot, and Private Space has its own list.
-- Choose the font, weight and size of app names, the time and the date. You see the result on your wallpaper as you go.
+- One font, Android's own, at sizes that follow your phone's font size. Show or hide the time and the date, and make app names bigger or smaller.
 - The text colour matches your wallpaper. Settings follow your phone's theme.
 
 ## Install
 
-Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium), or get the APK from [Releases](https://github.com/pyrocklast/mot/releases). Then set mot launcher as your Home app.
+Add `https://github.com/pyrocklast/mot` to [Obtainium](https://github.com/ImranR98/Obtainium), or get the APK from [Releases](https://github.com/pyrocklast/mot/releases). Then set mot as your default launcher.
 
 ## Permissions
 

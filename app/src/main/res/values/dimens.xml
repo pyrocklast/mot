@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launcher text sizes at 100%. Being in sp, they follow Android's font size, and the size
-     settings scale them on top of that. -->
+<!-- Launcher text sizes. Being in sp, they follow Android's font size; app names also follow
+     their own size setting, on top of that. -->
 <resources>
-    <dimen name="app_name_size">30sp</dimen>
-    <dimen name="clock_size">42sp</dimen>
-    <dimen name="date_size">14sp</dimen>
+    <dimen name="app_name_size">34sp</dimen>
+    <dimen name="clock_size">64sp</dimen>
+    <dimen name="date_size">21sp</dimen>
     <dimen name="small_size">18sp</dimen>
 
     <!-- Settings: groups sit this far in from the screen's sides, and their rows' text this far
@@ -12,7 +12,4 @@
     <dimen name="settings_group_margin">16dp</dimen>
     <dimen name="settings_row_padding">16dp</dimen>
     <dimen name="settings_heading_inset">32dp</dimen>
-
-    <!-- The style screens' preview: room for the largest the time, date or three app names get -->
-    <dimen name="preview_height">216dp</dimen>
 </resources>

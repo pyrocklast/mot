@@ -7,8 +7,8 @@ import androidx.annotation.StringRes
 import io.github.pyrocklast.mot.R
 
 /**
- * A row with a slider that applies as you move it, for whole numbers like the number of home
- * apps. [onValueChange] saves the value; setting [value] only moves the slider.
+ * A row with a slider that applies as you move it, in whole steps like the app name size's.
+ * [onValueChange] saves the value; setting [value] only moves the slider.
  */
 class SliderRow(view: View) : Row(view) {
     private val slider: SeekBar = view.findViewById(R.id.slider)
@@ -51,7 +51,7 @@ class SliderRow(view: View) : Row(view) {
         slider.max = to
     }
 
-    // The value beside the title, and for TalkBack, e.g. "Weight, Light" rather than a percentage
+    // The value beside the title, and for TalkBack, e.g. "App name size, 120 %" rather than a step
     private fun showValue() {
         val text = formatValue(slider.progress)
         valueText.text = text

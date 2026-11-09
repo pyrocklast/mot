@@ -27,7 +27,6 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.data.Profile
 import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.util.Apps
-import io.github.pyrocklast.mot.util.Look
 import io.github.pyrocklast.mot.util.HomeFit
 import io.github.pyrocklast.mot.util.Search
 
@@ -75,7 +74,6 @@ class Drawer(
 
     private val adapter = DrawerAdapter(
         nameSizePx = nameSizePx,
-        nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight),
         onClick = ::onRowClick,
         onLongClick = ::onRowLongClick,
     )
@@ -123,7 +121,6 @@ class Drawer(
         })
 
         search.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, nameSizePx)
-        search.typeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         search.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit

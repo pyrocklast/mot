@@ -5,11 +5,13 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Color
 import android.content.res.Configuration
-import android.graphics.Typeface
-import android.widget.TextView
 import io.github.pyrocklast.mot.data.Prefs
 
-/** The launcher's look: fonts, weights and the text colour, shared by the launcher and settings' previews. */
+/**
+ * The launcher's text colour: light or dark, as you set it or as the wallpaper suits. The font is
+ * fixed (themes.xml): Android's own sans serif, light for the time and app names, regular for the
+ * date, at sizes that follow Android's font size.
+ */
 object Look {
 
     // The text takes the lightest and darkest of the colours Android works out from the wallpaper,
@@ -18,28 +20,9 @@ object Look {
     private const val LIGHT_TEXT = android.R.color.system_neutral1_50
     private const val DARK_TEXT = android.R.color.system_neutral1_900
 
-    /** The weights offered, from thin to bold. */
-    val WEIGHTS = intArrayOf(100, 300, 400, 500, 700)
-
-    val FONTS = intArrayOf(Prefs.FONT_SANS, Prefs.FONT_SERIF, Prefs.FONT_MONO, Prefs.FONT_CONDENSED)
-
-    /**
-     * One of Android's own fonts at a weight. Android 12 and later draw any weight of its main
-     * font (it's a variable font); other families use their nearest weight.
-     */
-    fun typeface(font: Int, weight: Int): Typeface {
-        val family = when (font) {
-            Prefs.FONT_SERIF -> Typeface.SERIF
-            Prefs.FONT_MONO -> Typeface.MONOSPACE
-            Prefs.FONT_CONDENSED -> Typeface.create("sans-serif-condensed", Typeface.NORMAL)
-            else -> Typeface.SANS_SERIF
-        }
-        return Typeface.create(family, weight, false)
-    }
-
     /**
      * The wallpaper's colours, or null when it has none to give. Asking takes Android a moment,
-     * so the launcher asks once and keeps them; settings' previews ask when they open.
+     * so the launcher asks once and keeps them.
      */
     fun wallpaperColours(context: Context): WallpaperColors? = runCatching {
         // Some phones' and live wallpapers' colours can't be read: carry on without them
@@ -47,11 +30,7 @@ object Look {
     }.getOrNull()
 
     /** Light text for dark wallpapers, dark text for light ones: as set, or as the wallpaper suits. */
-    fun lightText(
-        context: Context,
-        prefs: Prefs,
-        colours: WallpaperColors? = wallpaperColours(context),
-    ): Boolean = when (prefs.textColour) {
+    fun lightText(context: Context, prefs: Prefs, colours: WallpaperColors?): Boolean = when (prefs.textColour) {
         Prefs.TEXT_DARK -> false
         Prefs.TEXT_LIGHT -> true
         // With a wallpaper that says nothing about itself, the phone's dark mode is the next best
@@ -118,16 +97,5 @@ object Look {
             weight += 1f
         }
         return light / weight
-    }
-
-    /** Launcher text colours and shadow, for previews outside the launcher. */
-    fun applyTextColour(view: TextView, light: Boolean, tinted: Boolean) {
-        val colour = when {
-            tinted -> view.context.getColor(if (light) LIGHT_TEXT else DARK_TEXT)
-            light -> Color.WHITE
-            else -> Color.BLACK
-        }
-        view.setTextColor(colour)
-        view.setShadowLayer(4f, 0f, 2f, if (light) 0x80000000.toInt() else 0x80FFFFFF.toInt())
     }
 }

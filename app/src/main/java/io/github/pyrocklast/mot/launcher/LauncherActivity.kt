@@ -95,7 +95,7 @@ class LauncherActivity : ComponentActivity() {
         wallpaperPalette = palette(wallpaperColours)
         wallpaperId = systemWallpaperId()
         look = currentLook()
-        // Your text colour and weight, over the launcher theme
+        // Your text colour, over the launcher theme
         val light = lightText()
         theme.applyStyle(if (light) R.style.ThemeOverlay_Mot_LightText else R.style.ThemeOverlay_Mot_DarkText, true)
         if (!prefs.tintText) {
@@ -212,8 +212,7 @@ class LauncherActivity : ComponentActivity() {
 
     // The drawer's rows are made with these, so a change redraws the screen
     private fun currentLook(light: Boolean = lightText()): String =
-        listOf(light, prefs.tintText, prefs.nameFont, prefs.nameWeight, prefs.appNameScale)
-            .joinToString()
+        listOf(light, prefs.tintText, prefs.appNameScale).joinToString()
 
     // Status bar shown or hidden as set, and status and navigation bar icons that match the text
     private fun applySystemBars(light: Boolean) {

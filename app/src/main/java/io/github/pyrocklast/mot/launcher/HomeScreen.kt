@@ -33,7 +33,6 @@ import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.DefaultApp
 import io.github.pyrocklast.mot.util.HomeFit
-import io.github.pyrocklast.mot.util.Look
 import kotlin.math.abs
 
 /**
@@ -146,11 +145,6 @@ class HomeScreen(
         }
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
-        // The time and the date each have their own style
-        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.timeSizePx(context, prefs))
-        binding.clock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
-        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.dateSizePx(context, prefs))
-        binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
         updateDate()
 
         // One row per home app
@@ -158,7 +152,6 @@ class HomeScreen(
         val count = shown.size
         while (appViews.size < count) appViews += newAppView()
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         val nameSizePx = HomeFit.appNameSizePx(context, prefs)
         appViews.forEachIndexed { index, view ->
             // Shown again for now: whether it still fits is worked out below
@@ -169,7 +162,6 @@ class HomeScreen(
                 else R.string.app_not_found,
             )
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
-            view.typeface = nameTypeface
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         }
 
@@ -214,8 +206,7 @@ class HomeScreen(
             overflowView = view
             binding.homeApps.addView(view)
         }
-        // In the app names' font, smaller, so it doesn't read as an app
-        indicator.typeface = nameTypeface
+        // Smaller than the names, so it doesn't read as an app, and growing with them
         indicator.setTextSize(
             TypedValue.COMPLEX_UNIT_PX,
             context.resources.getDimension(R.dimen.small_size) * prefs.appNameScale,
@@ -274,7 +265,7 @@ class HomeScreen(
     // The date, left as it is when it hasn't changed
     private fun updateDate() {
         if (!prefs.showDate) return
-        val text = DateText.date(context, prefs.dateStyle)
+        val text = DateText.date(context)
         if (binding.date.text.toString() != text) binding.date.text = text
     }
 
@@ -384,7 +375,7 @@ class HomeScreen(
             popup.menu.add(0, HOME_REMOVE, 1, R.string.remove_from_home)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
-                    HOME_CHANGE -> openDrawer(Slot.Home(index))
+                    HOME_CHANGE -> openDrawer(Slot.Home(target))
                     HOME_REMOVE -> remove()
                 }
                 true
@@ -400,7 +391,7 @@ class HomeScreen(
             // Hiding is about the drawer: it's done there
             canHide = false,
             extras = listOf(
-                AppMenu.Extra(R.string.change_app) { openDrawer(Slot.Home(index)) },
+                AppMenu.Extra(R.string.change_app) { openDrawer(Slot.Home(target)) },
                 AppMenu.Extra(R.string.remove_from_home, remove),
             ),
         )

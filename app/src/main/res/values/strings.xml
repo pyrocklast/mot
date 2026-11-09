@@ -11,8 +11,8 @@
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
     <string name="tips">Swipe up for your apps\nLong press to add apps or open settings\nLong press and drag an app to move it</string>
-    <string name="set_as_home">Set mot launcher as your Home app</string>
-    <string name="set_as_home_underlined"><u>Set mot launcher as your Home app</u></string>
+    <string name="set_as_home">Set mot as default launcher</string>
+    <string name="set_as_home_underlined"><u>Set mot as default launcher</u></string>
     <!-- TalkBack actions on the home screen -->
     <string name="action_open">Open</string>
     <string name="action_more_options">More options</string>
@@ -71,7 +71,7 @@
     <string name="settings">Settings</string>
     <string name="settings_title">%1$s settings</string>
     <string name="back">Back</string>
-    <string name="change_home">Change Home app</string>
+    <string name="change_home">Change default launcher</string>
     <string name="none">None</string>
     <plurals name="app_count">
         <item quantity="one">%d app</item>
@@ -79,17 +79,10 @@
     </plurals>
 
     <string name="home_screen">Home screen</string>
-
-    <string name="time">Time</string>
-    <string name="date">Date</string>
-    <!-- The Time and Date settings: shown on the home screen or not, and the date's format -->
     <string name="show_time">Show the time</string>
     <string name="show_date">Show the date</string>
-    <string name="format">Format</string>
-    <string name="date_format">Date format</string>
-    <!-- Summary of the Time or Date setting while it's switched off -->
-    <string name="hidden">Hidden</string>
-    <string name="size">Size</string>
+
+    <!-- Gestures: what tapping the time or the date opens, and the swipes -->
     <string name="tap_time">Tapping the time opens</string>
     <string name="tap_date">Tapping the date opens</string>
     <string name="default_clock_app">Default clock app</string>
@@ -122,18 +115,8 @@
     <string name="tint_text">Harmonise with the wallpaper</string>
     <string name="tint_text_on">The text takes a tint from it</string>
     <string name="tint_text_off">Plain white or black</string>
-    <string name="app_names">App names</string>
-    <string name="font">Font</string>
-    <string name="font_sans">Sans serif</string>
-    <string name="font_serif">Serif</string>
-    <string name="font_mono">Monospace</string>
-    <string name="font_condensed">Condensed</string>
-    <string name="weight">Weight</string>
-    <string name="weight_thin">Thin</string>
-    <string name="weight_light">Light</string>
-    <string name="weight_regular">Regular</string>
-    <string name="weight_medium">Medium</string>
-    <string name="weight_bold">Bold</string>
+    <!-- One slider for app names on the home screen and in the drawer, 80 to 180 % -->
+    <string name="app_name_size">App name size</string>
     <string name="show_status_bar">Show status bar</string>
     <string name="status_bar_off_summary">Swipe down for notifications</string>
 
