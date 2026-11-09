@@ -45,7 +45,7 @@ class HomeAppsTest {
         assertEquals(listOf(maps), prefs.homeApps)
     }
 
-    @Test fun `as many as you like: the screen decides how many there's room for`() {
+    @Test fun `as many as you like, as the screen decides how many there's room for`() {
         repeat(14) { assertTrue(prefs.addHomeApp(app("app$it"))) }
         assertEquals(14, Prefs(context).homeApps.size)
     }
