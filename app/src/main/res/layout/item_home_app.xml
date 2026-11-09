@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A home app. Not clickable itself: the home screen's gesture detector handles touch. -->
+<!-- A home app: its name in the middle of a row as tall as HomeFit says. Not clickable itself:
+     the home screen's gesture detector handles touch. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/Mot.Text.AppName"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:paddingVertical="10dp" />
+    android:gravity="start|center_vertical" />

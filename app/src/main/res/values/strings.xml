@@ -7,7 +7,7 @@
     <!-- Home screen -->
     <string name="home_apps">Home apps</string>
     <string name="add_to_home">Add app to home</string>
-    <string name="home_apps_full">Home screen full (10 apps)</string>
+    <string name="home_apps_full">Home screen full</string>
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
     <string name="tips">Swipe up for your apps\nLong press to add apps or open settings\nLong press and drag an app to move it</string>
@@ -115,7 +115,7 @@
     <string name="tint_text">Harmonise with the wallpaper</string>
     <string name="tint_text_on">The text takes a tint from it</string>
     <string name="tint_text_off">Plain white or black</string>
-    <!-- One slider for app names on the home screen and in the drawer, 80 to 180 % -->
+    <!-- One slider for app names on the home screen and in the drawer, 24 to 48 dp -->
     <string name="app_name_size">App name size</string>
     <string name="show_status_bar">Show status bar</string>
     <string name="status_bar_off_summary">Swipe down for notifications</string>

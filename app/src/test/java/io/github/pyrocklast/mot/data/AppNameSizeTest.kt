@@ -10,7 +10,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** App names are 80 to 180 % of their usual size, whatever was saved before. */
+/** App names are 24 to 48 dp. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = Application::class)
 class AppNameSizeTest {
@@ -21,22 +21,17 @@ class AppNameSizeTest {
         saved.edit().clear().commit()
     }
 
-    @Test fun `the usual size to start with`() {
-        assertEquals(1f, Prefs(context).appNameScale, 0.001f)
+    @Test fun `34 to start with`() {
+        assertEquals(34, Prefs(context).appNameSize)
     }
 
-    @Test fun `a size saved by an earlier version is brought into the range`() {
-        saved.edit().putFloat("app_name_scale", 0.5f).commit()
-        assertEquals(0.8f, Prefs(context).appNameScale, 0.001f)
-        saved.edit().putFloat("app_name_scale", 1.5f).commit()
-        assertEquals(1.5f, Prefs(context).appNameScale, 0.001f)
-    }
-
-    @Test fun `nothing outside the range is saved`() {
+    @Test fun `nothing outside 24 to 48 is saved or read`() {
         val prefs = Prefs(context)
-        prefs.appNameScale = 0.2f
-        assertEquals(0.8f, saved.getFloat("app_name_scale", -1f), 0.001f)
-        prefs.appNameScale = 2.5f
-        assertEquals(1.8f, saved.getFloat("app_name_scale", -1f), 0.001f)
+        prefs.appNameSize = 12
+        assertEquals(24, saved.getInt("app_name_size", -1))
+        prefs.appNameSize = 60
+        assertEquals(48, saved.getInt("app_name_size", -1))
+        saved.edit().putInt("app_name_size", 8).commit()
+        assertEquals(24, Prefs(context).appNameSize)
     }
 }

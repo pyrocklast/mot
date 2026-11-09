@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launcher text sizes. Being in sp, they follow Android's font size; app names also follow
-     their own size setting, on top of that. -->
-<resources>
-    <dimen name="app_name_size">34sp</dimen>
-    <dimen name="clock_size">64sp</dimen>
-    <dimen name="date_size">21sp</dimen>
+<!-- Launcher text sizes. The home screen's are in dp: they follow the screen (HomeFit sets them
+     from its width, and app names from their own setting), not Android's text size. These are
+     the starting points; the small text of tips and the drawer's Private space row is in sp. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <dimen name="app_name_size" tools:ignore="SpUsage">34dp</dimen>
+    <dimen name="clock_size" tools:ignore="SpUsage">64dp</dimen>
+    <dimen name="date_size" tools:ignore="SpUsage">21dp</dimen>
     <dimen name="small_size">18sp</dimen>
 
     <!-- Settings: groups sit this far in from the screen's sides, and their rows' text this far

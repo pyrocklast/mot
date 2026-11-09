@@ -8,7 +8,6 @@ import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.AppTarget
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.launcher.Slot
-import java.text.NumberFormat
 
 // Dialogs and labels shared by the settings screens. The rows themselves are in Rows.kt.
 
@@ -63,6 +62,3 @@ internal fun Context.appName(repo: AppRepository, target: AppTarget?, @StringRes
     repo.isLockedPrivateSpace(target.userSerial) -> getString(R.string.private_space)
     else -> repo.nameFor(target) ?: getString(default)
 }
-
-/** e.g. "110 %" in French. */
-internal fun percent(scale: Float): String = NumberFormat.getPercentInstance().format(scale.toDouble())

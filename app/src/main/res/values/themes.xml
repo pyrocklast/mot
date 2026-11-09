@@ -60,7 +60,7 @@
     </style>
 
     <!-- Launcher text: your text colour, with a soft shadow that keeps it readable on busy wallpapers,
-         in Android's own sans serif. The time and app names are light, the date regular. -->
+         in Android's own sans serif: the time bold, the date regular, app names light. -->
     <style name="Mot.Text" parent="">
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:textColor">@color/launcher_text</item>
@@ -89,13 +89,14 @@
 
     <style name="Mot.Text.Clock">
         <item name="android:textSize">@dimen/clock_size</item>
-        <item name="android:textFontWeight">300</item>
+        <item name="android:textFontWeight">700</item>
         <item name="android:maxLines">1</item>
     </style>
 
     <style name="Mot.Text.Date">
         <item name="android:textSize">@dimen/date_size</item>
         <item name="android:textFontWeight">400</item>
+        <item name="android:maxLines">1</item>
     </style>
 
     <style name="Mot.Text.Small">

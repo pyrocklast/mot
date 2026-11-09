@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** The home screen's apps: one list, in order, at most ten, each app once. */
+/** The home screen's apps: one list, in order, each app once. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = Application::class)
 class HomeAppsTest {
@@ -45,10 +45,9 @@ class HomeAppsTest {
         assertEquals(listOf(maps), prefs.homeApps)
     }
 
-    @Test fun `ten at most`() {
-        repeat(Prefs.MAX_HOME_APPS) { assertTrue(prefs.addHomeApp(app("app$it"))) }
-        assertFalse(prefs.addHomeApp(maps))
-        assertEquals(Prefs.MAX_HOME_APPS, prefs.homeApps.size)
+    @Test fun `as many as you like: the screen decides how many there's room for`() {
+        repeat(14) { assertTrue(prefs.addHomeApp(app("app$it"))) }
+        assertEquals(14, Prefs(context).homeApps.size)
     }
 
     @Test fun `moving one makes room for it`() {

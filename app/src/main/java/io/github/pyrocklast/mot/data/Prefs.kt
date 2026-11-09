@@ -13,24 +13,26 @@ class Prefs(context: Context) {
 
     // Home screen
 
-    /** The apps on the home screen, top to bottom: never more than [MAX_HOME_APPS], never twice the same. */
+    /**
+     * The apps on the home screen, top to bottom, never twice the same. How many there's room for
+     * depends on the screen (HomeFit.capacity): adding stops there.
+     */
     var homeApps: List<AppTarget>
         get() = prefs.getString("home_apps", null)
             ?.split(LIST_SEPARATOR)
             ?.mapNotNull { AppTarget.decode(it) }
             ?.distinct()
-            ?.take(MAX_HOME_APPS)
             .orEmpty()
         set(value) = prefs.edit {
-            val apps = value.distinct().take(MAX_HOME_APPS)
+            val apps = value.distinct()
             if (apps.isEmpty()) remove("home_apps")
             else putString("home_apps", apps.joinToString(LIST_SEPARATOR) { it.encode() })
         }
 
-    /** Puts an app at the end of the home screen. False when it's already there or there's no more room. */
+    /** Puts an app at the end of the home screen. False when it's already there. */
     fun addHomeApp(target: AppTarget): Boolean {
         val apps = homeApps
-        if (apps.size >= MAX_HOME_APPS || target in apps) return false
+        if (target in apps) return false
         homeApps = apps + target
         return true
     }
@@ -121,12 +123,13 @@ class Prefs(context: Context) {
         set(value) = prefs.edit { putBoolean("tint_text", value) }
 
     /**
-     * How big app names are, on the home screen and in the drawer, from 80 to 180 % of their usual
-     * size, which itself follows Android's font size. The time and the date have one size each.
+     * How big app names are, on the home screen and in the drawer, in dp: [MIN_NAME_SIZE] (text
+     * that fills a 48 dp touch target, with 8 dp above and below) to [MAX_NAME_SIZE]. Android's
+     * text size doesn't change it.
      */
-    var appNameScale: Float
-        get() = prefs.getFloat("app_name_scale", 1f).coerceIn(MIN_NAME_SCALE, MAX_NAME_SCALE)
-        set(value) = prefs.edit { putFloat("app_name_scale", value.coerceIn(MIN_NAME_SCALE, MAX_NAME_SCALE)) }
+    var appNameSize: Int
+        get() = prefs.getInt("app_name_size", DEFAULT_NAME_SIZE).coerceIn(MIN_NAME_SIZE, MAX_NAME_SIZE)
+        set(value) = prefs.edit { putInt("app_name_size", value.coerceIn(MIN_NAME_SIZE, MAX_NAME_SIZE)) }
 
     var showStatusBar: Boolean
         get() = prefs.getBoolean("show_status_bar", true)
@@ -214,8 +217,6 @@ class Prefs(context: Context) {
     }
 
     companion object {
-        const val MAX_HOME_APPS = 10
-
         // Between the home apps in their one saved line. AppTarget uses the unit separator inside
         // each one, so this is the next control character along, which can't appear in either.
         private const val LIST_SEPARATOR = "\u001E"
@@ -226,11 +227,12 @@ class Prefs(context: Context) {
         // Everything that decides how the home screen is drawn, and so what a crash while drawing
         // is likely to have come from
         private val LOOK_KEYS = listOf(
-            "show_time", "show_date", "app_name_scale", "text_colour", "tint_text", "show_status_bar",
+            "show_time", "show_date", "app_name_size", "text_colour", "tint_text", "show_status_bar",
         )
 
-        const val MIN_NAME_SCALE = 0.8f
-        const val MAX_NAME_SCALE = 1.8f
+        const val MIN_NAME_SIZE = 24
+        const val MAX_NAME_SIZE = 48
+        const val DEFAULT_NAME_SIZE = 34
 
         /** Dark text, for light wallpapers. */
         const val TEXT_DARK = 0
