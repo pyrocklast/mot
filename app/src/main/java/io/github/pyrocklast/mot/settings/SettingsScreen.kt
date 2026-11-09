@@ -14,7 +14,7 @@ import io.github.pyrocklast.mot.databinding.SettingsAppBarBinding
  * What every settings screen shares: drawn edge to edge, a title bar with Back under the status
  * bar, a list that scrolls under the navigation bar, and at most one dialog open at a time.
  *
- * Each screen is its own activity (the main list, a style screen, a list of apps), so Back and
+ * Each screen is its own activity (the main list, a list of apps), so Back and
  * the screen transitions are Android's own. They follow the phone's dark mode, font and colours;
  * the launcher's own look applies to the home screen and drawer only.
  */

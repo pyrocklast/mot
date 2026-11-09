@@ -68,15 +68,21 @@ class HomeAppsTest {
 
     @Test fun `changing one keeps its place`() {
         listOf(maps, mail).forEach { prefs.addHomeApp(it) }
-        prefs.setHomeApp(0, music)
+        prefs.replaceHomeApp(maps, music)
         assertEquals(listOf(music, mail), prefs.homeApps)
+    }
+
+    @Test fun `changing one that has gone adds the new one at the end`() {
+        prefs.addHomeApp(mail)
+        prefs.replaceHomeApp(maps, music)
+        assertEquals(listOf(mail, music), prefs.homeApps)
     }
 
     @Test fun `removing one closes the gap`() {
         listOf(maps, mail, music).forEach { prefs.addHomeApp(it) }
         prefs.removeHomeApp(mail)
         assertEquals(listOf(maps, music), prefs.homeApps)
-        prefs.setHomeApp(0, null)
+        prefs.replaceHomeApp(maps, null)
         assertEquals(listOf(music), prefs.homeApps)
     }
 

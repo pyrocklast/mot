@@ -33,7 +33,6 @@ import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.DefaultApp
 import io.github.pyrocklast.mot.util.HomeFit
-import io.github.pyrocklast.mot.util.Look
 import kotlin.math.abs
 
 /**
@@ -146,19 +145,14 @@ class HomeScreen(
         }
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
-        // The time and the date each have their own style
-        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.timeSizePx(context, prefs))
-        binding.clock.typeface = Look.typeface(prefs.timeFont, prefs.timeWeight)
-        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, HomeFit.dateSizePx(context, prefs))
-        binding.date.typeface = Look.typeface(prefs.dateFont, prefs.dateWeight)
         updateDate()
 
-        // One row per home app
-        shown = prefs.homeApps
+        // One row per home app, but none from a Private Space that's locked and hidden: they
+        // come back when it's unlocked
+        shown = prefs.homeApps.filterNot { repo.isConcealed(it) }
         val count = shown.size
         while (appViews.size < count) appViews += newAppView()
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameTypeface = Look.typeface(prefs.nameFont, prefs.nameWeight)
         val nameSizePx = HomeFit.appNameSizePx(context, prefs)
         appViews.forEachIndexed { index, view ->
             // Shown again for now: whether it still fits is worked out below
@@ -169,7 +163,6 @@ class HomeScreen(
                 else R.string.app_not_found,
             )
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
-            view.typeface = nameTypeface
             view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         }
 
@@ -214,8 +207,7 @@ class HomeScreen(
             overflowView = view
             binding.homeApps.addView(view)
         }
-        // In the app names' font, smaller, so it doesn't read as an app
-        indicator.typeface = nameTypeface
+        // Smaller than the names, so it doesn't read as an app, and growing with them
         indicator.setTextSize(
             TypedValue.COMPLEX_UNIT_PX,
             context.resources.getDimension(R.dimen.small_size) * prefs.appNameScale,
@@ -274,7 +266,7 @@ class HomeScreen(
     // The date, left as it is when it hasn't changed
     private fun updateDate() {
         if (!prefs.showDate) return
-        val text = DateText.date(context, prefs.dateStyle)
+        val text = DateText.date(context)
         if (binding.date.text.toString() != text) binding.date.text = text
     }
 
@@ -335,8 +327,12 @@ class HomeScreen(
     private fun canMove(index: Int): Boolean =
         appViews.getOrNull(index)?.isVisible == true && shown.getOrNull(index)?.let { repo.find(it) } != null
 
+    // [from] and [to] are rows on screen; the saved list can also have apps that aren't shown
     private fun move(from: Int, to: Int) {
-        prefs.moveHomeApp(from, to)
+        val apps = prefs.homeApps
+        val moving = shown.getOrNull(from) ?: return
+        val there = shown.getOrNull(to) ?: return
+        prefs.moveHomeApp(apps.indexOf(moving), apps.indexOf(there))
         render()
     }
 
@@ -384,7 +380,7 @@ class HomeScreen(
             popup.menu.add(0, HOME_REMOVE, 1, R.string.remove_from_home)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
-                    HOME_CHANGE -> openDrawer(Slot.Home(index))
+                    HOME_CHANGE -> openDrawer(Slot.Home(target))
                     HOME_REMOVE -> remove()
                 }
                 true
@@ -400,7 +396,7 @@ class HomeScreen(
             // Hiding is about the drawer: it's done there
             canHide = false,
             extras = listOf(
-                AppMenu.Extra(R.string.change_app) { openDrawer(Slot.Home(index)) },
+                AppMenu.Extra(R.string.change_app) { openDrawer(Slot.Home(target)) },
                 AppMenu.Extra(R.string.remove_from_home, remove),
             ),
         )
@@ -417,7 +413,7 @@ class HomeScreen(
             .coerceIn(0, (binding.home.height - 1).coerceAtLeast(0))
         binding.home.addView(anchor, params)
         val popup = PopupMenu(context, anchor, Gravity.START)
-        if (shown.size < Prefs.MAX_HOME_APPS) {
+        if (prefs.homeApps.size < Prefs.MAX_HOME_APPS) {
             popup.menu.add(0, HOME_ADD, 0, R.string.add_to_home)
         }
         popup.menu.add(0, HOME_SETTINGS, 1, R.string.settings)
@@ -453,9 +449,11 @@ class HomeScreen(
     }
 
     // The app you chose, or Android's own: an app that's been uninstalled falls back to the
-    // default rather than saying it's missing. One whose profile is away still asks to turn it on.
+    // default rather than saying it's missing. One whose profile is away still asks to turn it on,
+    // unless it's in a Private Space that's locked and hidden, which mustn't show it's there.
     private fun openOrDefault(target: AppTarget?, default: DefaultApp, from: View? = null) {
-        val here = target != null && (repo.find(target) != null || repo.isProfileAway(target.userSerial))
+        val here = target != null && !repo.isConcealed(target) &&
+            (repo.find(target) != null || repo.isProfileAway(target.userSerial))
         if (here) Apps.open(context, target!!, from) else Apps.openDefault(context, default)
     }
 

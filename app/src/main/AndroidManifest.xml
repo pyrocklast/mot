@@ -61,19 +61,12 @@
         <activity
             android:name=".settings.SettingsActivity"
             android:exported="false"
-            android:theme="@style/Theme.Mot.Settings"
             android:label="@string/settings" />
 
-        <!-- Settings' other screens: the style of app names, the time or the date, and lists of apps -->
-        <activity
-            android:name=".settings.StyleActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Mot.Settings" />
-
+        <!-- Settings' other screen: lists of apps, to choose one or see the hidden ones -->
         <activity
             android:name=".settings.AppListActivity"
             android:exported="false"
-            android:theme="@style/Theme.Mot.Settings"
             android:windowSoftInputMode="stateHidden" />
 
         <!-- "Add to home screen" from other apps -->

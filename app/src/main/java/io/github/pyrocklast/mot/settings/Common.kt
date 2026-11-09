@@ -54,35 +54,15 @@ internal fun SettingsScreen.appChoiceDialog(
 
 // Labels
 
-/** The name of the app a setting opens, or [default]. An app in a locked Private Space is only named once it's unlocked. */
+/**
+ * The name of the app a setting opens, or [default]. An app in a locked Private Space is only
+ * named once it's unlocked, and while it's hidden too, the default shows, as that's what opens.
+ */
 internal fun Context.appName(repo: AppRepository, target: AppTarget?, @StringRes default: Int): String = when {
-    target == null -> getString(default)
+    target == null || repo.isConcealed(target) -> getString(default)
     repo.isLockedPrivateSpace(target.userSerial) -> getString(R.string.private_space)
     else -> repo.nameFor(target) ?: getString(default)
 }
 
-/** e.g. "Sans serif · Light · 100 %" */
-internal fun Context.styleSummary(font: Int, weight: Int, scale: Float): String =
-    listOf(getString(fontLabel(font)), getString(weightLabel(weight)), percent(scale)).joinToString(SEPARATOR)
-
-internal const val SEPARATOR = " · "
-
 /** e.g. "110 %" in French. */
 internal fun percent(scale: Float): String = NumberFormat.getPercentInstance().format(scale.toDouble())
-
-@StringRes
-internal fun fontLabel(font: Int) = when (font) {
-    Prefs.FONT_SERIF -> R.string.font_serif
-    Prefs.FONT_MONO -> R.string.font_mono
-    Prefs.FONT_CONDENSED -> R.string.font_condensed
-    else -> R.string.font_sans
-}
-
-@StringRes
-internal fun weightLabel(weight: Int) = when {
-    weight < 200 -> R.string.weight_thin
-    weight < 350 -> R.string.weight_light
-    weight < 450 -> R.string.weight_regular
-    weight < 600 -> R.string.weight_medium
-    else -> R.string.weight_bold
-}

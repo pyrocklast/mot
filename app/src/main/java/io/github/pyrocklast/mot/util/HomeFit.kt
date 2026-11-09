@@ -36,16 +36,9 @@ object HomeFit {
      */
     fun clockTop(context: Context, topInset: Int): Int = topInset + dp(context, CLOCK_TOP_DP)
 
-    /** Shared displayed app-name size for home and drawer, including user and system scaling. */
+    /** App names' size, on the home screen and in the drawer: Android's font size, then yours. */
     fun appNameSizePx(context: Context, prefs: Prefs): Float =
         context.resources.getDimension(R.dimen.app_name_size) * prefs.appNameScale
-
-    /** Shared clock/date sizes for the launcher and their settings previews. */
-    fun timeSizePx(context: Context, prefs: Prefs): Float =
-        context.resources.getDimension(R.dimen.clock_size) * prefs.timeScale
-
-    fun dateSizePx(context: Context, prefs: Prefs): Float =
-        context.resources.getDimension(R.dimen.date_size) * prefs.dateScale
 
     /** Where the names stop: clear of the navigation bar, wherever Android puts it. */
     fun bottomPadding(context: Context, bottomInset: Int): Int = bottomInset + dp(context, ABOVE_NAVIGATION_DP)

@@ -35,15 +35,24 @@ class Prefs(context: Context) {
         return true
     }
 
-    /** The home app at [index] becomes [target], or is taken off the home screen when it's null. */
-    fun setHomeApp(index: Int, target: AppTarget?) {
+    /**
+     * [old] makes way for [new] in the same place, or is taken off the home screen when [new] is
+     * null. If [old] has gone in the meantime, [new] goes at the end.
+     */
+    fun replaceHomeApp(old: AppTarget, new: AppTarget?) {
         val apps = homeApps.toMutableList()
-        if (index !in apps.indices) {
-            if (target != null) addHomeApp(target)
-            return
+        val index = apps.indexOf(old)
+        when {
+            index < 0 -> if (new != null) addHomeApp(new)
+            new == null -> {
+                apps.removeAt(index)
+                homeApps = apps
+            }
+            else -> {
+                apps[index] = new
+                homeApps = apps
+            }
         }
-        if (target == null) apps.removeAt(index) else apps[index] = target
-        homeApps = apps
     }
 
     fun removeHomeApp(target: AppTarget) {
@@ -67,10 +76,6 @@ class Prefs(context: Context) {
     var showDate: Boolean
         get() = prefs.getBoolean("show_date", true)
         set(value) = prefs.edit { putBoolean("show_date", value) }
-
-    var dateStyle: Int
-        get() = prefs.getInt("date_style", DATE_SHORT)
-        set(value) = prefs.edit { putInt("date_style", value) }
 
     /** The app tapping the time opens; null for Android's default clock app. */
     var clockApp: AppTarget?
@@ -115,44 +120,13 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean("tint_text", true)
         set(value) = prefs.edit { putBoolean("tint_text", value) }
 
-    // App names (home screen and drawer), the time and the date each have a font, a weight and a
-    // size. Weights are CSS-style numbers: 100 thin, 300 light, 400 regular, 500 medium, 700 bold.
-
-    var nameFont: Int
-        get() = prefs.getInt("name_font", FONT_SANS)
-        set(value) = prefs.edit { putInt("name_font", value) }
-
-    var nameWeight: Int
-        get() = prefs.getInt("name_weight", 300)
-        set(value) = prefs.edit { putInt("name_weight", value) }
-
+    /**
+     * How big app names are, on the home screen and in the drawer, from 80 to 180 % of their usual
+     * size, which itself follows Android's font size. The time and the date have one size each.
+     */
     var appNameScale: Float
-        get() = prefs.getFloat("app_name_scale", 1f)
-        set(value) = prefs.edit { putFloat("app_name_scale", value) }
-
-    var timeFont: Int
-        get() = prefs.getInt("clock_font", FONT_SANS)
-        set(value) = prefs.edit { putInt("clock_font", value) }
-
-    var timeWeight: Int
-        get() = prefs.getInt("clock_weight", 300)
-        set(value) = prefs.edit { putInt("clock_weight", value) }
-
-    var timeScale: Float
-        get() = prefs.getFloat("clock_scale", 1f)
-        set(value) = prefs.edit { putFloat("clock_scale", value) }
-
-    var dateFont: Int
-        get() = prefs.getInt("date_font", FONT_SANS)
-        set(value) = prefs.edit { putInt("date_font", value) }
-
-    var dateWeight: Int
-        get() = prefs.getInt("date_weight", 300)
-        set(value) = prefs.edit { putInt("date_weight", value) }
-
-    var dateScale: Float
-        get() = prefs.getFloat("date_scale", 1f)
-        set(value) = prefs.edit { putFloat("date_scale", value) }
+        get() = prefs.getFloat("app_name_scale", 1f).coerceIn(MIN_NAME_SCALE, MAX_NAME_SCALE)
+        set(value) = prefs.edit { putFloat("app_name_scale", value.coerceIn(MIN_NAME_SCALE, MAX_NAME_SCALE)) }
 
     var showStatusBar: Boolean
         get() = prefs.getBoolean("show_status_bar", true)
@@ -252,16 +226,11 @@ class Prefs(context: Context) {
         // Everything that decides how the home screen is drawn, and so what a crash while drawing
         // is likely to have come from
         private val LOOK_KEYS = listOf(
-            "show_time", "show_date", "date_style",
-            "clock_font", "clock_weight", "clock_scale",
-            "date_font", "date_weight", "date_scale",
-            "name_font", "name_weight", "app_name_scale",
-            "text_colour", "tint_text", "show_status_bar",
+            "show_time", "show_date", "app_name_scale", "text_colour", "tint_text", "show_status_bar",
         )
 
-        const val DATE_SHORT = 0
-        const val DATE_FULL = 1
-        const val DATE_NUMERIC = 2
+        const val MIN_NAME_SCALE = 0.8f
+        const val MAX_NAME_SCALE = 1.8f
 
         /** Dark text, for light wallpapers. */
         const val TEXT_DARK = 0
@@ -269,10 +238,5 @@ class Prefs(context: Context) {
         const val TEXT_LIGHT = 1
         /** Dark or light text, whichever suits the wallpaper. */
         const val TEXT_MATCH_WALLPAPER = 3
-
-        const val FONT_SANS = 0
-        const val FONT_SERIF = 1
-        const val FONT_MONO = 2
-        const val FONT_CONDENSED = 3
     }
 }

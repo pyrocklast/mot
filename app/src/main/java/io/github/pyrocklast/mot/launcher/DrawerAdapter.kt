@@ -1,6 +1,5 @@
 package io.github.pyrocklast.mot.launcher
 
-import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -34,7 +33,6 @@ sealed interface DrawerRow {
 
 class DrawerAdapter(
     private val nameSizePx: Float,
-    private val nameTypeface: Typeface,
     private val onClick: (DrawerRow, View) -> Unit,
     private val onLongClick: (DrawerRow, View) -> Unit,
 ) : ListAdapter<DrawerRow, RecyclerView.ViewHolder>(Diff) {
@@ -54,7 +52,6 @@ class DrawerAdapter(
         if (viewType == TYPE_APP) {
             val binding = ItemAppBinding.inflate(inflater, parent, false)
             binding.name.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
-            binding.name.typeface = nameTypeface
             // The whole row is tappable, not just the name
             holder = AppHolder(binding)
             clickable = binding.root
