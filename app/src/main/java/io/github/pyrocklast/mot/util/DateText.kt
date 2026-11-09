@@ -6,8 +6,8 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * The home screen's date, short, in the app's language (or the phone's, if none is set) and that
- * language's usual order: "lun. 2 nov.", "Mon 2 Nov". Always with the weekday, never the year.
+ * The home screen's date, in full, in the app's language (or the phone's, if none is set) and
+ * that language's usual order: "lundi 9 novembre", "Monday 9 November". Never the year.
  */
 object DateText {
 
@@ -21,7 +21,7 @@ object DateText {
 
     private fun format(locale: Locale): DateFormat {
         lastFormat?.let { if (locale == lastLocale) return it }
-        return DateFormat.getInstanceForSkeleton("EEEdMMM", locale).also {
+        return DateFormat.getInstanceForSkeleton("EEEEdMMMM", locale).also {
             lastLocale = locale
             lastFormat = it
         }

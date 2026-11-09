@@ -108,7 +108,12 @@ class LauncherActivity : ComponentActivity() {
         repo = AppRepository.get(this)
 
         menu = AppMenu(this, prefs, repo)
-        drawer = Drawer(this, binding, prefs, repo, menu, redrawHome = { home.render() }, openSettings = ::openSettings)
+        drawer = Drawer(
+            this, binding, prefs, repo, menu,
+            redrawHome = { home.render() },
+            homeCapacity = { home.capacity },
+            openSettings = ::openSettings,
+        )
         home = HomeScreen(
             context = this,
             binding = binding,
@@ -218,7 +223,7 @@ class LauncherActivity : ComponentActivity() {
 
     // The drawer's rows are made with these, so a change redraws the screen
     private fun currentLook(light: Boolean = lightText()): String =
-        listOf(light, prefs.tintText, prefs.appNameScale).joinToString()
+        listOf(light, prefs.tintText, prefs.appNameSize).joinToString()
 
     // Status bar shown or hidden as set, and status and navigation bar icons that match the text
     private fun applySystemBars(light: Boolean) {

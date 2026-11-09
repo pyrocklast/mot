@@ -5,7 +5,7 @@
     <!-- Écran d'accueil -->
     <string name="home_apps">Applications d\'accueil</string>
     <string name="add_to_home">Ajouter une application à l\'accueil</string>
-    <string name="home_apps_full">Écran d\'accueil complet (10 applications)</string>
+    <string name="home_apps_full">Écran d\'accueil complet</string>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
     <string name="tips">Balayez vers le haut pour vos applications\nAppui long pour ajouter des applications ou ouvrir les paramètres\nAppui long puis glisser pour déplacer une application</string>

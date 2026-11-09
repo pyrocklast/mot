@@ -9,12 +9,12 @@ It's for Android 15 and up, in English and French.
 
 ## What it does
 
-- Up to 10 apps on the home screen. Long press an app in the drawer to add it, and long press and drag one on the home screen to move it.
+- As many apps on the home screen as your screen has room for. Long press an app in the drawer to add it, and long press and drag one on the home screen to move it.
 - Swipe up for all your apps, down for notifications, left and right for two apps you pick. Settings: long press the home screen, or the gear in the app drawer.
 - Tap the time or the date to open your clock or calendar, or any app you choose.
 - Search ignores accents and case, puts the best matches first, and can optionally open the only match after two letters (off by default).
 - Long press an app to rename it, hide it or uninstall it. Work apps get a small dot, and Private Space has its own list.
-- One font, Android's own, at sizes that follow your phone's font size. Show or hide the time and the date, and make app names bigger or smaller.
+- One font, Android's own. The time and date grow with your screen, and app names have their own size, from 24 to 48 dp, whatever Android's text size. Show or hide the time and the date.
 - The text colour matches your wallpaper. Settings follow your phone's theme.
 
 ## Install

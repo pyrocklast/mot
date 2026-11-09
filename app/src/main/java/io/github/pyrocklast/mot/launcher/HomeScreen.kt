@@ -123,28 +123,32 @@ class HomeScreen(
         binding.homeApps.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) render()
         }
-        // The date can change height at midnight, or with the language or font size, while the
-        // screen stays the same size
-        binding.clockBlock.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
-            if (bottom - top != oldBottom - oldTop) render()
-        }
         binding.setDefault.setOnClickListener { requestHomeRole() }
         describeForTalkBack(binding.clock, R.string.action_open_clock, R.string.action_choose_clock) { tap(it) }
         describeForTalkBack(binding.date, R.string.action_open_calendar, R.string.action_choose_calendar) { tap(it) }
     }
 
+    /**
+     * How many apps there's room for on this screen, as last drawn. Adding an app stops here; the
+     * drawer and the home screen's own menu ask.
+     */
+    var capacity = 0
+        private set
+
     /** Draws the home screen from the current settings and app names. Cheap enough to call often. */
     fun render() {
-        // The clock and date first: where the names start depends on how tall they come out.
+        val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
+        val fit = HomeFit.layout(context, prefs, displayHeight, topInset, bottomInset)
+        capacity = fit.capacity
+
+        // The time and date, sized for the screen, the date's capitals tucked in under the time.
         // With the status bar hidden, they move up into its space.
-        val clockParams = binding.clockBlock.layoutParams as ViewGroup.MarginLayoutParams
-        val clockTop = HomeFit.clockTop(context, topInset)
-        if (clockParams.topMargin != clockTop) {
-            clockParams.topMargin = clockTop
-            binding.clockBlock.layoutParams = clockParams
-        }
         binding.clock.isVisible = prefs.showTime
         binding.date.isVisible = prefs.showDate
+        binding.clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, fit.timeSize)
+        binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, fit.dateSize)
+        setTopMargin(binding.clockBlock, fit.clockTop)
+        setTopMargin(binding.date, fit.dateMargin)
         updateDate()
 
         // One row per home app, but none from a Private Space that's locked and hidden: they
@@ -153,51 +157,36 @@ class HomeScreen(
         val count = shown.size
         while (appViews.size < count) appViews += newAppView()
         while (appViews.size > count) binding.homeApps.removeView(appViews.removeAt(appViews.lastIndex))
-        val nameSizePx = HomeFit.appNameSizePx(context, prefs)
         appViews.forEachIndexed { index, view ->
-            // Shown again for now: whether it still fits is worked out below
-            view.isVisible = true
             val target = shown[index]
             view.text = repo.nameFor(target) ?: context.getString(
                 if (repo.isLockedPrivateSpace(target.userSerial)) R.string.private_space_locked
                 else R.string.app_not_found,
             )
-            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, nameSizePx)
-            view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, fit.nameSize)
+            setHeight(view, fit.row)
         }
 
-        // The first-run tips and the "Set as Home app" link sit over the bottom of the home
-        // screen: the names stop above them
+        // The first-run tips and the "Set as default launcher" link sit over the bottom of the
+        // home screen: while they show, the names stop above them
         binding.tips.isVisible = !prefs.settingsOpened
         binding.setDefault.isVisible = !prefs.settingsOpened && !Apps.isDefaultLauncher(context)
-
-        // The room the names have: under the clock and date, above the navigation bar and tips
-        val minimumTop = HomeFit.topPadding(context, prefs, topInset, heightOf(binding.clockBlock))
         val overlayClearance = listOf(binding.tips, binding.setDefault)
             .filter { it.isVisible }
             .maxOfOrNull {
                 (it.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin +
                     heightOf(it) + (8 * context.resources.displayMetrics.density).toInt()
             } ?: 0
-        val bottomPadding = maxOf(HomeFit.bottomPadding(context, bottomInset), overlayClearance)
-        val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
-        val room = (displayHeight - minimumTop - bottomPadding).coerceAtLeast(0)
-        // Each name is measured on its own, so every row keeps its 48 dp touch target whatever
-        // its font
-        val textHeights = appViews.map { heightOf(it) }
-        appViews.forEachIndexed { index, view ->
-            val padding = HomeFit.namePadding(context, count, textHeights[index].toFloat(), room.toFloat())
-            view.setPadding(view.paddingLeft, padding, view.paddingRight, padding)
-        }
-        // The home screen never scrolls (swiping is for gestures). If the names don't all fit,
-        // the last row becomes "All apps", rather than names quietly going missing.
-        val rowHeights = appViews.map { heightOf(it) }
+        val bottomPadding = maxOf(fit.bottom, overlayClearance)
+        val room = (displayHeight - fit.namesTop - bottomPadding).coerceAtLeast(0)
+
+        // The home screen never scrolls (swiping is for gestures). Adding apps stops when the
+        // screen is full, but making names bigger afterwards can leave too many: then the last
+        // row becomes "All apps", rather than names quietly going missing.
         val indicator = overflowView ?: (LayoutInflater.from(binding.homeApps.context)
             .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView).also { view ->
             // Made like a name, so it has the launcher's text colour and shadow
-            view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
-            view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
-            view.minHeight = kotlin.math.ceil(48.0 * context.resources.displayMetrics.density).toInt()
+            view.setTextSize(TypedValue.COMPLEX_UNIT_DIP, HomeFit.ALL_APPS_DP)
             view.setText(R.string.home_all_apps)
             // Not clickable itself, or it would swallow swipes: the gesture detector handles
             // taps, and TalkBack gets an action
@@ -207,23 +196,15 @@ class HomeScreen(
             overflowView = view
             binding.homeApps.addView(view)
         }
-        // Smaller than the names, so it doesn't read as an app, and growing with them
-        indicator.setTextSize(
-            TypedValue.COMPLEX_UNIT_PX,
-            context.resources.getDimension(R.dimen.small_size) * prefs.appNameScale,
-        )
+        setHeight(indicator, fit.row)
         // Always the last row, after any names added since it was made
         indicator.bringToFront()
-        // Only measured when the names don't all fit
-        indicator.isVisible = rowHeights.sumOf { it.toLong() } > room.toLong()
-        val indicatorHeight = if (indicator.isVisible) heightOf(indicator) else 0
-        val layout = HomeFit.visibleRows(rowHeights, room, indicatorHeight)
+        val layout = HomeFit.visibleRows(count, HomeFit.slots(room, fit.row, 0))
         appViews.forEachIndexed { index, view -> view.isVisible = index < layout.count }
         indicator.isVisible = layout.showAllApps
-        val groupHeight = rowHeights.take(layout.count).sum() +
-            if (layout.showAllApps) indicatorHeight else 0
+        val groupHeight = fit.row * (layout.count + if (layout.showAllApps) 1 else 0)
         val balancedTop = HomeFit.balancedTop(
-            displayHeight, topInset, bottomPadding, minimumTop, groupHeight,
+            displayHeight, topInset, bottomPadding, fit.namesTop, groupHeight,
         )
         binding.homeApps.setPadding(
             binding.homeApps.paddingLeft, balancedTop,
@@ -231,21 +212,28 @@ class HomeScreen(
         )
     }
 
+    private fun setTopMargin(view: View, margin: Int) {
+        val params = view.layoutParams as ViewGroup.MarginLayoutParams
+        if (params.topMargin == margin) return
+        params.topMargin = margin
+        view.layoutParams = params
+    }
+
+    // Every row the same height, with its name in the middle of it
+    private fun setHeight(view: View, height: Int) {
+        val params = view.layoutParams
+        if (params.height == height) return
+        params.height = height
+        view.layoutParams = params
+    }
+
     // How tall a view comes out at its current text, size and font
     private fun heightOf(view: View): Int {
-        // At the width it really has: measured without one, a date that wraps on a narrow
-        // screen would come out a line short
-        val screenWidth = binding.homeApps.width.takeIf { it > 0 }
-            ?: binding.home.width.takeIf { it > 0 }
-            ?: context.resources.displayMetrics.widthPixels
-        val horizontal = if (view === binding.clockBlock || view === binding.tips ||
-            view === binding.setDefault) {
-            val margins = view.layoutParams as? ViewGroup.MarginLayoutParams
-            (margins?.leftMargin ?: 0) + (margins?.rightMargin ?: 0)
-        } else {
-            binding.homeApps.paddingLeft + binding.homeApps.paddingRight
-        }
-        val width = (screenWidth - horizontal).coerceAtLeast(1)
+        // At the width it really has: measured without one, text that wraps on a narrow screen
+        // would come out a line short
+        val screenWidth = binding.home.width.takeIf { it > 0 } ?: context.resources.displayMetrics.widthPixels
+        val margins = view.layoutParams as? ViewGroup.MarginLayoutParams
+        val width = (screenWidth - (margins?.leftMargin ?: 0) - (margins?.rightMargin ?: 0)).coerceAtLeast(1)
         val atMost = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.AT_MOST)
         val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         view.measure(atMost, unspecified)
@@ -257,7 +245,6 @@ class HomeScreen(
     private fun newAppView(): TextView {
         val view = LayoutInflater.from(binding.homeApps.context)
             .inflate(R.layout.item_home_app, binding.homeApps, false) as TextView
-        view.gravity = Gravity.START or Gravity.CENTER_VERTICAL
         binding.homeApps.addView(view)
         describeForTalkBack(view, R.string.action_open, R.string.action_more_options, canBeMoved = true) { tap(it) }
         return view
@@ -413,7 +400,7 @@ class HomeScreen(
             .coerceIn(0, (binding.home.height - 1).coerceAtLeast(0))
         binding.home.addView(anchor, params)
         val popup = PopupMenu(context, anchor, Gravity.START)
-        if (prefs.homeApps.size < Prefs.MAX_HOME_APPS) {
+        if (prefs.homeApps.size < capacity) {
             popup.menu.add(0, HOME_ADD, 0, R.string.add_to_home)
         }
         popup.menu.add(0, HOME_SETTINGS, 1, R.string.settings)

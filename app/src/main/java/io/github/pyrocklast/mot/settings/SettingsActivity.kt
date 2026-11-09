@@ -14,7 +14,7 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.ActivitySettingsBinding
 import io.github.pyrocklast.mot.launcher.Slot
 import io.github.pyrocklast.mot.util.Apps
-import kotlin.math.roundToInt
+import io.github.pyrocklast.mot.util.HomeFit
 
 /**
  * mot launcher's settings, grouped by the part of the home screen each setting changes. Rows
@@ -108,10 +108,10 @@ class SettingsActivity : SettingsScreen() {
                 prefs.tintText = it
                 refresh()
             }
-            // 80 to 180 %, in steps of 10
+            // 24 to 48 dp, in steps of 2
             nameSize = slider(R.string.app_name_size, 0, NAME_SIZE_STEPS, nameSizeStep()) {
-                prefs.appNameScale = Prefs.MIN_NAME_SCALE + it / 10f
-            }.apply { formatValue = { percent(Prefs.MIN_NAME_SCALE + it / 10f) } }
+                prefs.appNameSize = Prefs.MIN_NAME_SIZE + it * NAME_SIZE_STEP
+            }.apply { formatValue = { (Prefs.MIN_NAME_SIZE + it * NAME_SIZE_STEP).toString() } }
             statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
                 prefs.showStatusBar = it
                 refresh()
@@ -152,7 +152,7 @@ class SettingsActivity : SettingsScreen() {
 
         // Not counting a locked, hidden Private Space's: nothing here may show it's there
         val homeCount = prefs.homeApps.count { !repo.isConcealed(it) }
-        homeApps.summary = if (homeCount == Prefs.MAX_HOME_APPS) {
+        homeApps.summary = if (prefs.homeApps.size >= HomeFit.capacity(this, prefs)) {
             getString(R.string.home_apps_full)
         } else {
             resources.getQuantityString(R.plurals.app_count, homeCount, homeCount)
@@ -203,7 +203,7 @@ class SettingsActivity : SettingsScreen() {
                 else R.string.app_not_found,
             )
         }.toMutableList()
-        if (all.size < Prefs.MAX_HOME_APPS) options += getString(R.string.add_to_home)
+        if (all.size < HomeFit.capacity(this, prefs)) options += getString(R.string.add_to_home)
         val dialog = android.app.AlertDialog.Builder(this)
             .setTitle(R.string.home_apps)
             .setItems(options.toTypedArray()) { _, selected ->
@@ -259,8 +259,7 @@ class SettingsActivity : SettingsScreen() {
     }
 
     // The app name size as one of the slider's steps
-    private fun nameSizeStep(): Int =
-        ((prefs.appNameScale - Prefs.MIN_NAME_SCALE) * 10).roundToInt().coerceIn(0, NAME_SIZE_STEPS)
+    private fun nameSizeStep(): Int = (prefs.appNameSize - Prefs.MIN_NAME_SIZE) / NAME_SIZE_STEP
 
     // Labels
 
@@ -272,6 +271,7 @@ class SettingsActivity : SettingsScreen() {
     }
 
     private companion object {
-        val NAME_SIZE_STEPS = ((Prefs.MAX_NAME_SCALE - Prefs.MIN_NAME_SCALE) * 10).roundToInt()
+        const val NAME_SIZE_STEP = 2
+        const val NAME_SIZE_STEPS = (Prefs.MAX_NAME_SIZE - Prefs.MIN_NAME_SIZE) / NAME_SIZE_STEP
     }
 }

@@ -42,6 +42,8 @@ class Drawer(
     private val menu: AppMenu,
     /** An app was chosen for a spot, or put on the home screen or taken off it. */
     private val redrawHome: () -> Unit,
+    /** How many apps the home screen has room for. */
+    private val homeCapacity: () -> Int,
     private val openSettings: () -> Unit,
 ) {
     var isOpen = false
@@ -358,7 +360,7 @@ class Drawer(
                 redrawHome()
                 Apps.toast(activity, R.string.removed_from_home)
             })
-            onHome.size < Prefs.MAX_HOME_APPS -> listOf(AppMenu.Extra(R.string.add_to_home_screen) {
+            onHome.size < homeCapacity() -> listOf(AppMenu.Extra(R.string.add_to_home_screen) {
                 if (prefs.addHomeApp(target)) {
                     redrawHome()
                     Apps.toast(activity, R.string.added_to_home)
