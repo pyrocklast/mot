@@ -3,9 +3,7 @@
     <string name="app_name">lanceur mot</string>
 
     <!-- Écran d'accueil -->
-    <string name="home_apps">Applications d\'accueil</string>
     <string name="add_to_home">Ajouter une application à l\'accueil</string>
-    <string name="home_apps_full">Écran d\'accueil complet</string>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
     <string name="tips">Balayez vers le haut pour vos applications\nAppui long pour ajouter des applications ou ouvrir les paramètres\nAppui long puis glisser pour déplacer une application</string>
@@ -80,16 +78,12 @@
     <string name="default_calendar_app">Application d\'agenda par défaut</string>
     <string name="default_camera_app">Application d\'appareil photo par défaut</string>
     <string name="default_phone_app">Application de téléphone par défaut</string>
-    <string name="choose_app_ellipsis">Choisir une application…</string>
 
     <string name="app_drawer">Tiroir d\'applications</string>
     <string name="auto_open_unique_search_result">Ouvrir automatiquement le seul résultat de recherche</string>
     <string name="show_keyboard">Afficher le clavier automatiquement</string>
     <string name="hidden_apps">Applications masquées</string>
     <string name="no_hidden_apps">Aucune application masquée</string>
-    <string name="private_space_locked_summary">Verrouillé, à la fin du tiroir d\'applications</string>
-    <string name="private_space_unlocked_summary">Déverrouillé, à la fin du tiroir d\'applications</string>
-    <string name="not_set_up">Non configuré</string>
     <string name="shortcut">Raccourci</string>
     <string name="work_profile">Profil professionnel</string>
     <string name="hide_app">Masquer %1$s</string>
@@ -100,18 +94,19 @@
     <string name="dark_text">Sombre</string>
     <string name="light_text">Clair</string>
     <string name="text_matches_wallpaper">Automatique</string>
-    <string name="tint_text">Harmoniser avec le fond d\'écran</string>
-    <string name="tint_text_on">Le texte en prend une teinte</string>
-    <string name="tint_text_off">Blanc ou noir</string>
     <string name="app_name_size">Taille des noms d\'applications</string>
+    <plurals name="room_for_apps">
+        <item quantity="one">place pour %d application</item>
+        <item quantity="many">place pour %d applications</item>
+        <item quantity="other">place pour %d applications</item>
+    </plurals>
+    <string name="selected">Sélectionnée</string>
     <string name="show_status_bar">Afficher la barre d\'état</string>
     <string name="status_bar_off_summary">Balayez vers le bas pour les notifications</string>
 
     <string name="gestures">Gestes</string>
     <string name="swipe_left">Balayer vers la gauche</string>
     <string name="swipe_right">Balayer vers la droite</string>
-    <string name="swipe_left_opens">Balayer vers la gauche ouvre</string>
-    <string name="swipe_right_opens">Balayer vers la droite ouvre</string>
 
     <string name="about">À propos</string>
     <string name="version">Version %1$s · un minimum de choses, un lanceur</string>

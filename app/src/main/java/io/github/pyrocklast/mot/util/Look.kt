@@ -35,7 +35,7 @@ object Look {
         Prefs.TEXT_LIGHT -> true
         // With a wallpaper that says nothing about itself, the phone's dark mode is the next best
         // guess at the light in the room
-        else -> colours?.let { suitsDarkText(context, it, prefs.tintText) }?.not() ?: darkMode(context)
+        else -> colours?.let { suitsDarkText(context, it) }?.not() ?: darkMode(context)
     }
 
     private fun darkMode(context: Context): Boolean =
@@ -47,21 +47,18 @@ object Look {
      * usually sends no hint either. So the hint is taken when it says dark text reads, and
      * otherwise the colours themselves decide.
      */
-    private fun suitsDarkText(context: Context, colours: WallpaperColors, tinted: Boolean): Boolean {
+    private fun suitsDarkText(context: Context, colours: WallpaperColors): Boolean {
         if (colours.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT != 0) return true
         // Whichever of the two stands out more against the wallpaper. Dark text wins sooner than
         // it looks like it should: against a mid orange, dark is three times the contrast of light.
         val wallpaper = brightness(colours)
-        return contrast(wallpaper, textLuminance(context, tinted, light = false)) >
-            contrast(wallpaper, textLuminance(context, tinted, light = true))
+        return contrast(wallpaper, textLuminance(context, light = false)) >
+            contrast(wallpaper, textLuminance(context, light = true))
     }
 
-    /** How light the text itself is: the wallpaper's lightest or darkest colour, or plain white or black. */
-    private fun textLuminance(context: Context, tinted: Boolean, light: Boolean): Float = when {
-        tinted -> Color.valueOf(context.getColor(if (light) LIGHT_TEXT else DARK_TEXT)).luminance()
-        light -> 1f
-        else -> 0f
-    }
+    /** How light the text itself is: the lightest or darkest of the wallpaper's own colours. */
+    private fun textLuminance(context: Context, light: Boolean): Float =
+        Color.valueOf(context.getColor(if (light) LIGHT_TEXT else DARK_TEXT)).luminance()
 
     /**
      * How far apart two brightnesses are to the eye, from 1 (the same) to 21 (black on white).

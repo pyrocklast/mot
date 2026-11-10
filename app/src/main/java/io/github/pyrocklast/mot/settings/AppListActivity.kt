@@ -6,11 +6,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.StringRes
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
@@ -18,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppEntry
 import io.github.pyrocklast.mot.data.AppRepository
+import io.github.pyrocklast.mot.data.AppTarget
 import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.data.Profile
 import io.github.pyrocklast.mot.databinding.ActivityAppListBinding
@@ -29,7 +33,8 @@ import kotlinx.coroutines.launch
 
 /**
  * A list of apps in the settings' own style, for two jobs:
- * - choosing the app a swipe, the time or the date opens (hidden apps included), or
+ * - choosing the app a swipe, the time or the date opens (hidden apps included), with Android's
+ *   own app first, and a tick on the one in use, or
  * - hidden apps: tap one to open it, or turn its switch off to show it in the drawer again.
  */
 class AppListActivity : SettingsScreen() {
@@ -46,6 +51,21 @@ class AppListActivity : SettingsScreen() {
     /** Which apps are hidden now, read once rather than for every row drawn. */
     private var hidden: Set<String> = emptySet()
 
+    /** What choosing no app means here, e.g. "Default clock app": null where there's no such choice. */
+    @get:StringRes
+    private val defaultLabel: Int?
+        get() = when (slot) {
+            Slot.Clock -> R.string.default_clock_app
+            Slot.Calendar -> R.string.default_calendar_app
+            Slot.SwipeLeft -> R.string.default_camera_app
+            Slot.SwipeRight -> R.string.default_phone_app
+            else -> null
+        }
+
+    /** The app in use now, which gets the tick; null for Android's own. */
+    private var chosen: AppTarget? = null
+
+    private val defaultRow = DefaultRow()
     private val adapter = Adapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,7 +89,7 @@ class AppListActivity : SettingsScreen() {
         setUpFrame(binding.root, binding.appBar, binding.list, title)
 
         binding.list.layoutManager = LinearLayoutManager(this)
-        binding.list.adapter = adapter
+        binding.list.adapter = ConcatAdapter(defaultRow, adapter)
         binding.search.isVisible = slot != null
         binding.search.doAfterTextChanged { update() }
 
@@ -82,20 +102,27 @@ class AppListActivity : SettingsScreen() {
 
     private fun update() {
         hidden = prefs.hiddenApps
+        chosen = when (slot) {
+            Slot.Clock -> prefs.clockApp
+            Slot.Calendar -> prefs.calendarApp
+            Slot.SwipeLeft -> prefs.swipeLeftApp
+            Slot.SwipeRight -> prefs.swipeRightApp
+            else -> null
+        }
         val loadedApps = repo.apps.value
         val apps = loadedApps.orEmpty()
         val query = if (slot != null) Search.normalize(binding.search.text ?: "") else ""
         val rows = if (slot != null) {
             // Best matches first, as in the drawer
-            // Choosing a home app, the ones already there aren't offered again
-            val onHome = if (slot == Slot.AddHome || slot is Slot.Home) prefs.homeApps.toSet() else emptySet()
-            val matches = apps.filter { it.target !in onHome && Search.matches(it.searchText, query) }
+            val matches = apps.filter { Search.matches(it.searchText, query) }
             if (query.isEmpty()) matches else matches.sortedBy { Search.rank(it.searchText, it.searchWords, query) }
         } else {
             apps.filter { it.appKey in listed }
         }
+        // Android's own app comes first, but not among search results: it isn't an app's name
+        defaultRow.isShown = defaultLabel != null && query.isEmpty()
         adapter.submitList(rows)
-        binding.empty.isVisible = rows.isEmpty()
+        binding.empty.isVisible = rows.isEmpty() && !defaultRow.isShown
         if (rows.isEmpty()) {
             binding.empty.setText(when {
                 loadedApps == null -> R.string.loading_apps
@@ -121,9 +148,43 @@ class AppListActivity : SettingsScreen() {
         prefs.hiddenApps = hidden
     }
 
-    private inner class Adapter : ListAdapter<AppEntry, Adapter.Holder>(Diff) {
-        inner class Holder(val binding: ItemSettingsAppBinding) : RecyclerView.ViewHolder(binding.root)
+    private class Holder(val binding: ItemSettingsAppBinding) : RecyclerView.ViewHolder(binding.root)
 
+    // A tick on the choice in use, which TalkBack says too
+    private fun tick(row: ItemSettingsAppBinding, on: Boolean) {
+        row.chosen.isVisible = on
+        ViewCompat.setStateDescription(row.root, if (on) getString(R.string.selected) else null)
+    }
+
+    /** The first row when choosing an app: Android's own, e.g. "Default clock app". */
+    private inner class DefaultRow : RecyclerView.Adapter<Holder>() {
+        var isShown = false
+            set(value) {
+                if (value == field) return
+                field = value
+                if (value) notifyItemInserted(0) else notifyItemRemoved(0)
+            }
+
+        override fun getItemCount() = if (isShown) 1 else 0
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+            val row = ItemSettingsAppBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            row.root.setOnClickListener {
+                slot?.save(prefs, null)
+                finish()
+            }
+            return Holder(row)
+        }
+
+        override fun onBindViewHolder(holder: Holder, position: Int) {
+            holder.binding.name.setText(defaultLabel ?: return)
+            holder.binding.detail.isVisible = false
+            holder.binding.hidden.isVisible = false
+            tick(holder.binding, chosen == null)
+        }
+    }
+
+    private inner class Adapter : ListAdapter<AppEntry, Holder>(Diff) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
             val row = ItemSettingsAppBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             val holder = Holder(row)
@@ -153,6 +214,7 @@ class AppListActivity : SettingsScreen() {
             switch.isChecked = entry.appKey in hidden
             switch.contentDescription = getString(R.string.hide_app, entry.label)
             switch.setOnCheckedChangeListener { _, checked -> setHidden(entry, checked) }
+            tick(holder.binding, slot != null && entry.target == chosen)
         }
     }
 

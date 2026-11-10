@@ -5,9 +5,7 @@
     <string name="app_name">mot launcher</string>
 
     <!-- Home screen -->
-    <string name="home_apps">Home apps</string>
     <string name="add_to_home">Add app to home</string>
-    <string name="home_apps_full">Home screen full</string>
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
     <string name="tips">Swipe up for your apps\nLong press to add apps or open settings\nLong press and drag an app to move it</string>
@@ -89,16 +87,12 @@
     <string name="default_calendar_app">Default calendar app</string>
     <string name="default_camera_app">Default camera app</string>
     <string name="default_phone_app">Default phone app</string>
-    <string name="choose_app_ellipsis">Choose an app…</string>
 
     <string name="app_drawer">App drawer</string>
     <string name="auto_open_unique_search_result">Open a single search match automatically</string>
     <string name="show_keyboard">Show keyboard automatically</string>
     <string name="hidden_apps">Hidden apps</string>
     <string name="no_hidden_apps">No hidden apps</string>
-    <string name="private_space_locked_summary">Locked, at the end of the app drawer</string>
-    <string name="private_space_unlocked_summary">Unlocked, at the end of the app drawer</string>
-    <string name="not_set_up">Not set up</string>
     <!-- Second line in settings' list of apps -->
     <string name="shortcut">Shortcut</string>
     <string name="work_profile">Work profile</string>
@@ -112,19 +106,21 @@
     <string name="light_text">Light</string>
     <!-- Dark or light, whichever suits the wallpaper -->
     <string name="text_matches_wallpaper">Automatic</string>
-    <string name="tint_text">Harmonise with the wallpaper</string>
-    <string name="tint_text_on">The text takes a tint from it</string>
-    <string name="tint_text_off">Plain white or black</string>
     <!-- One slider for app names on the home screen and in the drawer, 24 to 48 dp -->
     <string name="app_name_size">App name size</string>
-    <string name="show_status_bar">Show status bar</string>
+    <!-- Beside the app name size, as it changes: how many apps fit on the home screen at that size -->
+    <plurals name="room_for_apps">
+        <item quantity="one">room for %d app</item>
+        <item quantity="other">room for %d apps</item>
+    </plurals>
+    <!-- TalkBack, in settings' lists of apps: the one in use -->
+    <string name="selected">Selected</string>
+    <string name="show_status_bar">Show the status bar</string>
     <string name="status_bar_off_summary">Swipe down for notifications</string>
 
     <string name="gestures">Gestures</string>
     <string name="swipe_left">Swipe left</string>
     <string name="swipe_right">Swipe right</string>
-    <string name="swipe_left_opens">Swipe left opens</string>
-    <string name="swipe_right_opens">Swipe right opens</string>
 
     <string name="about">About</string>
     <string name="version">Version %1$s · a minimum of things, a launcher</string>
