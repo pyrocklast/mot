@@ -117,11 +117,6 @@ class Prefs(context: Context) {
             .let { if (it == TEXT_DARK || it == TEXT_LIGHT) it else TEXT_MATCH_WALLPAPER }
         set(value) = prefs.edit { putInt("text_colour", value) }
 
-    /** Whether the text takes its colour from the wallpaper, rather than being plain white or black. */
-    var tintText: Boolean
-        get() = prefs.getBoolean("tint_text", true)
-        set(value) = prefs.edit { putBoolean("tint_text", value) }
-
     /**
      * How big app names are, on the home screen and in the drawer, in dp: [MIN_NAME_SIZE] (text
      * that fills a 48 dp touch target, with 8 dp above and below) to [MAX_NAME_SIZE]. Android's
@@ -227,7 +222,7 @@ class Prefs(context: Context) {
         // Everything that decides how the home screen is drawn, and so what a crash while drawing
         // is likely to have come from
         private val LOOK_KEYS = listOf(
-            "show_time", "show_date", "app_name_size", "text_colour", "tint_text", "show_status_bar",
+            "show_time", "show_date", "app_name_size", "text_colour", "show_status_bar",
         )
 
         const val MIN_NAME_SIZE = 24

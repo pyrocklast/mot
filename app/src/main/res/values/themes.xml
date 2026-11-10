@@ -45,15 +45,6 @@
         <item name="launcherVeilColor">#40FFFFFF</item>
     </style>
 
-    <!-- Over either of those, when the text is to be plain rather than the wallpaper's colours -->
-    <style name="ThemeOverlay.Mot.PlainLightText" parent="">
-        <item name="launcherTextColor">@android:color/white</item>
-    </style>
-
-    <style name="ThemeOverlay.Mot.PlainDarkText" parent="">
-        <item name="launcherTextColor">@android:color/black</item>
-    </style>
-
     <style name="Mot.WindowAnimation" parent="">
         <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
         <item name="android:windowExitAnimation">@android:anim/fade_out</item>

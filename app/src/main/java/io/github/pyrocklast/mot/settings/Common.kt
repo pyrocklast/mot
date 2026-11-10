@@ -6,8 +6,6 @@ import androidx.annotation.StringRes
 import io.github.pyrocklast.mot.R
 import io.github.pyrocklast.mot.data.AppRepository
 import io.github.pyrocklast.mot.data.AppTarget
-import io.github.pyrocklast.mot.data.Prefs
-import io.github.pyrocklast.mot.launcher.Slot
 
 // Dialogs and labels shared by the settings screens. The rows themselves are in Rows.kt.
 
@@ -29,27 +27,6 @@ internal fun SettingsScreen.choiceDialog(
         .setNegativeButton(android.R.string.cancel, null)
         .show()
 )
-
-/**
- * Android's default app for something (e.g. "Default clock app"), or one you choose from the list
- * of apps. [onDefault] runs after going back to the default.
- */
-internal fun SettingsScreen.appChoiceDialog(
-    prefs: Prefs,
-    @StringRes title: Int,
-    @StringRes defaultLabel: Int,
-    current: AppTarget?,
-    slot: Slot,
-    onDefault: () -> Unit,
-) {
-    val labels = arrayOf<CharSequence>(getString(defaultLabel), getString(R.string.choose_app_ellipsis))
-    choiceDialog(title, labels, if (current == null) 0 else 1) { which ->
-        if (which == 0) {
-            slot.save(prefs, null)
-            onDefault()
-        } else startActivity(AppListActivity.chooseApp(this, slot))
-    }
-}
 
 // Labels
 

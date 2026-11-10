@@ -86,15 +86,18 @@ object HomeFit {
 
     /**
      * The layout of a home screen [height] pixels tall, with the status bar (and any cutout)
-     * [topInset] tall and the navigation bar [bottomInset].
+     * [topInset] tall and the navigation bar [bottomInset], and app names [nameSizeDp] tall.
      */
-    fun layout(context: Context, prefs: Prefs, height: Int, topInset: Int, bottomInset: Int): Layout {
+    fun layout(
+        context: Context, prefs: Prefs, height: Int, topInset: Int, bottomInset: Int,
+        nameSizeDp: Int = prefs.appNameSize,
+    ): Layout {
         val density = context.resources.displayMetrics.density
         fun px(dp: Int) = (dp * density).roundToInt()
         val growth = growth(context.resources.configuration.smallestScreenWidthDp)
         val timeSize = TIME_DP * growth * density
         val dateSize = DATE_DP * growth * density
-        val nameSize = appNameSizePx(context, prefs)
+        val nameSize = nameSizeDp * density
 
         val time = metrics(context, R.style.Mot_Text_Clock)
         val date = metrics(context, R.style.Mot_Text_Date)
@@ -170,16 +173,17 @@ object HomeFit {
 
     /**
      * How many apps the home screen has room for, worked out from [activity]'s window, as the
-     * home screen would be with the status bar shown or hidden as set.
+     * home screen would be with the status bar shown or hidden as set, and app names
+     * [nameSizeDp] tall: settings asks this as you move the size slider.
      */
-    fun capacity(activity: Activity, prefs: Prefs): Int {
+    fun capacity(activity: Activity, prefs: Prefs, nameSizeDp: Int = prefs.appNameSize): Int {
         val window = activity.windowManager.currentWindowMetrics
         val insets = window.windowInsets
         val cutout = insets.getInsets(WindowInsets.Type.displayCutout()).top
         val statusBar = insets.getInsetsIgnoringVisibility(WindowInsets.Type.statusBars()).top
         val top = if (prefs.showStatusBar) maxOf(statusBar, cutout) else cutout
         val bottom = insets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom
-        return layout(activity, prefs, window.bounds.height(), top, bottom).capacity
+        return layout(activity, prefs, window.bounds.height(), top, bottom, nameSizeDp).capacity
     }
 
     /** App names' size, on the home screen and in the drawer: yours, in dp. */
