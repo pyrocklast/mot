@@ -18,7 +18,8 @@
             android:layout_marginHorizontal="24dp"
             android:orientation="vertical">
 
-            <TextClock
+            <!-- The time, kept current by the home screen's minute tick (TimeText) -->
+            <TextView
                 android:id="@+id/clock"
                 style="@style/Mot.Text.Clock"
                 android:layout_width="wrap_content"

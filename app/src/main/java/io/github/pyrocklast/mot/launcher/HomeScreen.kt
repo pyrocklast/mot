@@ -33,6 +33,7 @@ import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.DefaultApp
 import io.github.pyrocklast.mot.util.HomeFit
+import io.github.pyrocklast.mot.util.TimeText
 import kotlin.math.abs
 
 /**
@@ -135,10 +136,14 @@ class HomeScreen(
     var capacity = 0
         private set
 
+    /** The layout last drawn: the time and date use it as they change each minute. */
+    private var fit: HomeFit.Layout? = null
+
     /** Draws the home screen from the current settings and app names. Cheap enough to call often. */
     fun render() {
         val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
         val fit = HomeFit.layout(context, prefs, displayHeight, topInset, bottomInset)
+        this.fit = fit
         capacity = fit.capacity
 
         // The time and date, sized for the screen, the date's capitals tucked in under the time.
@@ -149,7 +154,7 @@ class HomeScreen(
         binding.date.setTextSize(TypedValue.COMPLEX_UNIT_PX, fit.dateSize)
         setTopMargin(binding.clockBlock, fit.clockTop)
         setTopMargin(binding.date, fit.dateMargin)
-        updateDate()
+        updateClock()
 
         // One row per home app, but none from a Private Space that's locked and hidden: they
         // come back when it's unlocked
@@ -250,22 +255,48 @@ class HomeScreen(
         return view
     }
 
-    // The date, left as it is when it hasn't changed
-    private fun updateDate() {
-        if (!prefs.showDate) return
-        val text = DateText.date(context)
-        if (binding.date.text.toString() != text) binding.date.text = text
+    // The time and the date, each left as it is when it hasn't changed
+    private fun updateClock() {
+        val fit = fit ?: return
+        if (prefs.showTime) {
+            val time = TimeText.time(context, fit.colonLift, fit.dateSize, fit.markerGap)
+            if (binding.clock.text.toString() != time.toString()) {
+                binding.clock.text = time
+                alignInk(binding.clock)
+            }
+        }
+        if (prefs.showDate) {
+            val date = DateText.date(context)
+            if (binding.date.text.toString() != date) {
+                binding.date.text = date
+                alignInk(binding.date)
+            }
+        }
     }
 
-    // Keeps the date current while the home screen shows, e.g. past midnight.
-    // It follows Android's once-a-minute tick, so it adds no wake-ups.
+    // Puts the first letter or figure itself on the margin, rather than the room the font keeps
+    // before it, which at the time's size is a few dp, and different for each figure
+    private fun alignInk(view: TextView) {
+        val text = view.text
+        if (text.isEmpty() || view.layoutDirection != View.LAYOUT_DIRECTION_LTR) {
+            view.translationX = 0f
+            return
+        }
+        val first = android.graphics.Rect()
+        view.paint.getTextBounds(text, 0, 1, first)
+        view.translationX = -first.left.toFloat()
+    }
+
+    // Keeps the time and date current while the home screen shows, e.g. past midnight, and
+    // follows the phone's 12- or 24-hour setting when it changes. It follows Android's
+    // once-a-minute tick, so it adds no wake-ups.
     private var ticking = false
     private val ticker = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) = updateDate()
+        override fun onReceive(context: Context?, intent: Intent?) = updateClock()
     }
 
     fun startTicking() {
-        if (ticking || !prefs.showDate) return
+        if (ticking || (!prefs.showTime && !prefs.showDate)) return
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_TIME_TICK)
             addAction(Intent.ACTION_TIME_CHANGED)

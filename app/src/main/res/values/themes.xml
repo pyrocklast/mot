@@ -87,9 +87,12 @@
         <item name="android:gravity">start|center_vertical</item>
     </style>
 
+    <!-- Proportional figures, a touch closer together: tabular ones leave "11" gapped -->
     <style name="Mot.Text.Clock">
         <item name="android:textSize">@dimen/clock_size</item>
         <item name="android:textFontWeight">700</item>
+        <item name="android:fontFeatureSettings">pnum</item>
+        <item name="android:letterSpacing">-0.01</item>
         <item name="android:maxLines">1</item>
     </style>
 

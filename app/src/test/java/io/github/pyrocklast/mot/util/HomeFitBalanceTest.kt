@@ -61,6 +61,36 @@ class HomeFitBalanceTest {
         assertEquals(HomeFit.VisibleRows(0, false), HomeFit.visibleRows(count = 3, slots = 0))
     }
 
+    // The time and date, placed by what you see. A 360 dp phone at one pixel to the dp: the
+    // time's view has its baseline 68 below its top and ends 18 under it, its figures 46 tall;
+    // the date's baseline is 23 below its view's top, its capitals 15 tall, descenders 4 deep.
+
+    private fun place(showTime: Boolean = true, showDate: Boolean = true) = HomeFit.placeClock(
+        inkTop = 72, showTime = showTime, showDate = showDate,
+        timeBaseline = 68, timeBottom = 18, figures = 46,
+        dateBaseline = 23, capitals = 15, descenders = 4,
+        gap = 16, underClock = 24,
+    )
+
+    @Test fun `the figures start where the time should, and the date's capitals 16 under them`() {
+        val place = place()
+        assertEquals(50, place.top)                   // 50 + 68 - 46: the figures' top is at 72
+        assertEquals(-10, place.dateMargin)           // the date's baseline at 118 + 16 + 15
+        assertEquals(177, place.namesTop)             // 24 under the date's descenders
+    }
+
+    @Test fun `without the date, the names start 24 under the figures`() {
+        assertEquals(HomeFit.ClockPlace(50, 0, 142), place(showDate = false))
+    }
+
+    @Test fun `without the time, the date's capitals start where the time would`() {
+        assertEquals(HomeFit.ClockPlace(64, 0, 115), place(showTime = false))
+    }
+
+    @Test fun `without either, the names may start right under the status bar's gap`() {
+        assertEquals(HomeFit.ClockPlace(72, 0, 72), place(showTime = false, showDate = false))
+    }
+
     // Where the names start
 
     @Test fun centersGroupInsideUsableInsets() {
