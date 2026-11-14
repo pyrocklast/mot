@@ -28,7 +28,7 @@
     <string name="choose_calendar_app">Choisir une application d\'agenda</string>
     <string name="choose_left_swipe_app">Choisir l\'application du balayage à gauche</string>
     <string name="choose_right_swipe_app">Choisir l\'application du balayage à droite</string>
-    <string name="loading_apps">Chargement des applications…</string>
+    <string name="loading_apps">Chargement…</string>
     <string name="no_search_results">Aucune application correspondante</string>
     <string name="no_apps_available">Aucune application disponible</string>
     <string name="private_space">Espace privé</string>

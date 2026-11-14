@@ -32,7 +32,7 @@
     <string name="choose_calendar_app">Choose a calendar app</string>
     <string name="choose_left_swipe_app">Choose the app for swipe left</string>
     <string name="choose_right_swipe_app">Choose the app for swipe right</string>
-    <string name="loading_apps">Loading apps…</string>
+    <string name="loading_apps">Loading…</string>
     <string name="no_search_results">No matching apps</string>
     <string name="no_apps_available">No apps available</string>
     <string name="private_space">Private space</string>

@@ -182,6 +182,8 @@ class Drawer(
         keepOpenWhileAway = false
         menu.dismiss()
         hideKeyboard()
+        binding.drawerEmpty.removeCallbacks(showLoading)
+        binding.drawerEmpty.isVisible = false
         search.text = null
         binding.home.isInvisible = false
         if (animate) {
@@ -281,19 +283,36 @@ class Drawer(
         }
         spaceRow?.let { rows += it }
 
-        binding.drawerEmpty.isVisible = rows.isEmpty()
-        if (rows.isEmpty()) {
-            binding.drawerEmpty.setText(when {
-                repo.apps.value == null -> R.string.loading_apps
-                query.isNotEmpty() -> R.string.no_search_results
-                else -> R.string.no_apps_available
-            })
-        }
+        showWhyEmpty(empty = rows.isEmpty(), loading = repo.apps.value == null, searching = query.isNotEmpty())
         adapter.submitList(rows) {
             if (fromTop) list.scrollToPosition(0)
             if (typed && !choosing) maybeOpenOnlyMatch()
         }
     }
+
+    /**
+     * The line where the first app would be, when there is no first app: why the list is empty.
+     * Loading is the one case that passes on its own, and usually within a frame or two of the
+     * drawer opening, so that line waits a moment rather than flashing up and straight back out.
+     */
+    private fun showWhyEmpty(empty: Boolean, loading: Boolean, searching: Boolean) {
+        binding.drawerEmpty.removeCallbacks(showLoading)
+        if (!empty) {
+            binding.drawerEmpty.isVisible = false
+            return
+        }
+        binding.drawerEmpty.setText(
+            when {
+                loading -> R.string.loading_apps
+                searching -> R.string.no_search_results
+                else -> R.string.no_apps_available
+            }
+        )
+        binding.drawerEmpty.isVisible = !loading
+        if (loading) binding.drawerEmpty.postDelayed(showLoading, LOADING_SHOWS_AFTER_MS)
+    }
+
+    private val showLoading = Runnable { binding.drawerEmpty.isVisible = isOpen }
 
     // Typing that leaves only one app opens it, if you've turned that on
     private fun maybeOpenOnlyMatch() {
@@ -423,5 +442,8 @@ class Drawer(
         const val OVERSCROLL_TO_CLOSE = 10
         const val NO_REQUEST = -1L
         const val UNLOCK_WAIT_MS = 60_000L
+
+        /** How long the apps have to load before the drawer says it's waiting for them. */
+        const val LOADING_SHOWS_AFTER_MS = 400L
     }
 }

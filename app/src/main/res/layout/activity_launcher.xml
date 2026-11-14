@@ -131,16 +131,17 @@
                 android:overScrollMode="ifContentScrolls"
                 android:requiresFadingEdge="vertical" />
 
-            <!-- Says why the list is empty, when it is -->
+            <!-- Says why the list is empty, where its first row would be -->
             <TextView
                 android:id="@+id/drawerEmpty"
                 style="@style/Mot.Text.Small"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
+                android:layout_gravity="top"
+                android:alpha="0.7"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="16dp"
                 android:textColor="@color/launcher_text"
-                android:padding="24dp"
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>
