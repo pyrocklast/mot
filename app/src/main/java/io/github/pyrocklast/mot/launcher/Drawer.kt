@@ -165,9 +165,8 @@ class Drawer(
         binding.drawer.alpha = 0f
         binding.drawer.animate().alpha(1f).setDuration(OPEN_MS).start()
         // Only the wallpaper shows through, not the home screen
-        binding.home.animate().alpha(0f).setDuration(OPEN_MS).withEndAction {
-            if (isOpen) binding.home.isInvisible = true
-        }.start()
+        binding.home.animate().alpha(0f).setDuration(OPEN_MS).start()
+        settleAfter(OPEN_MS)
         // The rows rise into place while the keyboard comes up
         list.scheduleLayoutAnimation()
         showKeyboardIfWanted()
@@ -187,16 +186,45 @@ class Drawer(
         search.text = null
         binding.home.isInvisible = false
         if (animate) {
-            binding.drawer.animate().alpha(0f).setDuration(CLOSE_MS).withEndAction {
-                if (!isOpen) hideDrawer()
-            }.start()
+            binding.drawer.animate().alpha(0f).setDuration(CLOSE_MS).start()
             binding.home.animate().alpha(1f).setDuration(CLOSE_MS).start()
+            settleAfter(CLOSE_MS)
         } else {
-            binding.drawer.animate().cancel()
+            settle()
+        }
+    }
+
+    /**
+     * What the drawer and the home screen actually look like, from whether the drawer is open.
+     *
+     * The fades are decoration. One that doesn't finish — cancelled by the next gesture, or by
+     * the window changing under it — used to leave the drawer open at no opacity: working, since
+     * a see-through view still takes taps, but never drawn, so the home screen appeared stuck
+     * with the keyboard over it. So the state is set outright a moment after each fade, and
+     * again whenever the launcher comes back to the front.
+     */
+    fun settle() {
+        binding.drawer.removeCallbacks(settleRunnable)
+        binding.drawer.animate().cancel()
+        binding.home.animate().cancel()
+        if (isOpen) {
+            binding.drawer.isVisible = true
+            binding.drawer.alpha = 1f
+            binding.drawer.scaleX = 1f
+            binding.drawer.scaleY = 1f
+            binding.home.isInvisible = true
+        } else {
             hideDrawer()
-            binding.home.animate().cancel()
+            binding.home.isInvisible = false
             binding.home.alpha = 1f
         }
+    }
+
+    private val settleRunnable = Runnable { settle() }
+
+    private fun settleAfter(animation: Long) {
+        binding.drawer.removeCallbacks(settleRunnable)
+        binding.drawer.postDelayed(settleRunnable, animation + SETTLE_AFTER_MS)
     }
 
     private fun hideDrawer() {
@@ -218,6 +246,7 @@ class Drawer(
     fun backProgress(progress: Float) {
         // Back from Private Space doesn't close the drawer, so nothing shrinks
         if (!isOpen || inPrivateSpace) return
+        binding.drawer.removeCallbacks(settleRunnable)
         val scale = 1f - BACK_SHRINK * progress
         binding.drawer.scaleX = scale
         binding.drawer.scaleY = scale
@@ -228,6 +257,7 @@ class Drawer(
     fun backCancelled() {
         if (!isOpen) return
         binding.drawer.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(CLOSE_MS).start()
+        settleAfter(CLOSE_MS)
     }
 
     /**
@@ -442,6 +472,9 @@ class Drawer(
         const val OVERSCROLL_TO_CLOSE = 10
         const val NO_REQUEST = -1L
         const val UNLOCK_WAIT_MS = 60_000L
+
+        /** How long after a fade the drawer is simply put in the state it should be in. */
+        const val SETTLE_AFTER_MS = 50L
 
         /** How long the apps have to load before the drawer says it's waiting for them. */
         const val LOADING_SHOWS_AFTER_MS = 400L

@@ -170,6 +170,9 @@ class LauncherActivity : ComponentActivity() {
             return
         }
         drawer.onLauncherResumed()
+        // Back at the front: whatever became of a fade while we were away, the drawer and the
+        // home screen look like what they are
+        drawer.settle()
         applySystemBars(light)
         home.render()
         home.startTicking()
