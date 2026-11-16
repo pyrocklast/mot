@@ -14,13 +14,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.doOnLayout
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import androidx.core.view.isVisible
@@ -55,7 +53,6 @@ class HomeScreen(
     private val appViews = ArrayList<TextView>()
     private var overflowView: TextView? = null
     private var homeMenu: PopupMenu? = null
-    private var homeMenuAnchor: View? = null
 
     // Where the system bars are, until Android says otherwise: the home screen draws under them
     private var topInset = (24 * context.resources.displayMetrics.density).toInt()
@@ -74,7 +71,7 @@ class HomeScreen(
             binding.home.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             val view = viewAt(e)
             val index = appViews.indexOf(view)
-            if (view == null || index < 0) return longPress(view, e)
+            if (view == null || index < 0) return longPress(view)
             // A home app picks up, and moves if you drag it. Its menu waits until you let go
             // without dragging, so it never covers the spots the app could be dragged to.
             if (canMove(index)) reorder.arm(index, e.rawY, lift = true) else homeAppMenu(view, index)
@@ -130,8 +127,8 @@ class HomeScreen(
     }
 
     /**
-     * How many apps there's room for on this screen, as last drawn. Adding an app stops here; the
-     * drawer and the home screen's own menu ask.
+     * How many apps there's room for on this screen, as last drawn. Adding an app stops here,
+     * which is what the drawer asks before offering to add one.
      */
     var capacity = 0
         private set
@@ -337,8 +334,6 @@ class HomeScreen(
     private fun dismissHomeMenu() {
         homeMenu?.dismiss()
         homeMenu = null
-        homeMenuAnchor?.let { binding.home.removeView(it) }
-        homeMenuAnchor = null
     }
 
     // Only an app that's there and showing moves: not one that's gone, paused or locked away
@@ -372,9 +367,9 @@ class HomeScreen(
         }
     }
 
-    private fun longPress(view: View?, event: MotionEvent? = null) {
+    private fun longPress(view: View?) {
         when (view) {
-            null -> showHomeMenu(event)
+            null -> openSettings()
             binding.clock -> openDrawer(Slot.Clock)
             binding.date -> openDrawer(Slot.Calendar)
             overflowView -> openDrawer(null)
@@ -389,6 +384,7 @@ class HomeScreen(
         val remove = {
             prefs.removeHomeApp(target)
             render()
+            Apps.toast(context, R.string.removed_from_home)
         }
         val entry = repo.find(target)
         if (entry == null) {
@@ -418,42 +414,6 @@ class HomeScreen(
                 AppMenu.Extra(R.string.remove_from_home, remove),
             ),
         )
-    }
-
-    /** A long press on the home screen's empty space: add an app, or settings, where you pressed. */
-    private fun showHomeMenu(event: MotionEvent?) {
-        dismissHomeMenu()
-        val anchor = View(context)
-        val params = FrameLayout.LayoutParams(1, 1)
-        params.leftMargin = (event?.x?.toInt() ?: binding.home.width / 2)
-            .coerceIn(0, (binding.home.width - 1).coerceAtLeast(0))
-        params.topMargin = (event?.y?.toInt() ?: binding.home.height / 2)
-            .coerceIn(0, (binding.home.height - 1).coerceAtLeast(0))
-        binding.home.addView(anchor, params)
-        val popup = PopupMenu(context, anchor, Gravity.START)
-        if (prefs.homeApps.size < capacity) {
-            popup.menu.add(0, HOME_ADD, 0, R.string.add_to_home)
-        }
-        popup.menu.add(0, HOME_SETTINGS, 1, R.string.settings)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                HOME_ADD -> openDrawer(Slot.AddHome)
-                HOME_SETTINGS -> openSettings()
-            }
-            true
-        }
-        popup.setOnDismissListener {
-            binding.home.removeView(anchor)
-            if (homeMenuAnchor === anchor) homeMenuAnchor = null
-            if (homeMenu === popup) homeMenu = null
-        }
-        homeMenuAnchor = anchor
-        homeMenu = popup
-        // The menu hangs from a one-pixel view where you pressed, which has to be laid out
-        // before the menu can find it
-        anchor.doOnLayout {
-            if (homeMenu === popup && anchor.parent === binding.home) popup.show()
-        }
     }
 
     private fun swipe(left: Boolean) {
@@ -539,9 +499,7 @@ class HomeScreen(
 
     private companion object {
         const val SWIPE_DISTANCE_DP = 40
-        const val HOME_ADD = 1
-        const val HOME_SETTINGS = 2
-        const val HOME_CHANGE = 3
-        const val HOME_REMOVE = 4
+        const val HOME_CHANGE = 1
+        const val HOME_REMOVE = 2
     }
 }

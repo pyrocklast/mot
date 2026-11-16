@@ -5,10 +5,9 @@
     <string name="app_name">mot launcher</string>
 
     <!-- Home screen -->
-    <string name="add_to_home">Add app to home</string>
     <string name="home_all_apps">All apps ↑</string>
     <string name="home_all_apps_description">Open all apps</string>
-    <string name="tips">Swipe up for your apps\nLong press to add apps or open settings\nLong press and drag an app to move it</string>
+    <string name="tips">Swipe up for your apps\nLong press one there to add it here\nLong press the home screen for settings</string>
     <string name="set_as_home">Set mot as default launcher</string>
     <string name="set_as_home_underlined"><u>Set mot as default launcher</u></string>
     <!-- TalkBack actions on the home screen -->
@@ -61,6 +60,7 @@
     <!-- Shown once, after mot launcher crashed repeatedly and put its look back to the defaults -->
     <string name="look_reset">mot launcher kept stopping, so its look is back to the defaults. Your apps are as they were.</string>
     <string name="app_not_found">App not found</string>
+    <string name="cant_open_notifications">Couldn\'t open notifications</string>
     <string name="cant_open">Couldn\'t open it</string>
     <string name="shortcut_added">Added to the app drawer</string>
     <string name="shortcut_not_added">Couldn\'t add the shortcut</string>

@@ -3,10 +3,9 @@
     <string name="app_name">lanceur mot</string>
 
     <!-- Écran d'accueil -->
-    <string name="add_to_home">Ajouter une application à l\'accueil</string>
     <string name="home_all_apps">Applications ↑</string>
     <string name="home_all_apps_description">Ouvrir toutes les applications</string>
-    <string name="tips">Balayez vers le haut pour vos applications\nAppui long pour ajouter des applications ou ouvrir les paramètres\nAppui long puis glisser pour déplacer une application</string>
+    <string name="tips">Balayez vers le haut pour vos applications\nAppui long sur l\'une d\'elles pour l\'ajouter ici\nAppui long sur l\'écran d\'accueil pour les paramètres</string>
     <string name="set_as_home">Définir mot comme lanceur par défaut</string>
     <string name="set_as_home_underlined"><u>Définir mot comme lanceur par défaut</u></string>
     <string name="action_open">Ouvrir</string>
@@ -52,6 +51,7 @@
     <string name="first_hide">Application masquée. Retrouvez-la dans Paramètres &gt; %1$s &gt; %2$s.</string>
     <string name="look_reset">Le lanceur mot s\'arrêtait sans cesse : son apparence est revenue aux réglages par défaut. Vos applications n\'ont pas changé.</string>
     <string name="app_not_found">Application introuvable</string>
+    <string name="cant_open_notifications">Impossible d\'ouvrir les notifications</string>
     <string name="cant_open">Impossible de l\'ouvrir</string>
     <string name="shortcut_added">Ajouté au tiroir d\'applications</string>
     <string name="shortcut_not_added">Impossible d\'ajouter le raccourci</string>

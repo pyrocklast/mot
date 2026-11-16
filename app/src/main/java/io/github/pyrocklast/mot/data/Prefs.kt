@@ -197,9 +197,6 @@ class Prefs(context: Context) {
 
     // Names
 
-    /** The name you gave an app or shortcut, or null. */
-    fun customName(key: String): String? = names.getString(key, null)
-
     fun setCustomName(key: String, name: String?) = names.edit {
         if (name.isNullOrBlank()) remove(key) else putString(key, name.trim())
     }
