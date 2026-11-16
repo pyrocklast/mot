@@ -83,7 +83,6 @@ class AppListActivity : SettingsScreen() {
             Slot.Calendar -> R.string.choose_calendar_app
             Slot.SwipeLeft -> R.string.choose_left_swipe_app
             Slot.SwipeRight -> R.string.choose_right_swipe_app
-            Slot.AddHome -> R.string.add_to_home
             is Slot.Home -> R.string.change_app
         })
         setUpFrame(binding.root, binding.appBar, binding.list, title)

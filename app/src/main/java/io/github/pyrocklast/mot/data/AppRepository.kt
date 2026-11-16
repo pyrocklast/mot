@@ -196,9 +196,8 @@ class AppRepository private constructor(private val context: Context) {
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // One profile failing (e.g. switched off mid-query) shouldn't empty the whole list
-                e.printStackTrace()
             }
         }
         return result to space

@@ -62,9 +62,8 @@ object Apps {
                 launcherApps.startMainActivity(component, user, bounds, options)
             }
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Not found, profile off, or not the default launcher (needed for shortcuts)
-            e.printStackTrace()
             toast(context, R.string.cant_open)
             false
         }
@@ -135,6 +134,10 @@ object Apps {
         runCatching {
             val service = context.getSystemService("statusbar")
             Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel").invoke(service)
+        }.onFailure {
+            // Android has never offered this to apps; if it ever stops answering, say so rather
+            // than leave the swipe doing nothing
+            toast(context, R.string.cant_open_notifications)
         }
     }
 

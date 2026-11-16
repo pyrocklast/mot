@@ -287,7 +287,7 @@ class Drawer(
         val choosing = choosingFor != null
         val hidden = if (choosing) emptySet() else prefs.hiddenApps
         // Choosing a home app, the ones already there aren't offered again
-        val onHome = if (choosingFor == Slot.AddHome || choosingFor is Slot.Home) prefs.homeApps.toSet() else emptySet()
+        val onHome = if (choosingFor is Slot.Home) prefs.homeApps.toSet() else emptySet()
         val now = System.currentTimeMillis()
 
         // Your apps, then a small "Private space" row; or Private Space's apps, then "Lock".
