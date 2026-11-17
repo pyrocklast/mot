@@ -10,6 +10,7 @@ import androidx.activity.BackEventCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import android.view.KeyEvent
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -23,6 +24,8 @@ import io.github.pyrocklast.mot.data.Prefs
 import io.github.pyrocklast.mot.databinding.ActivityLauncherBinding
 import io.github.pyrocklast.mot.settings.SettingsActivity
 import io.github.pyrocklast.mot.util.Apps
+import io.github.pyrocklast.mot.util.KeyAction
+import io.github.pyrocklast.mot.util.Keys
 import io.github.pyrocklast.mot.util.Look
 import kotlinx.coroutines.launch
 
@@ -158,6 +161,32 @@ class LauncherActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Keys the screen itself didn't take. Typing a letter on the home screen opens the drawer
+     * and starts searching for it, which is the quickest way to an app from a keyboard, and the
+     * drawer's own keys go through [Keys] like the home screen's.
+     */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        when (Keys.action(keyCode)) {
+            KeyAction.DRAWER -> if (!drawer.isOpen) {
+                drawer.open()
+                return true
+            }
+            KeyAction.CLOSE -> if (drawer.isOpen) {
+                drawer.close()
+                return true
+            }
+            else -> Unit
+        }
+        if (!drawer.isOpen) {
+            Keys.typed(event)?.let {
+                drawer.open(query = it.toString())
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onResume() {

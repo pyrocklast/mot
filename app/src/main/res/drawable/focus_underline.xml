@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Focus, for a line of text: a rule under it, in the launcher's own text colour. Drawn at the
+     bottom of the row, which is a few dp under the descenders whatever size names are. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:gravity="bottom"
+        android:height="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/launcherTextColor" />
+        </shape>
+    </item>
+</layer-list>

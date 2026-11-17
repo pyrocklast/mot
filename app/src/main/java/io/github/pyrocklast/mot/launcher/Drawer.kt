@@ -183,7 +183,8 @@ class Drawer(
         binding.drawerSettings.translationY = (top + (fit.searchHeight - gear) / 2).toFloat()
     }
 
-    fun open(slot: Slot? = null) {
+    /** [query] starts the search with what you typed on the home screen to get here. */
+    fun open(slot: Slot? = null, query: String? = null) {
         choosingFor = slot
         binding.drawerSettings.isVisible = slot == null
         isOpen = true
@@ -193,6 +194,10 @@ class Drawer(
         setSearchHint()
         userScrolled = false
         update()
+        if (query != null) {
+            search.setText(query)
+            search.setSelection(query.length)
+        }
 
         binding.drawer.isVisible = true
         binding.drawer.alpha = 0f
@@ -217,6 +222,8 @@ class Drawer(
         binding.drawerEmpty.removeCallbacks(showLoading)
         binding.drawerEmpty.isVisible = false
         search.text = null
+        // Focus follows the screen you're on: it would be left on a hidden box otherwise
+        if (!binding.home.isInTouchMode) binding.home.requestFocus()
         binding.home.isInvisible = false
         if (animate) {
             binding.drawer.animate().alpha(0f).setDuration(CLOSE_MS).start()
@@ -478,8 +485,9 @@ class Drawer(
     // Keyboard
 
     private fun showKeyboardIfWanted() {
-        if (!prefs.autoKeyboard) return
+        // Typing goes where the focus is, keyboard on screen or not
         search.requestFocus()
+        if (!prefs.autoKeyboard) return
         search.post { WindowCompat.getInsetsController(activity.window, search).show(WindowInsetsCompat.Type.ime()) }
     }
 

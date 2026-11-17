@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.KeyEvent
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
@@ -31,6 +32,8 @@ import io.github.pyrocklast.mot.util.Apps
 import io.github.pyrocklast.mot.util.DateText
 import io.github.pyrocklast.mot.util.DefaultApp
 import io.github.pyrocklast.mot.util.HomeFit
+import io.github.pyrocklast.mot.util.KeyAction
+import io.github.pyrocklast.mot.util.Keys
 import io.github.pyrocklast.mot.util.TimeText
 import kotlin.math.abs
 
@@ -107,6 +110,9 @@ class HomeScreen(
         // TalkBack and Switch Access can't swipe or long press the whole screen, so the drawer
         // and settings are actions on it instead
         binding.home.isFocusable = true
+        // The names come first when a keyboard or controller moves focus; the screen itself is
+        // the last resort, for the actions below
+        binding.home.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         binding.home.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         ViewCompat.addAccessibilityAction(binding.home, context.getString(R.string.action_open_app_drawer)) { _, _ ->
             openDrawer(null)
@@ -122,6 +128,8 @@ class HomeScreen(
             if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) render()
         }
         binding.setDefault.setOnClickListener { requestHomeRole() }
+        binding.setDefault.defaultFocusHighlightEnabled = false
+        binding.setDefault.setBackgroundResource(R.drawable.focus_name)
         describeForTalkBack(binding.clock, R.string.action_open_clock, R.string.action_choose_clock) { tap(it) }
         describeForTalkBack(binding.date, R.string.action_open_calendar, R.string.action_choose_calendar) { tap(it) }
     }
@@ -445,6 +453,11 @@ class HomeScreen(
      * The home screen's text isn't clickable itself (the gesture detector handles touch), so
      * TalkBack is told what each item does: double tap to open, double tap and hold to change.
      * Home apps can also be moved up and down from TalkBack's actions, as dragging can't be done.
+     *
+     * The same goes for a keyboard or a controller, which can't swipe or long press either: the
+     * text takes focus and [Keys] says what each key does. Focus and clicks are separate in
+     * Android, so a view that takes focus without being clickable leaves touch exactly as it
+     * was — the gesture detector still sees every tap and swipe.
      */
     private fun describeForTalkBack(
         view: View,
@@ -453,6 +466,19 @@ class HomeScreen(
         canBeMoved: Boolean = false,
         onOpen: (View) -> Unit,
     ) {
+        view.isFocusable = true
+        view.defaultFocusHighlightEnabled = false
+        view.setBackgroundResource(R.drawable.focus_name)
+        view.setOnKeyListener { host, keyCode, event ->
+            if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (Keys.action(keyCode)) {
+                KeyAction.OPEN -> onOpen(host)
+                KeyAction.MENU -> longPress(host)
+                KeyAction.DRAWER -> openDrawer(null)
+                else -> return@setOnKeyListener false
+            }
+            true
+        }
         ViewCompat.setAccessibilityDelegate(view, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
                 super.onInitializeAccessibilityNodeInfo(host, info)

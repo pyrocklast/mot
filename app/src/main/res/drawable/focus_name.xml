@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nothing until a keyboard, a controller or Switch Access puts focus here: Android only shows
+     focus once something other than a finger is driving. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/focus_underline" android:state_focused="true" />
+    <item android:drawable="@android:color/transparent" />
+</selector>
