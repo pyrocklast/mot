@@ -73,6 +73,13 @@ class Drawer(
     private val search = binding.search
     private val list = binding.appList
 
+    /**
+     * Whether you've moved the list yourself. Until you have, it stays at the top as it fills:
+     * apps arriving, or a package installed while you look, shouldn't take you somewhere you
+     * didn't ask to be. Once you've scrolled, your place is yours until the list is a new one.
+     */
+    private var userScrolled = false
+
     private val nameSizePx = HomeFit.appNameSizePx(activity, prefs)
 
     private val adapter = DrawerAdapter(
@@ -117,7 +124,10 @@ class Drawer(
         list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 // The keyboard makes way while you scroll, and comes back when you're at the top again
-                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) hideKeyboard()
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    userScrolled = true
+                    hideKeyboard()
+                }
                 else if (newState == RecyclerView.SCROLL_STATE_IDLE && !recyclerView.canScrollVertically(-1) && isOpen)
                     showKeyboardIfWanted()
             }
@@ -128,6 +138,8 @@ class Drawer(
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
             override fun afterTextChanged(s: Editable?) {
+                // What you type makes a new list, which starts at the top wherever you'd scrolled to
+                userScrolled = false
                 if (isOpen) update(typed = true)
             }
         })
@@ -179,7 +191,8 @@ class Drawer(
         unlockRequestedAt = NO_REQUEST
         search.text = null
         setSearchHint()
-        update(fromTop = true)
+        userScrolled = false
+        update()
 
         binding.drawer.isVisible = true
         binding.drawer.alpha = 0f
@@ -281,11 +294,12 @@ class Drawer(
     }
 
     /**
-     * Rebuilds the list from the current apps, hidden apps and search. [fromTop] scrolls to the
-     * top once the new list is in: the list changes a moment later, and scrolling before that
-     * would let it keep showing a row from the old list wherever that row ends up.
+     * Rebuilds the list from the current apps, hidden apps and search. Unless you've scrolled it
+     * yourself, it ends up at the top once the new list is in: rows added above where you are
+     * keep the row you were looking at in place, which on the first opening left the drawer
+     * showing the end of the list, the apps having arrived above the Private space row.
      */
-    fun update(typed: Boolean = false, fromTop: Boolean = false) {
+    fun update(typed: Boolean = false) {
         if (!isOpen) return
         val apps = repo.apps.value.orEmpty()
         val space = repo.privateSpace.value
@@ -335,7 +349,7 @@ class Drawer(
 
         showWhyEmpty(empty = rows.isEmpty(), loading = repo.apps.value == null, searching = query.isNotEmpty())
         adapter.submitList(rows) {
-            if (fromTop) list.scrollToPosition(0)
+            if (!userScrolled) list.scrollToPosition(0)
             if (typed && !choosing) maybeOpenOnlyMatch()
         }
     }
@@ -444,7 +458,8 @@ class Drawer(
         inPrivateSpace = show
         search.text = null
         setSearchHint()
-        update(fromTop = true)
+        userScrolled = false
+        update()
         list.scheduleLayoutAnimation()
         if (show) showKeyboardIfWanted()
     }
