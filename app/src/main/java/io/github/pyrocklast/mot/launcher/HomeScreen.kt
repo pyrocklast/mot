@@ -129,7 +129,7 @@ class HomeScreen(
         }
         binding.setDefault.setOnClickListener { requestHomeRole() }
         binding.setDefault.defaultFocusHighlightEnabled = false
-        binding.setDefault.setBackgroundResource(R.drawable.focus_name)
+        binding.setDefault.setBackgroundResource(R.drawable.focus)
         describeForTalkBack(binding.clock, R.string.action_open_clock, R.string.action_choose_clock) { tap(it) }
         describeForTalkBack(binding.date, R.string.action_open_calendar, R.string.action_choose_calendar) { tap(it) }
     }
@@ -468,7 +468,7 @@ class HomeScreen(
     ) {
         view.isFocusable = true
         view.defaultFocusHighlightEnabled = false
-        view.setBackgroundResource(R.drawable.focus_name)
+        view.setBackgroundResource(R.drawable.focus)
         view.setOnKeyListener { host, keyCode, event ->
             if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
             when (Keys.action(keyCode)) {

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The patch behind whatever has focus: the launcher's own text colour, thinned until it reads
+     as a tint rather than a block. Light text gives a light patch on a dark wallpaper, dark text
+     a dark one on a light wallpaper, so it follows the wallpaper as the text does. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.3" android:color="?attr/launcherTextColor" />
+</selector>

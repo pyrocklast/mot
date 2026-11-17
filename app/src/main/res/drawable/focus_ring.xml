@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Focus, for the settings button: a ring, there being no text to underline. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <stroke
-        android:width="3dp"
-        android:color="?attr/launcherTextColor" />
-</shape>
