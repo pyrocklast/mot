@@ -8,6 +8,11 @@
     <dimen name="date_size" tools:ignore="SpUsage">21dp</dimen>
     <dimen name="small_size">18sp</dimen>
 
+    <!-- The drawer: the search box sits this far below the settings gear, and the names this far
+         below the search box, wherever the keyboard is -->
+    <dimen name="drawer_above_search">32dp</dimen>
+    <dimen name="drawer_below_search">20dp</dimen>
+
     <!-- Settings: groups sit this far in from the screen's sides, and their rows' text this far
          in from the group's edge; headings line up with that text -->
     <dimen name="settings_group_margin">16dp</dimen>

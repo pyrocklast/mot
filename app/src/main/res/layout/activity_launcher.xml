@@ -95,10 +95,11 @@
             android:padding="14dp"
             android:src="@drawable/ic_settings" />
 
+        <!-- Fixed gaps, not a share of what's left: the keyboard takes room from the bottom of
+             the drawer, and a share of the rest would move the search box and the names with it -->
         <Space
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.1" />
+            android:layout_height="@dimen/drawer_above_search" />
 
         <EditText
             android:id="@+id/search"
@@ -112,8 +113,7 @@
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.06" />
+            android:layout_height="@dimen/drawer_below_search" />
 
         <FrameLayout
             android:layout_width="match_parent"
