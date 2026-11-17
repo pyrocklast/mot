@@ -32,7 +32,6 @@ class SettingsActivity : SettingsScreen() {
     private lateinit var changeHome: Row
     private lateinit var showTime: SwitchRow
     private lateinit var showDate: SwitchRow
-    private lateinit var statusBar: SwitchRow
     private lateinit var textColour: Row
     private lateinit var nameSize: SliderRow
     private lateinit var hiddenApps: Row
@@ -77,10 +76,6 @@ class SettingsActivity : SettingsScreen() {
 
         // What shows on the home screen, top to bottom, apart from your apps
         group(R.string.home_screen) {
-            statusBar = switch(R.string.show_status_bar, prefs.showStatusBar) {
-                prefs.showStatusBar = it
-                refresh()
-            }
             showTime = switch(R.string.show_time, prefs.showTime) {
                 prefs.showTime = it
                 refresh()
@@ -141,8 +136,6 @@ class SettingsActivity : SettingsScreen() {
         setAsHome.isVisible = !isHome
         changeHome.isVisible = isHome
 
-        statusBar.isChecked = prefs.showStatusBar
-        statusBar.summaryOff = getString(R.string.status_bar_off_summary)
         showTime.isChecked = prefs.showTime
         showDate.isChecked = prefs.showDate
 

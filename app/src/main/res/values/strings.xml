@@ -115,8 +115,6 @@
     </plurals>
     <!-- TalkBack, in settings' lists of apps: the one in use -->
     <string name="selected">Selected</string>
-    <string name="show_status_bar">Show the status bar</string>
-    <string name="status_bar_off_summary">Swipe down for notifications</string>
 
     <string name="gestures">Gestures</string>
     <string name="swipe_left">Swipe left</string>

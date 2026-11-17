@@ -126,10 +126,6 @@ class Prefs(context: Context) {
         get() = prefs.getInt("app_name_size", DEFAULT_NAME_SIZE).coerceIn(MIN_NAME_SIZE, MAX_NAME_SIZE)
         set(value) = prefs.edit { putInt("app_name_size", value.coerceIn(MIN_NAME_SIZE, MAX_NAME_SIZE)) }
 
-    var showStatusBar: Boolean
-        get() = prefs.getBoolean("show_status_bar", true)
-        set(value) = prefs.edit { putBoolean("show_status_bar", value) }
-
     // Gestures
 
     var swipeLeftOn: Boolean
@@ -219,7 +215,7 @@ class Prefs(context: Context) {
         // Everything that decides how the home screen is drawn, and so what a crash while drawing
         // is likely to have come from
         private val LOOK_KEYS = listOf(
-            "show_time", "show_date", "app_name_size", "text_colour", "show_status_bar",
+            "show_time", "show_date", "app_name_size", "text_colour",
         )
 
         const val MIN_NAME_SIZE = 24

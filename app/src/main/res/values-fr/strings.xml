@@ -101,8 +101,6 @@
         <item quantity="other">place pour %d applications</item>
     </plurals>
     <string name="selected">Sélectionnée</string>
-    <string name="show_status_bar">Afficher la barre d\'état</string>
-    <string name="status_bar_off_summary">Balayez vers le bas pour les notifications</string>
 
     <string name="gestures">Gestes</string>
     <string name="swipe_left">Balayer vers la gauche</string>

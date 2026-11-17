@@ -181,7 +181,7 @@ object HomeFit {
         val insets = window.windowInsets
         val cutout = insets.getInsets(WindowInsets.Type.displayCutout()).top
         val statusBar = insets.getInsetsIgnoringVisibility(WindowInsets.Type.statusBars()).top
-        val top = if (prefs.showStatusBar) maxOf(statusBar, cutout) else cutout
+        val top = maxOf(statusBar, cutout)
         val bottom = insets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom
         return layout(activity, prefs, window.bounds.height(), top, bottom, nameSizeDp).capacity
     }

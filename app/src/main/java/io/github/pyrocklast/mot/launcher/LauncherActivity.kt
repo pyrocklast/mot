@@ -13,7 +13,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -224,12 +223,9 @@ class LauncherActivity : ComponentActivity() {
     private fun currentLook(light: Boolean = lightText()): String =
         listOf(light, prefs.appNameSize).joinToString()
 
-    // Status bar shown or hidden as set, and status and navigation bar icons that match the text
+    // Status and navigation bar icons that match the text they sit over
     private fun applySystemBars(light: Boolean) {
         WindowCompat.getInsetsController(window, window.decorView).apply {
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            if (prefs.showStatusBar) show(WindowInsetsCompat.Type.statusBars())
-            else hide(WindowInsetsCompat.Type.statusBars())
             isAppearanceLightStatusBars = !light
             isAppearanceLightNavigationBars = !light
         }
