@@ -74,76 +74,80 @@
             tools:visibility="visible" />
     </FrameLayout>
 
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/drawer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="?attr/launcherVeilColor"
-        android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- The way into settings from here; a long press on the home screen does the same -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- The search box starts on the time's line (HomeFit sets its top margin), so that
+                 opening the drawer puts "Search" where the time was. The gap below it is fixed,
+                 not a share of what's left: the keyboard takes room from the bottom of the drawer,
+                 and a share of the rest would move the search box and the names with it -->
+            <EditText
+                android:id="@+id/search"
+                style="@style/Mot.Text.Search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="textCapSentences|textNoSuggestions"
+                android:imeOptions="actionGo|flagNoExtractUi"
+                android:maxLines="1" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/drawer_below_search" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/appList"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="24dp"
+                    android:clipToPadding="false"
+                    android:fadingEdgeLength="24dp"
+                    android:layoutAnimation="@anim/layout_anim_from_bottom"
+                    android:overScrollMode="ifContentScrolls"
+                    android:requiresFadingEdge="vertical" />
+
+                <!-- Says why the list is empty, where its first row would be -->
+                <TextView
+                    android:id="@+id/drawerEmpty"
+                    style="@style/Mot.Text.Small"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:alpha="0.7"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="16dp"
+                    android:textColor="@color/launcher_text"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- The way into settings from here; a long press on the home screen does the same. It
+             rides on the search box's line, which HomeFit places: see Drawer.placeHeader -->
         <ImageButton
             android:id="@+id/drawerSettings"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="end"
-            android:layout_marginHorizontal="12dp"
+            android:layout_width="@dimen/drawer_gear"
+            android:layout_height="@dimen/drawer_gear"
+            android:layout_gravity="top|end"
+            android:layout_marginEnd="12dp"
             android:alpha="0.6"
             android:background="@null"
             android:contentDescription="@string/settings"
             android:padding="14dp"
             android:src="@drawable/ic_settings" />
-
-        <!-- Fixed gaps, not a share of what's left: the keyboard takes room from the bottom of
-             the drawer, and a share of the rest would move the search box and the names with it -->
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/drawer_above_search" />
-
-        <EditText
-            android:id="@+id/search"
-            style="@style/Mot.Text.Search"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="textCapSentences|textNoSuggestions"
-            android:imeOptions="actionGo|flagNoExtractUi"
-            android:maxLines="1" />
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/drawer_below_search" />
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/appList"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="24dp"
-                android:clipToPadding="false"
-                android:fadingEdgeLength="24dp"
-                android:layoutAnimation="@anim/layout_anim_from_bottom"
-                android:overScrollMode="ifContentScrolls"
-                android:requiresFadingEdge="vertical" />
-
-            <!-- Says why the list is empty, where its first row would be -->
-            <TextView
-                android:id="@+id/drawerEmpty"
-                style="@style/Mot.Text.Small"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top"
-                android:alpha="0.7"
-                android:paddingHorizontal="24dp"
-                android:paddingVertical="16dp"
-                android:textColor="@color/launcher_text"
-                android:visibility="gone" />
-        </FrameLayout>
-    </LinearLayout>
+    </FrameLayout>
 
 </FrameLayout>

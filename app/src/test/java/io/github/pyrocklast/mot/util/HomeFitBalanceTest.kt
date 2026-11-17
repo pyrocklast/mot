@@ -80,15 +80,38 @@ class HomeFitBalanceTest {
     }
 
     @Test fun `without the date, the names start 24 under the figures`() {
-        assertEquals(HomeFit.ClockPlace(50, 0, 142), place(showDate = false))
+        assertEquals(HomeFit.ClockPlace(50, 0, 142, 118), place(showDate = false))
     }
 
     @Test fun `without the time, the date's capitals start where the time would`() {
-        assertEquals(HomeFit.ClockPlace(64, 0, 115), place(showTime = false))
+        assertEquals(HomeFit.ClockPlace(64, 0, 115, 87), place(showTime = false))
     }
 
     @Test fun `without either, the names may start right under the status bar's gap`() {
-        assertEquals(HomeFit.ClockPlace(72, 0, 72), place(showTime = false, showDate = false))
+        assertEquals(HomeFit.ClockPlace(72, 0, 72, null), place(showTime = false, showDate = false))
+    }
+
+    // The drawer's search box, on the home screen's first line. A 34 dp name has its baseline
+    // 32 below its view's top and capitals 25 tall.
+
+    @Test fun `the search box sits on the time's baseline`() {
+        // The time's baseline is at 118, so a box placed at 86 puts its text on it
+        assertEquals(86, HomeFit.searchTop(headerBaseline = 118, inkTop = 72, baseline = 32, capitals = 25))
+    }
+
+    @Test fun `it follows the date when the time is hidden`() {
+        assertEquals(55, HomeFit.searchTop(headerBaseline = 87, inkTop = 72, baseline = 32, capitals = 25))
+    }
+
+    @Test fun `with neither, its capitals start where the clock's figures would have`() {
+        val top = HomeFit.searchTop(headerBaseline = null, inkTop = 72, baseline = 32, capitals = 25)
+        assertEquals(65, top)
+        assertEquals(72, top + 32 - 25)
+    }
+
+    @Test fun `bigger names keep the same line`() {
+        // A 48 dp name: baseline 45 below the view's top, capitals 35 tall
+        assertEquals(73, HomeFit.searchTop(headerBaseline = 118, inkTop = 72, baseline = 45, capitals = 35))
     }
 
     // Where the names start

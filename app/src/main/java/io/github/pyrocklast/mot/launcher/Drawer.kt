@@ -9,6 +9,7 @@ import android.text.TextWatcher
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -147,8 +148,27 @@ class Drawer(
                 WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.displayCutout()
             ).top
             view.updatePadding(top = top, bottom = bottom)
+            placeHeader(top)
             insets
         }
+        placeHeader(binding.drawer.paddingTop)
+    }
+
+    /**
+     * Puts the search box on the line the time is on, and the settings gear in the middle of
+     * that line. The drawer's top padding already holds the status bar's room, so both are
+     * placed under it.
+     */
+    private fun placeHeader(topInset: Int) {
+        val fit = HomeFit.forWindow(activity, prefs)
+        val top = fit.searchTop - topInset
+        val params = search.layoutParams as ViewGroup.MarginLayoutParams
+        if (params.topMargin != top) {
+            params.topMargin = top
+            search.layoutParams = params
+        }
+        val gear = activity.resources.getDimensionPixelSize(R.dimen.drawer_gear)
+        binding.drawerSettings.translationY = (top + (fit.searchHeight - gear) / 2).toFloat()
     }
 
     fun open(slot: Slot? = null) {

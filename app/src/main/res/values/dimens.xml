@@ -8,10 +8,12 @@
     <dimen name="date_size" tools:ignore="SpUsage">21dp</dimen>
     <dimen name="small_size">18sp</dimen>
 
-    <!-- The drawer: the search box sits this far below the settings gear, and the names this far
-         below the search box, wherever the keyboard is -->
-    <dimen name="drawer_above_search">32dp</dimen>
+    <!-- The drawer: the search box sits on the time's line (HomeFit places it), the settings
+         gear in the middle of that line, and the names this far below it, wherever the keyboard
+         is. What you type stops short of the gear: drawer_gear and its 12dp margin -->
     <dimen name="drawer_below_search">20dp</dimen>
+    <dimen name="drawer_gear">48dp</dimen>
+    <dimen name="drawer_search_end">60dp</dimen>
 
     <!-- Settings: groups sit this far in from the screen's sides, and their rows' text this far
          in from the group's edge; headings line up with that text -->

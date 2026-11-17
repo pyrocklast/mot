@@ -22,6 +22,8 @@ import kotlin.math.roundToInt
  *   spaced by what you see, the letters and figures themselves, not the room the font keeps
  *   around them: the figures' tops 32 dp under the status bar, the date's capitals 16 dp under
  *   the time, and the names 24 dp under the date's descenders.
+ * - The drawer's search box sits on the time's baseline, so that opening the drawer puts
+ *   "Search" on the line the time was on, whatever size names are.
  * - App names have your size, 24 to 48 dp.
  * - Each row is a 48 dp touch target with 8 dp to the next, so rows are never under 56 dp
  *   apart, and more if the names need it: 8 dp above and below the text.
@@ -76,6 +78,10 @@ object HomeFit {
         val colonLift: Float,
         /** Where the names may start, under the time and date. */
         val namesTop: Int,
+        /** Where the drawer's search box goes, so its text sits on the time's line. */
+        val searchTop: Int,
+        /** How tall the search box is, so the settings button can sit in the middle of it. */
+        val searchHeight: Int,
         /** Kept free at the bottom, above the navigation bar. */
         val bottom: Int,
         /** Each row's height. */
@@ -104,8 +110,9 @@ object HomeFit {
         val name = metrics(context, R.style.Mot_Text_AppName)
 
         val gap = (CLOCK_GAP_DP * growth * density).roundToInt()
+        val inkTop = topInset + px(CLOCK_TOP_DP)
         val clock = placeClock(
-            inkTop = topInset + px(CLOCK_TOP_DP),
+            inkTop = inkTop,
             showTime = prefs.showTime,
             showDate = prefs.showDate,
             // A TextView puts one line's baseline the font's top below its own top, and ends the
@@ -120,7 +127,8 @@ object HomeFit {
             underClock = px(UNDER_CLOCK_DP),
         )
         val bottom = bottomInset + px(ABOVE_NAVIGATION_DP)
-        val row = rowHeight(ceil((name.top + name.bottom) * nameSize).toInt(), px(MIN_ROW_DP), px(NAME_PADDING_DP))
+        val nameHeight = ceil((name.top + name.bottom) * nameSize).toInt()
+        val row = rowHeight(nameHeight, px(MIN_ROW_DP), px(NAME_PADDING_DP))
         return Layout(
             timeSize = timeSize,
             dateSize = dateSize,
@@ -130,14 +138,36 @@ object HomeFit {
             markerGap = gap,
             colonLift = time.colonLift * timeSize,
             namesTop = clock.namesTop,
+            searchTop = searchTop(
+                headerBaseline = clock.headerBaseline,
+                inkTop = inkTop,
+                baseline = ceil(name.top * nameSize).toInt(),
+                capitals = (name.cap * nameSize).roundToInt(),
+            ),
+            searchHeight = nameHeight,
             bottom = bottom,
             row = row,
             capacity = slots(height - clock.namesTop - bottom, row, px(SAFETY_DP)),
         )
     }
 
-    /** Where the time and date's views go, and where the names may start. */
-    internal data class ClockPlace(val top: Int, val dateMargin: Int, val namesTop: Int)
+    /**
+     * Where the time and date's views go, where the names may start, and the baseline of the
+     * home screen's first line of text, which is null when neither the time nor the date shows.
+     */
+    internal data class ClockPlace(
+        val top: Int, val dateMargin: Int, val namesTop: Int, val headerBaseline: Int?,
+    )
+
+    /**
+     * Where the drawer's search box goes, in pixels. Its text sits on [headerBaseline], the
+     * home screen's first line, so that opening the drawer puts "Search" where the time was.
+     * With no time and no date there's no line to sit on, and the placeholder's capitals start
+     * where the home screen's text would have started instead. The box has its baseline
+     * [baseline] below its top, and capitals [capitals] tall.
+     */
+    internal fun searchTop(headerBaseline: Int?, inkTop: Int, baseline: Int, capitals: Int): Int =
+        if (headerBaseline != null) headerBaseline - baseline else inkTop - (baseline - capitals)
 
     /**
      * The arithmetic of placing the time and date, in pixels, so it can be tested on its own.
@@ -159,32 +189,36 @@ object HomeFit {
                 // From the bottom of the time's view to the date's view, so that the date's
                 // capitals start [gap] under the time's baseline
                 val dateMargin = gap + capitals - timeBottom - dateBaseline
-                ClockPlace(top, dateMargin, baseline + gap + capitals + descenders + underClock)
+                ClockPlace(top, dateMargin, baseline + gap + capitals + descenders + underClock, baseline)
             } else {
-                ClockPlace(top, 0, baseline + underClock)
+                ClockPlace(top, 0, baseline + underClock, baseline)
             }
         }
         showDate -> {
             val top = inkTop - (dateBaseline - capitals)
-            ClockPlace(top, 0, top + dateBaseline + descenders + underClock)
+            ClockPlace(top, 0, top + dateBaseline + descenders + underClock, top + dateBaseline)
         }
-        else -> ClockPlace(inkTop, 0, inkTop)
+        else -> ClockPlace(inkTop, 0, inkTop, null)
     }
 
     /**
-     * How many apps the home screen has room for, worked out from [activity]'s window, as the
-     * home screen would be with the status bar shown or hidden as set, and app names
-     * [nameSizeDp] tall: settings asks this as you move the size slider.
+     * The home screen's layout in [activity]'s window, with app names [nameSizeDp] tall. The
+     * drawer asks for it to put its search box on the same line as the time, and settings asks
+     * for it as you move the name size slider; the home screen measures its own view instead.
      */
-    fun capacity(activity: Activity, prefs: Prefs, nameSizeDp: Int = prefs.appNameSize): Int {
+    fun forWindow(activity: Activity, prefs: Prefs, nameSizeDp: Int = prefs.appNameSize): Layout {
         val window = activity.windowManager.currentWindowMetrics
         val insets = window.windowInsets
         val cutout = insets.getInsets(WindowInsets.Type.displayCutout()).top
         val statusBar = insets.getInsetsIgnoringVisibility(WindowInsets.Type.statusBars()).top
         val top = maxOf(statusBar, cutout)
         val bottom = insets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom
-        return layout(activity, prefs, window.bounds.height(), top, bottom, nameSizeDp).capacity
+        return layout(activity, prefs, window.bounds.height(), top, bottom, nameSizeDp)
     }
+
+    /** How many apps the home screen has room for: settings asks this as you move the slider. */
+    fun capacity(activity: Activity, prefs: Prefs, nameSizeDp: Int = prefs.appNameSize): Int =
+        forWindow(activity, prefs, nameSizeDp).capacity
 
     /** App names' size, on the home screen and in the drawer: yours, in dp. */
     fun appNameSizePx(context: Context, prefs: Prefs): Float =
