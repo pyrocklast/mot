@@ -92,26 +92,32 @@ class HomeFitBalanceTest {
     }
 
     // The drawer's search box, on the home screen's first line. A 34 dp name has its baseline
-    // 32 below its view's top and capitals 25 tall.
+    // 32 below its view's top, capitals 25 tall, and takes 42; its box is 48, to stay worth
+    // tapping, so the text sits 3 below the box's top.
+
+    private fun search(
+        headerBaseline: Int? = 118, baseline: Int = 32, capitals: Int = 25,
+        textHeight: Int = 42, boxHeight: Int = 48,
+    ) = HomeFit.searchTop(headerBaseline, inkTop = 72, baseline, capitals, textHeight, boxHeight)
 
     @Test fun `the search box sits on the time's baseline`() {
-        // The time's baseline is at 118, so a box placed at 86 puts its text on it
-        assertEquals(86, HomeFit.searchTop(headerBaseline = 118, inkTop = 72, baseline = 32, capitals = 25))
+        // The time's baseline is at 118: the text goes at 86, the box 3 above it
+        assertEquals(83, search())
     }
 
     @Test fun `it follows the date when the time is hidden`() {
-        assertEquals(55, HomeFit.searchTop(headerBaseline = 87, inkTop = 72, baseline = 32, capitals = 25))
+        assertEquals(52, search(headerBaseline = 87))
     }
 
     @Test fun `with neither, its capitals start where the clock's figures would have`() {
-        val top = HomeFit.searchTop(headerBaseline = null, inkTop = 72, baseline = 32, capitals = 25)
-        assertEquals(65, top)
-        assertEquals(72, top + 32 - 25)
+        val top = search(headerBaseline = null)
+        assertEquals(62, top)
+        assertEquals(72, top + 3 + 32 - 25)
     }
 
-    @Test fun `bigger names keep the same line`() {
-        // A 48 dp name: baseline 45 below the view's top, capitals 35 tall
-        assertEquals(73, HomeFit.searchTop(headerBaseline = 118, inkTop = 72, baseline = 45, capitals = 35))
+    @Test fun `names too big for a 48 dp box keep the same line`() {
+        // A 48 dp name: baseline 45 below the view's top, capitals 35 tall, taking 60
+        assertEquals(73, search(baseline = 45, capitals = 35, textHeight = 60, boxHeight = 60))
     }
 
     // Where the names start

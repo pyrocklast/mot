@@ -51,6 +51,9 @@ object HomeFit {
     /** The room kept above the navigation bar. */
     private const val ABOVE_NAVIGATION_DP = 8
 
+    /** The least anything you tap may be. */
+    private const val TOUCH_TARGET_DP = 48
+
     /** A 48 dp touch target and 8 dp to the next: rows are never closer than this. */
     private const val MIN_ROW_DP = 56
 
@@ -80,7 +83,7 @@ object HomeFit {
         val namesTop: Int,
         /** Where the drawer's search box goes, so its text sits on the time's line. */
         val searchTop: Int,
-        /** How tall the search box is, so the settings button can sit in the middle of it. */
+        /** How tall the search box is: its text, or a 48 dp target, whichever is more. */
         val searchHeight: Int,
         /** Kept free at the bottom, above the navigation bar. */
         val bottom: Int,
@@ -128,6 +131,8 @@ object HomeFit {
         )
         val bottom = bottomInset + px(ABOVE_NAVIGATION_DP)
         val nameHeight = ceil((name.top + name.bottom) * nameSize).toInt()
+        // Worth tapping even when names are small, to put the keyboard back after scrolling
+        val searchHeight = maxOf(px(TOUCH_TARGET_DP), nameHeight)
         val row = rowHeight(nameHeight, px(MIN_ROW_DP), px(NAME_PADDING_DP))
         return Layout(
             timeSize = timeSize,
@@ -143,8 +148,10 @@ object HomeFit {
                 inkTop = inkTop,
                 baseline = ceil(name.top * nameSize).toInt(),
                 capitals = (name.cap * nameSize).roundToInt(),
+                textHeight = nameHeight,
+                boxHeight = searchHeight,
             ),
-            searchHeight = nameHeight,
+            searchHeight = searchHeight,
             bottom = bottom,
             row = row,
             capacity = slots(height - clock.namesTop - bottom, row, px(SAFETY_DP)),
@@ -163,11 +170,18 @@ object HomeFit {
      * Where the drawer's search box goes, in pixels. Its text sits on [headerBaseline], the
      * home screen's first line, so that opening the drawer puts "Search" where the time was.
      * With no time and no date there's no line to sit on, and the placeholder's capitals start
-     * where the home screen's text would have started instead. The box has its baseline
-     * [baseline] below its top, and capitals [capitals] tall.
+     * where the home screen's text would have started instead.
+     *
+     * The text has its baseline [baseline] below its own top, capitals [capitals] tall and
+     * takes [textHeight]; the box around it is [boxHeight], which is more than the text at
+     * small name sizes, to stay worth tapping. The text sits in the middle of it either way.
      */
-    internal fun searchTop(headerBaseline: Int?, inkTop: Int, baseline: Int, capitals: Int): Int =
-        if (headerBaseline != null) headerBaseline - baseline else inkTop - (baseline - capitals)
+    internal fun searchTop(
+        headerBaseline: Int?, inkTop: Int, baseline: Int, capitals: Int, textHeight: Int, boxHeight: Int,
+    ): Int {
+        val textTop = if (headerBaseline != null) headerBaseline - baseline else inkTop - (baseline - capitals)
+        return textTop - (boxHeight - textHeight) / 2
+    }
 
     /**
      * The arithmetic of placing the time and date, in pixels, so it can be tested on its own.

@@ -95,6 +95,7 @@
                 style="@style/Mot.Text.Search"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="@dimen/drawer_gear"
                 android:importantForAutofill="no"
                 android:inputType="textCapSentences|textNoSuggestions"
                 android:imeOptions="actionGo|flagNoExtractUi"
