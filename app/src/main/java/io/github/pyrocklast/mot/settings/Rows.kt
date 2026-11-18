@@ -9,6 +9,7 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import io.github.pyrocklast.mot.R
 
@@ -31,6 +32,8 @@ class Rows(private val column: ViewGroup) {
         val group = inflate(R.layout.settings_group)
         val heading = Row(group.findViewById(R.id.groupHeading))
         if (title != 0) heading.setTitle(title) else heading.isVisible = false
+        // So TalkBack can move heading by heading through a long screen
+        ViewCompat.setAccessibilityHeading(heading.view, title != 0)
         if (summary != 0) heading.summary = context.getString(summary)
         Rows(group.findViewById(R.id.groupRows)).rows()
     }
