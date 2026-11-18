@@ -36,17 +36,12 @@
                 tools:text="lundi 9 novembre" />
         </LinearLayout>
 
-        <!-- Never scrolls: swiping up and down are gestures -->
-        <LinearLayout
+        <!-- Never scrolls: swiping up and down are gestures. HomeFit says where the names go,
+             in one column or several, and HomeApps puts them there -->
+        <io.github.pyrocklast.mot.launcher.HomeApps
             android:id="@+id/homeApps"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="top|start"
-            android:orientation="vertical"
-            android:paddingHorizontal="12dp"
-            android:paddingTop="112dp"
-            android:paddingBottom="48dp"
-            tools:ignore="RtlSymmetry" />
+            android:layout_height="match_parent" />
 
         <TextView
             android:id="@+id/tips"

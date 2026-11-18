@@ -45,22 +45,6 @@ class HomeFitBalanceTest {
         assertEquals(1f, HomeFit.growth(320), 0.001f)
     }
 
-    // More names than rows
-
-    @Test fun `all the names when they fit`() {
-        assertEquals(HomeFit.VisibleRows(9, false), HomeFit.visibleRows(count = 9, slots = 9))
-        assertEquals(HomeFit.VisibleRows(0, false), HomeFit.visibleRows(count = 0, slots = 9))
-    }
-
-    @Test fun `too many, and the last row is All apps`() {
-        assertEquals(HomeFit.VisibleRows(8, true), HomeFit.visibleRows(count = 11, slots = 9))
-        assertEquals(HomeFit.VisibleRows(0, true), HomeFit.visibleRows(count = 3, slots = 1))
-    }
-
-    @Test fun `no rows at all, and swiping up is still there`() {
-        assertEquals(HomeFit.VisibleRows(0, false), HomeFit.visibleRows(count = 3, slots = 0))
-    }
-
     // The time and date, placed by what you see. A 360 dp phone at one pixel to the dp: the
     // time's view has its baseline 68 below its top and ends 18 under it, its figures 46 tall;
     // the date's baseline is 23 below its view's top, its capitals 15 tall, descenders 4 deep.
@@ -120,21 +104,16 @@ class HomeFitBalanceTest {
         assertEquals(73, search(baseline = 45, capitals = 35, textHeight = 60, boxHeight = 60))
     }
 
-    // Where the names start
+    // Where a column sits in the room it has
 
-    @Test fun centersGroupInsideUsableInsets() {
-        assertEquals(400, HomeFit.balancedTop(1000, 40, 80, 120, 240))
+    @Test fun `centred in the room between the two`() {
+        assertEquals(400, HomeFit.centre(top = 120, bottom = 920, height = 240))
+        assertEquals(456, HomeFit.centre(top = 360, bottom = 752, height = 200))
+        assertEquals(250, HomeFit.centre(top = 200, bottom = 700, height = 400))
     }
 
-    @Test fun avoidsOverlappingClockAndDate() {
-        assertEquals(456, HomeFit.balancedTop(800, 24, 48, 360, 200))
+    @Test fun `taller than the room, so it starts at the top of it`() {
+        assertEquals(200, HomeFit.centre(top = 200, bottom = 352, height = 300))
     }
 
-    @Test fun keepsGroupAboveNavigationWhenPossible() {
-        assertEquals(250, HomeFit.balancedTop(800, 24, 100, 200, 400))
-    }
-
-    @Test fun respectsMinimumTopWhenScreenIsTooSmall() {
-        assertEquals(200, HomeFit.balancedTop(400, 24, 48, 200, 300))
-    }
 }

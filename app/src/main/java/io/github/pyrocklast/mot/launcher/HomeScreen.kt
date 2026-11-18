@@ -188,7 +188,6 @@ class HomeScreen(
                     heightOf(it) + (8 * context.resources.displayMetrics.density).toInt()
             } ?: 0
         val bottomPadding = maxOf(fit.bottom, overlayClearance)
-        val room = (displayHeight - fit.namesTop - bottomPadding).coerceAtLeast(0)
 
         // The home screen never scrolls (swiping is for gestures). Adding apps stops when the
         // screen is full, but making names bigger afterwards can leave too many: then the last
@@ -209,17 +208,49 @@ class HomeScreen(
         setHeight(indicator, fit.row)
         // Always the last row, after any names added since it was made
         indicator.bringToFront()
-        val layout = HomeFit.visibleRows(count, HomeFit.slots(room, fit.row, 0))
-        appViews.forEachIndexed { index, view -> view.isVisible = index < layout.count }
-        indicator.isVisible = layout.showAllApps
-        val groupHeight = fit.row * (layout.count + if (layout.showAllApps) 1 else 0)
-        val balancedTop = HomeFit.balancedTop(
-            displayHeight, topInset, bottomPadding, fit.namesTop, groupHeight,
+
+        // Where the names go: one column under the time, or several beside it, whichever shows
+        // more of them. Measured from the names themselves, so a column is as wide as the
+        // longest of them rather than as wide as a guess.
+        val plan = HomeFit.names(
+            fit,
+            count = count,
+            nameWidth = widestName(),
+            clockWidth = clockWidth(),
+            left = sideMargin(),
+            right = displayWidth() - sideMargin(),
+            bottom = displayHeight - bottomPadding,
         )
-        binding.homeApps.setPadding(
-            binding.homeApps.paddingLeft, balancedTop,
-            binding.homeApps.paddingRight, bottomPadding,
-        )
+        appViews.forEachIndexed { index, view -> view.isVisible = index < plan.shown }
+        indicator.isVisible = plan.overflow
+        binding.homeApps.place(plan, fit.row)
+    }
+
+    private fun displayWidth(): Int =
+        if (binding.homeApps.width > 0) binding.homeApps.width
+        else context.resources.displayMetrics.widthPixels
+
+    /** The room kept between a name's own edge and the screen's, the focus patch living in it. */
+    private fun sideMargin(): Int = (12 * context.resources.displayMetrics.density).toInt()
+
+    /** How wide the longest name is, with the room its focus patch needs around it. */
+    private fun widestName(): Int {
+        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        return appViews.maxOfOrNull { view ->
+            view.measure(unspecified, unspecified)
+            view.measuredWidth
+        } ?: 0
+    }
+
+    /** How wide the time and date are, which is how much room the names haven't got beside them. */
+    private fun clockWidth(): Int {
+        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        fun widthOf(view: TextView): Int {
+            if (!view.isVisible) return 0
+            view.measure(unspecified, unspecified)
+            return view.measuredWidth
+        }
+        return maxOf(widthOf(binding.clock), widthOf(binding.date))
     }
 
     private fun setTopMargin(view: View, margin: Int) {
@@ -325,11 +356,18 @@ class HomeScreen(
     private fun onTouch(view: View, event: MotionEvent): Boolean =
         reorder.onTouch(event) || gestures.onTouchEvent(event)
 
-    /** Where the status bar (with any cutout) and the navigation bar end, so nothing hides behind them. */
-    fun applyInsets(top: Int, bottom: Int) {
-        if (top == topInset && bottom == bottomInset) return
+    /**
+     * Where the system bars and any cutout end, so nothing hides behind them. The sides become
+     * padding on the home screen itself: turned on its side, a phone's cutout and its gesture
+     * bar are beside the names rather than above and below them, and everything on the screen
+     * has to keep clear of them, not just the names.
+     */
+    fun applyInsets(top: Int, bottom: Int, left: Int, right: Int) {
+        val sides = left != binding.home.paddingLeft || right != binding.home.paddingRight
+        if (top == topInset && bottom == bottomInset && !sides) return
         topInset = top
         bottomInset = bottom
+        if (sides) binding.home.setPadding(left, 0, right, 0)
         render()
     }
 

@@ -260,24 +260,6 @@ object HomeFit {
     internal fun slots(room: Int, row: Int, safety: Int): Int =
         if (row <= 0) 0 else ((room - safety) / row).coerceAtLeast(0)
 
-    /**
-     * Where the names start so that they sit in the middle of the room under the clock and date,
-     * in pixels. When they can't, they stay clear of the navigation bar first.
-     */
-    internal fun balancedTop(
-        screenHeight: Int,
-        topInset: Int,
-        bottomInset: Int,
-        minimumTop: Int,
-        groupHeight: Int,
-    ): Int {
-        // The middle of the room under the clock and date, not of the whole screen, or a long
-        // list of names would end up pressed against the date
-        val usableTop = maxOf(topInset, minimumTop)
-        val usableBottom = (screenHeight - bottomInset).coerceAtLeast(usableTop)
-        return centre(usableTop, usableBottom, groupHeight)
-    }
-
     /** [height] in the middle of the room between [top] and [bottom]; [top] when it won't fit. */
     internal fun centre(top: Int, bottom: Int, height: Int): Int =
         top + ((bottom - top - height) / 2).coerceAtLeast(0)
@@ -361,19 +343,6 @@ object HomeFit {
         }
         val tallest = (rows.maxOrNull() ?: 0) * fit.row
         return spread.copy(left = left, top = centre(top, bottom, tallest), columnWidth = columnWidth)
-    }
-
-    /** How many names show on the home screen, and whether "All apps" ends the list. */
-    internal data class VisibleRows(val count: Int, val showAllApps: Boolean)
-
-    /**
-     * [count] names in [slots] rows. When there are more names than rows, which can happen after
-     * making names bigger, say, the last row is "All apps" instead.
-     */
-    internal fun visibleRows(count: Int, slots: Int): VisibleRows = when {
-        count <= slots -> VisibleRows(count, false)
-        slots <= 0 -> VisibleRows(0, false)
-        else -> VisibleRows(slots - 1, true)
     }
 
     /**

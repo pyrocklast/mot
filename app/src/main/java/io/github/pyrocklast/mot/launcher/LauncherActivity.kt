@@ -125,9 +125,12 @@ class LauncherActivity : ComponentActivity() {
 
         // The home screen draws edge to edge, and keeps the clock and the names clear of the bars
         ViewCompat.setOnApplyWindowInsetsListener(binding.home) { _, insets ->
-            val top = insets.getInsets(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.displayCutout()).top
-            val bottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-            home.applyInsets(top, bottom)
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.statusBars() or
+                    WindowInsetsCompat.Type.navigationBars() or
+                    WindowInsetsCompat.Type.displayCutout()
+            )
+            home.applyInsets(bars.top, bars.bottom, bars.left, bars.right)
             insets
         }
 
