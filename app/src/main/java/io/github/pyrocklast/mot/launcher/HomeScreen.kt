@@ -187,7 +187,6 @@ class HomeScreen(
                 else R.string.app_not_found,
             )
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, fit.nameSize)
-            setHeight(view, fit.row)
         }
 
         // The first-run tips and the "Set as default launcher" link sit over the bottom of the
@@ -218,7 +217,6 @@ class HomeScreen(
             overflowView = view
             binding.homeApps.addView(view)
         }
-        setHeight(indicator, fit.row)
         // Always the last row, after any names added since it was made
         indicator.bringToFront()
 
@@ -273,14 +271,6 @@ class HomeScreen(
         val params = view.layoutParams as ViewGroup.MarginLayoutParams
         if (params.topMargin == margin) return
         params.topMargin = margin
-        view.layoutParams = params
-    }
-
-    // Every row the same height, with its name in the middle of it
-    private fun setHeight(view: View, height: Int) {
-        val params = view.layoutParams
-        if (params.height == height) return
-        params.height = height
         view.layoutParams = params
     }
 

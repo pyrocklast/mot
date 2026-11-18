@@ -36,7 +36,10 @@ class HomeApps @JvmOverloads constructor(
         val height = MeasureSpec.getSize(heightMeasureSpec)
         // A name has its column's width to live in, and is cut short if it needs more
         val childWidth = MeasureSpec.makeMeasureSpec(plan?.columnWidth ?: width, MeasureSpec.AT_MOST)
-        val childHeight = MeasureSpec.makeMeasureSpec(row.coerceAtLeast(0), MeasureSpec.EXACTLY)
+        // Every row is the same height, its name in the middle of it; before there is a plan
+        // they are as tall as their own text, so they are never measured away to nothing
+        val childHeight = if (row > 0) MeasureSpec.makeMeasureSpec(row, MeasureSpec.EXACTLY)
+        else MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         forEachShown { it.measure(childWidth, childHeight) }
         setMeasuredDimension(width, height)
     }
