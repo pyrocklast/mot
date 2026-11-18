@@ -127,6 +127,13 @@ class HomeScreen(
         binding.homeApps.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) render()
         }
+        // Turning the phone over resizes the window rather than restarting the launcher, and a
+        // screen on its side holds its names differently, so it is laid out again when its shape
+        // changes — and only then, since placing the names asks for a layout of its own
+        binding.homeApps.addOnLayoutChangeListener { view, left, top, right, bottom, _, _, _, _ ->
+            val size = (right - left) to (bottom - top)
+            if (size != renderedFor && size.first > 0 && size.second > 0) view.post { render() }
+        }
         binding.setDefault.setOnClickListener { requestHomeRole() }
         binding.setDefault.defaultFocusHighlightEnabled = false
         binding.setDefault.setBackgroundResource(R.drawable.focus)
@@ -147,9 +154,15 @@ class HomeScreen(
     /** Draws the home screen from the current settings and app names. Cheap enough to call often. */
     fun render() {
         val displayHeight = if (binding.homeApps.height > 0) binding.homeApps.height else screenHeight()
+        renderedFor = displayWidth() to displayHeight
         val fit = HomeFit.layout(context, prefs, displayHeight, topInset, bottomInset)
         this.fit = fit
-        capacity = fit.capacity
+        // Room for one more app is a question about the screen, not about which way round it is:
+        // a phone on its side holds fewer names in a column and says "All apps" instead, rather
+        // than turning a home screen you filled upright into one you may no longer add to
+        capacity = HomeFit.layout(
+            context, prefs, maxOf(displayHeight, displayWidth()), topInset, bottomInset,
+        ).capacity
 
         // The time and date, sized for the screen, the date's capitals tucked in under the time.
         // With the status bar hidden, they move up into its space.
@@ -225,6 +238,9 @@ class HomeScreen(
         indicator.isVisible = plan.overflow
         binding.homeApps.place(plan, fit.row)
     }
+
+    /** The screen the names were last laid out for, so a change of shape redraws them once. */
+    private var renderedFor: Pair<Int, Int>? = null
 
     private fun displayWidth(): Int =
         if (binding.homeApps.width > 0) binding.homeApps.width

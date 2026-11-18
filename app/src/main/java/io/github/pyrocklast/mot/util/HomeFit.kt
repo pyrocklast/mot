@@ -239,7 +239,10 @@ object HomeFit {
         val statusBar = insets.getInsetsIgnoringVisibility(WindowInsets.Type.statusBars()).top
         val top = maxOf(statusBar, cutout)
         val bottom = insets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom
-        return layout(activity, prefs, window.bounds.height(), top, bottom, nameSizeDp)
+        // The screen's longer side, whichever way the phone is being held: how many apps there
+        // is room for shouldn't change because you turned it over to ask
+        val height = maxOf(window.bounds.height(), window.bounds.width())
+        return layout(activity, prefs, height, top, bottom, nameSizeDp)
     }
 
     /** How many apps the home screen has room for: settings asks this as you move the slider. */
