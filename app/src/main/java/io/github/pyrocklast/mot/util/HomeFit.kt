@@ -63,6 +63,9 @@ object HomeFit {
     /** Left over at the bottom, so the last row can't end up a hair too low. */
     private const val SAFETY_DP = 2
 
+    /** Between one column of names and the next, and between the time and the first of them. */
+    private const val COLUMN_GAP_DP = 56
+
     /** The "All apps" row, smaller than the names so it doesn't read as an app. */
     const val ALL_APPS_DP = 18f
 
@@ -79,8 +82,14 @@ object HomeFit {
         val markerGap: Int,
         /** How far up the colon goes, so it sits in the middle of the figures. */
         val colonLift: Float,
+        /** From the top of the screen to the first thing you see: the time's figures. */
+        val inkTop: Int,
         /** Where the names may start, under the time and date. */
         val namesTop: Int,
+        /** Between one column of names and the next, and between the time and the first. */
+        val columnGap: Int,
+        /** Left spare at the bottom of a column, so its last row can't end up a hair too low. */
+        val safety: Int,
         /** Where the drawer's search box goes, so its text sits on the time's line. */
         val searchTop: Int,
         /** How tall the search box is: its text, or a 48 dp target, whichever is more. */
@@ -140,6 +149,9 @@ object HomeFit {
             nameSize = nameSize,
             clockTop = clock.top,
             dateMargin = clock.dateMargin,
+            inkTop = inkTop,
+            columnGap = px(COLUMN_GAP_DP),
+            safety = px(SAFETY_DP),
             markerGap = gap,
             colonLift = time.colonLift * timeSize,
             namesTop = clock.namesTop,
@@ -263,9 +275,92 @@ object HomeFit {
         // list of names would end up pressed against the date
         val usableTop = maxOf(topInset, minimumTop)
         val usableBottom = (screenHeight - bottomInset).coerceAtLeast(usableTop)
-        val centered = usableTop + (usableBottom - usableTop - groupHeight) / 2
-        val latest = (usableBottom - groupHeight).coerceAtLeast(usableTop)
-        return centered.coerceIn(usableTop, latest)
+        return centre(usableTop, usableBottom, groupHeight)
+    }
+
+    /** [height] in the middle of the room between [top] and [bottom]; [top] when it won't fit. */
+    internal fun centre(top: Int, bottom: Int, height: Int): Int =
+        top + ((bottom - top - height) / 2).coerceAtLeast(0)
+
+    /**
+     * The names' place: equal columns [columnWidth] wide from [left], each holding one of
+     * [counts], all starting at the same [top] so the names line up across them. [overflow]
+     * gives the last row of the last column to "All apps".
+     */
+    data class Names(
+        val left: Int,
+        val top: Int,
+        val columnWidth: Int,
+        val counts: List<Int>,
+        val overflow: Boolean,
+    ) {
+        /** How many names show. */
+        val shown: Int get() = counts.sum()
+    }
+
+    /**
+     * How [count] names divide between columns holding [perColumn] each, there being room for
+     * [maxColumns] of them.
+     *
+     * When they all fit they are spread evenly, so ten names in two columns are five and five
+     * rather than six and four. When they don't, the columns are filled instead: a name you can
+     * see is worth more than a tidy pair, and the last row goes to "All apps", which costs one
+     * name its place.
+     */
+    internal fun arrange(count: Int, perColumn: Int, maxColumns: Int): Names =
+        if (count <= 0 || perColumn <= 0 || maxColumns <= 0) {
+            Names(0, 0, 0, emptyList(), false)
+        } else if (count <= perColumn * maxColumns) {
+            val columns = ceil(count.toFloat() / perColumn).toInt()
+            val each = count / columns
+            val overs = count % columns
+            Names(0, 0, 0, List(columns) { each + if (it < overs) 1 else 0 }, false)
+        } else {
+            Names(0, 0, 0, List(maxColumns) { if (it == maxColumns - 1) perColumn - 1 else perColumn }, true)
+        }
+
+    /**
+     * Where [count] names go on a screen: beside the time and date, or under them as they are on
+     * a tall screen, whichever shows more of them — and the fewer columns of the two when they
+     * show the same. A screen turned on its side has no room under the time for the names, but
+     * has room beside it; a tall one is the other way about.
+     *
+     * The room runs from [left] to [right] and from [bottom] up to either [Layout.inkTop], where
+     * the time starts, or [Layout.namesTop], under it. [clockWidth] is how wide the time and
+     * date are, [nameWidth] the widest name.
+     */
+    fun names(fit: Layout, count: Int, nameWidth: Int, clockWidth: Int, left: Int, right: Int, bottom: Int): Names {
+        val below = fill(left, right, fit.namesTop, bottom, fit, count, nameWidth, squeeze = true)
+        val beside = fill(left + clockWidth + fit.columnGap, right, fit.inkTop, bottom, fit, count, nameWidth, squeeze = false)
+        // Below first: on a tall screen both show every name, and under the time is where the
+        // names belong
+        return if (beside.shown > below.shown || (beside.shown == below.shown && beside.counts.size < below.counts.size)) {
+            beside
+        } else {
+            below
+        }
+    }
+
+    /**
+     * One way of laying the names out, in the room from [left] to [right] and [top] to [bottom].
+     * Under the time there is always room for a column, and a name too long for it is cut short,
+     * there being nowhere else for it to go; beside the time a column only counts when a whole
+     * name fits in it, or the names would be squeezed into a corner and clipped to get there.
+     */
+    private fun fill(
+        left: Int, right: Int, top: Int, bottom: Int,
+        fit: Layout, count: Int, nameWidth: Int, squeeze: Boolean,
+    ): Names {
+        val width = (right - left).coerceAtLeast(0)
+        val wanted = (nameWidth + fit.columnGap).coerceAtLeast(1)
+        val columnWidth = if (squeeze) minOf(wanted, maxOf(width, 1)) else wanted
+        val columns = if (squeeze) maxOf(1, width / columnWidth) else width / columnWidth
+        val spread = arrange(count, slots(bottom - top, fit.row, fit.safety), columns)
+        val rows = spread.counts.mapIndexed { index, held ->
+            held + if (spread.overflow && index == spread.counts.lastIndex) 1 else 0
+        }
+        val tallest = (rows.maxOrNull() ?: 0) * fit.row
+        return spread.copy(left = left, top = centre(top, bottom, tallest), columnWidth = columnWidth)
     }
 
     /** How many names show on the home screen, and whether "All apps" ends the list. */
