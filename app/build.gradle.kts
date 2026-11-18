@@ -71,6 +71,15 @@ android {
         buildConfig = true
     }
 
+    // Kotlin's own metadata: its built-in class descriptions, the module files that say which
+    // file each top-level function came from, and the debug probes' table. All of it is for
+    // reflection and tooling, which the launcher has none of, so none of it ships.
+    packaging {
+        resources.excludes += listOf(
+            "kotlin/**", "META-INF/*.kotlin_module", "META-INF/*.version", "DebugProbesKt.bin",
+        )
+    }
+
     // No Google-only dependency metadata in the APK
     dependenciesInfo {
         includeInApk = false
@@ -91,7 +100,8 @@ kotlin {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.activity.ktx)
+    // Plain activity, not activity-ktx: nothing here uses a ViewModel
+    implementation(libs.androidx.activity)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.recyclerview)
 
