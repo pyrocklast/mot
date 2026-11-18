@@ -77,7 +77,7 @@ class HomeScreen(
             if (view == null || index < 0) return longPress(view)
             // A home app picks up, and moves if you drag it. Its menu waits until you let go
             // without dragging, so it never covers the spots the app could be dragged to.
-            if (canMove(index)) reorder.arm(index, e.rawY, lift = true) else homeAppMenu(view, index)
+            if (canMove(index)) reorder.arm(index, e.rawX, e.rawY, lift = true) else homeAppMenu(view, index)
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
