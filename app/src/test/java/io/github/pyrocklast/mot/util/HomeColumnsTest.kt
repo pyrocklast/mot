@@ -24,14 +24,14 @@ class HomeColumnsTest {
         assertEquals(listOf(6), HomeFit.arrange(count = 6, perColumn = 6, maxColumns = 2).counts)
     }
 
-    @Test fun `too many to fit: the columns fill up and the last row says All apps`() {
+    @Test fun `too many to fit, so the columns fill up and the last row says All apps`() {
         val spread = HomeFit.arrange(count = 10, perColumn = 3, maxColumns = 2)
         assertEquals(listOf(3, 2), spread.counts)
         assertTrue(spread.overflow)
         assertEquals(5, spread.shown)
     }
 
-    @Test fun `room for one row and more names than that: All apps is all there is`() {
+    @Test fun `room for one row and more names than that, so All apps is all there is`() {
         val spread = HomeFit.arrange(count = 4, perColumn = 1, maxColumns = 1)
         assertEquals(listOf(0), spread.counts)
         assertTrue(spread.overflow)
@@ -91,7 +91,7 @@ class HomeColumnsTest {
         assertFalse(names.overflow)
     }
 
-    @Test fun `big names on its side: under the time shows more than beside it`() {
+    @Test fun `big names on its side, where under the time shows more than beside it`() {
         // 76 tall and 300 wide: one column of that width fits beside the time, two fit under it
         val names = names(count = 10, width = 936, height = 432, row = 76, nameWidth = 300)
         assertEquals(24, names.left)
