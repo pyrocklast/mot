@@ -109,7 +109,7 @@ class Drawer(
         // TalkBack says where you've arrived when the drawer appears, and reaches the settings
         // button straight after the search box rather than after every app in the list
         ViewCompat.setAccessibilityPaneTitle(binding.drawer, activity.getString(R.string.app_drawer))
-        ViewCompat.setAccessibilityTraversalAfter(binding.drawerSettings, R.id.search)
+        binding.drawerSettings.accessibilityTraversalAfter = R.id.search
         // A text box shows focus with its caret. Touch has no focus to show, and a caret
         // blinking under the hint only adds movement nobody asked for.
         search.isCursorVisible = !search.isInTouchMode
