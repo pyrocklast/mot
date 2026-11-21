@@ -11,12 +11,15 @@
     tools:viewBindingIgnore="true">
 
     <!-- Lines up with the rows' text: the surface's margin plus the rows' own padding.
-         TalkBack reads the heading and its note together, as one heading. -->
+         TalkBack reads the heading and its note together, as one heading. A titled heading
+         is also a button that collapses its rows; the word at its end says what a tap does. -->
     <LinearLayout
         android:id="@+id/groupHeading"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:accessibilityHeading="true"
+        android:background="?attr/selectableItemBackground"
+        android:minHeight="@dimen/touch_target"
         android:orientation="vertical"
         android:paddingStart="@dimen/settings_heading_inset"
         android:paddingTop="8dp"
@@ -24,13 +27,30 @@
         android:paddingBottom="8dp"
         android:screenReaderFocusable="true">
 
-        <TextView
-            android:id="@android:id/title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:textColor="?android:attr/colorAccent"
-            android:textSize="14sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@android:id/title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="?android:attr/colorAccent"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/groupToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:importantForAccessibility="no"
+                android:textColor="?android:attr/colorAccent"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@android:id/summary"

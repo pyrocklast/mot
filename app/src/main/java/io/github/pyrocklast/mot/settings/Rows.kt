@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
 import android.widget.TextView
@@ -12,12 +13,13 @@ import androidx.annotation.StringRes
 import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import io.github.pyrocklast.mot.R
+import io.github.pyrocklast.mot.data.Prefs
 
 // Settings rows, laid out one under the other in a screen's column. No row saves itself: each
 // shows a value from Prefs and writes changes back, so Prefs stays the one source of truth.
 
 /** Adds rows to a settings screen's column, in order. */
-class Rows(private val column: ViewGroup) {
+class Rows(private val column: ViewGroup, private val prefs: Prefs) {
 
     private val context: Context get() = column.context
 
@@ -26,16 +28,53 @@ class Rows(private val column: ViewGroup) {
 
     /**
      * A group: rows on their own rounded surface, added in [rows], under an optional heading
-     * with an optional note.
+     * with an optional note. A titled group collapses when its heading is tapped, and stays as
+     * the person left it.
      */
     fun group(@StringRes title: Int = 0, @StringRes summary: Int = 0, rows: Rows.() -> Unit) {
         val group = inflate(R.layout.settings_group)
         val heading = Row(group.findViewById(R.id.groupHeading))
+        val groupRows: View = group.findViewById(R.id.groupRows)
         if (title != 0) heading.setTitle(title) else heading.isVisible = false
         // So TalkBack can move heading by heading through a long screen
         ViewCompat.setAccessibilityHeading(heading.view, title != 0)
         if (summary != 0) heading.summary = context.getString(summary)
-        Rows(group.findViewById(R.id.groupRows)).rows()
+        if (title != 0) collapsible(title, heading.view, groupRows)
+        Rows(groupRows as ViewGroup, prefs).rows()
+    }
+
+    /**
+     * Makes a heading collapse [rows]. The collapse hides only the rows, so the heading stays
+     * to tap open again; the state is kept by the heading's name, which doesn't change between
+     * builds the way a resource id can.
+     */
+    private fun collapsible(@StringRes title: Int, heading: View, rows: View) {
+        val name = context.resources.getResourceEntryName(title)
+        val toggle: TextView = heading.findViewById(R.id.groupToggle)
+        var collapsed = name in prefs.collapsedGroups
+
+        fun show() {
+            rows.isVisible = !collapsed
+            toggle.setText(if (collapsed) R.string.group_show else R.string.group_hide)
+        }
+
+        heading.isClickable = true
+        heading.setOnClickListener {
+            collapsed = !collapsed
+            prefs.setGroupCollapsed(name, collapsed)
+            show()
+            // Tell TalkBack the section's rows have changed, so it reads the new state
+            heading.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+        }
+        // TalkBack reads the heading as a button that is expanded or collapsed
+        heading.accessibilityDelegate = object : View.AccessibilityDelegate() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.isClickable = true
+                info.setExpanded(!collapsed)
+            }
+        }
+        show()
     }
 
     fun item(@StringRes title: Int, onClick: () -> Unit): Row {

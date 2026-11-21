@@ -107,5 +107,7 @@
     <string name="swipe_right">Balayer vers la droite</string>
 
     <string name="about">À propos</string>
+    <string name="group_hide">Masquer</string>
+    <string name="group_show">Afficher</string>
     <string name="version">Version %1$s · un minimum de choses, un lanceur</string>
 </resources>

@@ -57,7 +57,7 @@ class SettingsActivity : SettingsScreen() {
         // The first-run tips on the home screen have done their job
         prefs.settingsOpened = true
 
-        addRows(Rows(binding.rows))
+        addRows(Rows(binding.rows, prefs))
     }
 
     override fun onResume() {

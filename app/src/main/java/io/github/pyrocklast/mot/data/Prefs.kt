@@ -109,6 +109,16 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean("hidden_before", false)
         set(value) = prefs.edit { putBoolean("hidden_before", value) }
 
+    /** The settings sections the person has collapsed, by the name of their heading. */
+    val collapsedGroups: Set<String>
+        get() = prefs.getStringSet("collapsed_groups", null).orEmpty().toSet()
+
+    fun setGroupCollapsed(group: String, collapsed: Boolean) {
+        val groups = collapsedGroups.toMutableSet()
+        if (collapsed) groups += group else groups -= group
+        prefs.edit { putStringSet("collapsed_groups", groups) }
+    }
+
     // Appearance (home screen and drawer only)
 
     /** Light text, dark text, or whichever the wallpaper suits. */

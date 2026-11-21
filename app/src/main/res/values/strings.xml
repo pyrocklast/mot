@@ -121,5 +121,7 @@
     <string name="swipe_right">Swipe right</string>
 
     <string name="about">About</string>
+    <string name="group_hide">Hide</string>
+    <string name="group_show">Show</string>
     <string name="version">Version %1$s · a minimum of things, a launcher</string>
 </resources>
