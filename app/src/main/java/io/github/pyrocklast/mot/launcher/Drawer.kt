@@ -10,6 +10,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -121,6 +122,14 @@ class Drawer(
             close()
             openSettings()
         }
+        // A word that does something is still a button, and TalkBack should say so, as it did
+        // when this was one
+        binding.drawerSettings.accessibilityDelegate = object : View.AccessibilityDelegate() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.className = android.widget.Button::class.java.name
+            }
+        }
         list.adapter = adapter
         list.itemAnimator = null
         list.layoutManager = object : LinearLayoutManager(activity) {
@@ -177,11 +186,14 @@ class Drawer(
     }
 
     /**
-     * Puts the search box on the line the time is on, and the settings gear in the middle of
+     * Puts the search box on the line the time is on, and the word "Settings" in the middle of
      * that line. The drawer's top padding already holds the status bar's room, so both are
      * placed under it.
+     *
+     * How wide that word is depends on the language and on Android's text size, so it is
+     * measured rather than guessed at, and what you type stops where it begins.
      */
-    private fun placeHeader(topInset: Int) {
+    private fun placeHeader(topInset: Int = binding.drawer.paddingTop) {
         val fit = HomeFit.forWindow(activity, prefs)
         val top = fit.searchTop - topInset
         val params = search.layoutParams as ViewGroup.MarginLayoutParams
@@ -189,14 +201,21 @@ class Drawer(
             params.topMargin = top
             search.layoutParams = params
         }
-        val gear = activity.resources.getDimensionPixelSize(R.dimen.drawer_gear)
-        binding.drawerSettings.translationY = (top + (fit.searchHeight - gear) / 2).toFloat()
+        val settings = binding.drawerSettings
+        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        settings.measure(unspecified, unspecified)
+        settings.translationY = (top + (fit.searchHeight - settings.measuredHeight) / 2).toFloat()
+        val margin = (settings.layoutParams as ViewGroup.MarginLayoutParams).marginEnd
+        val gap = search.paddingStart
+        val clear = if (settings.isVisible) settings.measuredWidth + margin + gap else gap
+        search.setPaddingRelative(gap, search.paddingTop, clear, search.paddingBottom)
     }
 
     /** [query] starts the search with what you typed on the home screen to get here. */
     fun open(slot: Slot? = null, query: String? = null) {
         choosingFor = slot
         binding.drawerSettings.isVisible = slot == null
+        placeHeader()
         isOpen = true
         inPrivateSpace = false
         unlockRequestedAt = NO_REQUEST
