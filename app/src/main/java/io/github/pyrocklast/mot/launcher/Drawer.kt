@@ -107,10 +107,10 @@ class Drawer(
     }
 
     init {
-        // TalkBack says where you've arrived when the drawer appears, and reaches the settings
-        // button straight after the search box rather than after every app in the list
+        // TalkBack says where you've arrived when the drawer appears. What order things come
+        // in it needn't be told: the word, the search box and the list are read in the order
+        // they are written in, which is the order they appear in
         ViewCompat.setAccessibilityPaneTitle(binding.drawer, activity.getString(R.string.app_drawer))
-        binding.drawerSettings.accessibilityTraversalAfter = R.id.search
         // A text box shows focus with its caret. Touch has no focus to show, and a caret
         // blinking under the hint only adds movement nobody asked for.
         search.isCursorVisible = !search.isInTouchMode
@@ -186,32 +186,34 @@ class Drawer(
     }
 
     /**
-     * Puts the search box on the line the time is on, and the word "Settings" in the middle of
-     * that line. The drawer's top padding already holds the status bar's room, so both are
-     * placed under it.
+     * Puts the search box on the line the time is on, so that opening the drawer puts "Search"
+     * where the time was, and the word "Settings" on its own line in the room above it. The
+     * drawer's top padding already holds the status bar's room, so both are placed under it.
      *
-     * How wide that word is depends on the language and on Android's text size, so it is
-     * measured rather than guessed at, and what you type stops where it begins.
+     * That room is about 42 dp on this phone, which holds the word and its text comfortably but
+     * not the 48 dp anything you tap must be: the word's target reaches a little way up behind
+     * the status bar, where there is nothing to press. Where the word really doesn't fit — a
+     * large text size, or names big enough to pull the time's line up — it takes the room it
+     * needs and the search box moves down rather than the two overlapping.
      */
     private fun placeHeader(topInset: Int = binding.drawer.paddingTop) {
         val fit = HomeFit.forWindow(activity, prefs)
-        val top = fit.searchTop - topInset
+        val settings = binding.drawerSettings
+        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        settings.measure(unspecified, unspecified)
+        // The word's box sits directly on top of the search box, its text in the middle of it.
+        // The text starts half the difference down, so this is where the box must end for the
+        // text to clear the status bar; the room above the search box is usually more than that
+        val clears = (settings.measuredHeight + settings.lineHeight + 1) / 2
+        val top = maxOf(fit.searchTop - topInset, clears)
         val params = search.layoutParams as ViewGroup.MarginLayoutParams
         if (params.topMargin != top) {
             params.topMargin = top
             search.layoutParams = params
         }
-        val settings = binding.drawerSettings
-        val unspecified = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        settings.measure(unspecified, unspecified)
-        settings.translationY = (top + (fit.searchHeight - settings.measuredHeight) / 2).toFloat()
-        val margin = (settings.layoutParams as ViewGroup.MarginLayoutParams).marginEnd
-        val gap = search.paddingStart
-        val clear = if (settings.isVisible) settings.measuredWidth + margin + gap else gap
-        search.setPaddingRelative(gap, search.paddingTop, clear, search.paddingBottom)
+        settings.translationY = (top - settings.measuredHeight).toFloat()
     }
 
-    /** [query] starts the search with what you typed on the home screen to get here. */
     fun open(slot: Slot? = null, query: String? = null) {
         choosingFor = slot
         binding.drawerSettings.isVisible = slot == null
