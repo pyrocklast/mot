@@ -109,5 +109,7 @@
     <string name="about">À propos</string>
     <string name="group_hide">Masquer</string>
     <string name="group_show">Afficher</string>
+    <string name="group_expanded">Ouverte</string>
+    <string name="group_collapsed">Repliée</string>
     <string name="version">Version %1$s · un minimum de choses, un lanceur</string>
 </resources>

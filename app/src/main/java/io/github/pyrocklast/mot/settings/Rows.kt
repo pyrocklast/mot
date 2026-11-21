@@ -66,12 +66,12 @@ class Rows(private val column: ViewGroup, private val prefs: Prefs) {
             // Tell TalkBack the section's rows have changed, so it reads the new state
             heading.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
         }
-        // TalkBack reads the heading as a button that is expanded or collapsed
+        // TalkBack reads the heading as a button, and its state: "Expanded" or "Collapsed"
         heading.accessibilityDelegate = object : View.AccessibilityDelegate() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
                 info.isClickable = true
-                info.setExpanded(!collapsed)
+                info.stateDescription = context.getString(if (collapsed) R.string.group_collapsed else R.string.group_expanded)
             }
         }
         show()
